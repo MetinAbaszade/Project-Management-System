@@ -1,1 +1,97 @@
-[{"state":{"code":"erDiagram\n    USERS {\n        int id PK\n        string email\n        string password_hash\n        string FirstName\n        string LastName\n        string avatar_url\n        boolean is_active\n        string role\n    }\n    \n    PROJECTS {\n        int id PK\n        string name\n        string description\n        int lead_id FK\n        timestamp created_at\n        timestamp updated_at\n    }\n    \n    BOARDS {\n        int id PK\n        string name\n        int project_id FK\n    }\n    \n    SPRINTS {\n        int id PK\n        string name\n        int board_id FK\n        timestamp start_date\n        timestamp end_date\n        string status\n        timestamp created_at\n        timestamp updated_at\n    }\n    \n    TASKS {\n        int id PK\n        string name\n        string description\n        BOOL priority\n        int assignee_id FK\n        int project_id FK\n        int sprint_id FK\n        int original_estimate_minutes\n        int remaining_estimate_minutes\n        int time_spent_minutes\n        timestamp due_date\n        timestamp created_at\n        timestamp updated_at\n        string status\n        string task_type\n    }\n    \n    TASK_DEPENDENCIES {\n        int id PK\n        int task_id FK\n        int dependent_on_task_id FK\n        string dependency_type\n        timestamp created_at\n    }\n    \n    WORK_LOGS {\n        int id PK\n        int task_id FK\n        int user_id FK\n        int time_spent_minutes\n        timestamp work_date\n        string description\n        timestamp created_at\n    }\n    \n    ATTACHMENTS {\n        int id PK\n        int issue_id FK\n        int user_id FK\n        string file_name\n        string file_path\n        int file_size\n        string file_type\n        timestamp created_at\n    }\n    \n    USER_PROJECT {\n        int user_id FK\n        int project_id FK\n        string role\n        timestamp joined_at\n    }\n    \n    USERS ||--o{ PROJECTS : \"leads\"\n    USERS ||--o{ TASKS : \"assigned\"\n    USERS ||--o{ USER_PROJECT : \"member of\"\n    USERS ||--o{ WORK_LOGS : \"logs time\"\n    \n    PROJECTS ||--o{ BOARDS : \"has\"\n    PROJECTS ||--o{ TASKS : \"contains\"\n    PROJECTS ||--o{ USER_PROJECT : \"has members\"\n    \n    BOARDS ||--o{ SPRINTS : \"has\"\n    \n    SPRINTS ||--o{ TASKS : \"contains\"\n    \n    TASKS ||--o{ ATTACHMENTS : \"has\"\n    TASKS ||--o{ WORK_LOGS : \"has\"\n    TASKS ||--o{ TASK_DEPENDENCIES : \"depends on\"\n    TASKS ||--o{ TASK_DEPENDENCIES : \"is depended on by\"\n   \n","mermaid":"{\n  \"theme\": \"dark\"\n}","autoSync":true,"rough":false,"updateDiagram":false,"panZoom":false},"time":1740587727892,"type":"manual","id":"9fce4153-6bbe-439d-9e3c-8799afbd2601","name":"attractive-doctor"}]
+Tables & Relationships
+USERS
+id (Primary Key)
+email
+password_hash
+FirstName
+LastName
+avatar_url
+is_active (Boolean)
+role
+PROJECTS
+id (Primary Key)
+name
+description
+lead_id (Foreign Key → USERS)
+created_at (Timestamp)
+updated_at (Timestamp)
+BOARDS
+id (Primary Key)
+name
+project_id (Foreign Key → PROJECTS)
+SPRINTS
+id (Primary Key)
+name
+board_id (Foreign Key → BOARDS)
+start_date (Timestamp)
+end_date (Timestamp)
+status
+created_at (Timestamp)
+updated_at (Timestamp)
+TASKS
+id (Primary Key)
+name
+description
+priority (Boolean)
+assignee_id (Foreign Key → USERS)
+project_id (Foreign Key → PROJECTS)
+sprint_id (Foreign Key → SPRINTS)
+original_estimate_minutes
+remaining_estimate_minutes
+time_spent_minutes
+due_date (Timestamp)
+created_at (Timestamp)
+updated_at (Timestamp)
+status
+task_type
+TASK_DEPENDENCIES
+id (Primary Key)
+task_id (Foreign Key → TASKS)
+dependent_on_task_id (Foreign Key → TASKS)
+dependency_type
+created_at (Timestamp)
+WORK_LOGS
+id (Primary Key)
+task_id (Foreign Key → TASKS)
+user_id (Foreign Key → USERS)
+time_spent_minutes
+work_date (Timestamp)
+description
+created_at (Timestamp)
+ATTACHMENTS
+id (Primary Key)
+issue_id (Foreign Key → TASKS)
+user_id (Foreign Key → USERS)
+file_name
+file_path
+file_size
+file_type
+created_at (Timestamp)
+USER_PROJECT
+user_id (Foreign Key → USERS)
+project_id (Foreign Key → PROJECTS)
+role
+joined_at (Timestamp)
+Relationships
+USERS
+
+Leads PROJECTS
+Assigned to TASKS
+Members of USER_PROJECT
+Logs time in WORK_LOGS
+PROJECTS
+
+Have multiple BOARDS
+Contain multiple TASKS
+Have members in USER_PROJECT
+BOARDS
+
+Contain multiple SPRINTS
+SPRINTS
+
+Contain multiple TASKS
+TASKS
+
+Have multiple ATTACHMENTS
+Have multiple WORK_LOGS
+Depend on other TASKS via TASK_DEPENDENCIES
