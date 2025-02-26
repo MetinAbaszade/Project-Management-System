@@ -1,0 +1,110 @@
+erDiagram
+    USERS {
+        int id PK
+        string email
+        string password_hash
+        string FirstName
+        string LastName
+        string avatar_url
+        boolean is_active
+        string role
+    }
+    
+    PROJECTS {
+        int id PK
+        string name
+        string description
+        int lead_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    BOARDS {
+        int id PK
+        string name
+        int project_id FK
+    }
+    
+    SPRINTS {
+        int id PK
+        string name
+        int board_id FK
+        timestamp start_date
+        timestamp end_date
+        string status
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    TASKS {
+        int id PK
+        string name
+        string description
+        BOOL priority
+        int assignee_id FK
+        int project_id FK
+        int sprint_id FK
+        int original_estimate_minutes
+        int remaining_estimate_minutes
+        int time_spent_minutes
+        timestamp due_date
+        timestamp created_at
+        timestamp updated_at
+        string status
+        string task_type
+    }
+    
+    TASK_DEPENDENCIES {
+        int id PK
+        int task_id FK
+        int dependent_on_task_id FK
+        string dependency_type
+        timestamp created_at
+    }
+    
+    WORK_LOGS {
+        int id PK
+        int task_id FK
+        int user_id FK
+        int time_spent_minutes
+        timestamp work_date
+        string description
+        timestamp created_at
+    }
+    
+    ATTACHMENTS {
+        int id PK
+        int issue_id FK
+        int user_id FK
+        string file_name
+        string file_path
+        int file_size
+        string file_type
+        timestamp created_at
+    }
+    
+    USER_PROJECT {
+        int user_id FK
+        int project_id FK
+        string role
+        timestamp joined_at
+    }
+    
+    USERS ||--o{ PROJECTS : "leads"
+    USERS ||--o{ TASKS : "assigned"
+    USERS ||--o{ USER_PROJECT : "member of"
+    USERS ||--o{ WORK_LOGS : "logs time"
+    
+    PROJECTS ||--o{ BOARDS : "has"
+    PROJECTS ||--o{ TASKS : "contains"
+    PROJECTS ||--o{ USER_PROJECT : "has members"
+    
+    BOARDS ||--o{ SPRINTS : "has"
+    
+    SPRINTS ||--o{ TASKS : "contains"
+    
+    TASKS ||--o{ ATTACHMENTS : "has"
+    TASKS ||--o{ WORK_LOGS : "has"
+    TASKS ||--o{ TASK_DEPENDENCIES : "depends on"
+    TASKS ||--o{ TASK_DEPENDENCIES : "is depended on by"
+   
