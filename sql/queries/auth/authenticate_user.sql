@@ -1,4 +1,4 @@
--- Check if login credentials are valid and update login stats
+
 BEGIN;
 
 -- Get user with password for validation
