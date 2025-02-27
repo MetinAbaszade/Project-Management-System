@@ -1,110 +1,205 @@
 erDiagram
     USERS {
-        int id PK
-        string email
-        string password_hash
+        int user_id PK
         string FirstName
         string LastName
-        string avatar_url
+        string Email
+        string Password
+        string ImageUrl
         boolean is_active
-        string role
+    }
+    
+    ROLES {
+        int role_id PK
+        string RoleName
+    }
+    
+    USER_ROLES {
+        int user_id FK
+        int role_id FK
     }
     
     PROJECTS {
-        int id PK
-        string name
-        string description
-        int lead_id FK
-        timestamp created_at
-        timestamp updated_at
+        int project_id PK
+        string Name
+        string Description
+        date StartDate
+        date EndDate
+        string Status
+        float Budget
+        float BudgetUsed
     }
     
-    BOARDS {
-        int id PK
-        string name
+    PROJECT_MEMBERS {
+        int project_member_id PK
         int project_id FK
-    }
-    
-    SPRINTS {
-        int id PK
-        string name
-        int board_id FK
-        timestamp start_date
-        timestamp end_date
-        string status
-        timestamp created_at
-        timestamp updated_at
+        int user_id FK
+        string RoleInProject
+        float TotalHoursWorked
     }
     
     TASKS {
-        int id PK
-        string name
-        string description
-        BOOL priority
-        int assignee_id FK
+        int task_id PK
         int project_id FK
-        int sprint_id FK
-        int original_estimate_minutes
-        int remaining_estimate_minutes
-        int time_spent_minutes
-        timestamp due_date
-        timestamp created_at
-        timestamp updated_at
-        string status
-        string task_type
+        string Title
+        string Description
+        string Type
+        string Priority
+        string Status
+        int CreatedBy FK
+        int AssignedTo FK
+        datetime CreatedAt
+        datetime UpdatedAt
+        datetime Deadline
+        float BudgetUsed
+    }
+    
+    TASK_TYPES {
+        int type_id PK
+        string TypeName
+        string Description
     }
     
     TASK_DEPENDENCIES {
-        int id PK
         int task_id FK
-        int dependent_on_task_id FK
-        string dependency_type
-        timestamp created_at
+        int dependent_task_id FK
     }
     
-    WORK_LOGS {
-        int id PK
+    TASK_ATTACHMENTS {
+        int attachment_id PK
+        int task_id FK
+        string FileUrl
+        string FileName
+        datetime UploadedAt
+    }
+    
+    TIME_ENTRIES {
+        int time_entry_id PK
         int task_id FK
         int user_id FK
-        int time_spent_minutes
-        timestamp work_date
-        string description
-        timestamp created_at
+        float TimeSpent
+        date EntryDate
     }
     
-    ATTACHMENTS {
-        int id PK
-        int issue_id FK
-        int user_id FK
-        string file_name
-        string file_path
-        int file_size
-        string file_type
-        timestamp created_at
+    LANGUAGES {
+        int language_id PK
+        string LanguageName
     }
     
-    USER_PROJECT {
-        int user_id FK
+    PROJECT_LANGUAGES {
+        int project_language_id PK
         int project_id FK
-        string role
-        timestamp joined_at
+        int language_id FK
+        float UsagePercentage
     }
     
-    USERS ||--o{ PROJECTS : "leads"
-    USERS ||--o{ TASKS : "assigned"
-    USERS ||--o{ USER_PROJECT : "member of"
-    USERS ||--o{ WORK_LOGS : "logs time"
+    NOTIFICATIONS {
+        int notification_id PK
+        int user_id FK
+        string Content
+        datetime CreatedAt
+    }
+    
+    SPRINTS {
+        int sprint_id PK
+        int project_id FK
+        string Name
+        date StartDate
+        date EndDate
+        string Goal
+        string Status
+    }
+    
+    SPRINT_TASKS {
+        int sprint_id FK
+        int task_id FK
+    }
+    
+    BOARDS {
+        int board_id PK
+        int project_id FK
+        string Name
+        string BoardType
+    }
+    
+    BOARD_COLUMNS {
+        int column_id PK
+        int board_id FK
+        string Name
+        int OrderIndex
+    }
+    
+    COMMENTS {
+        int comment_id PK
+        int task_id FK
+        int user_id FK
+        string Content
+        datetime CreatedAt
+    }
+    
+    TASK_STATUS_HISTORY {
+        int history_id PK
+        int task_id FK
+        int user_id FK
+        string OldStatus
+        string NewStatus
+        datetime UpdatedAt
+    }
+    
+    PROJECT_ATTACHMENTS {
+        int attachment_id PK
+        int project_id FK
+        string FileUrl
+        string FileName
+        datetime UploadedAt
+    }
+    
+    SUBTASKS {
+        int subtask_id PK
+        int parent_task_id FK
+        int assigned_to FK
+        string Title
+        string Status
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+    
+    USERS ||--o{ USER_ROLES : "has"
+    ROLES ||--o{ USER_ROLES : "assigned to"
+    
+    USERS ||--o{ PROJECT_MEMBERS : "is member in"
+    PROJECTS ||--o{ PROJECT_MEMBERS : "has"
+    
+    PROJECTS ||--o{ TASKS : "contains"
+    USERS ||--o{ TASKS : "creates"
+    USERS ||--o{ TASKS : "assigned to"
+    TASK_TYPES ||--o{ TASKS : "categorizes"
+    
+    TASKS ||--o{ TASK_DEPENDENCIES : "depends on"
+    
+    TASKS ||--o{ TASK_ATTACHMENTS : "has"
+    
+    TASKS ||--o{ TIME_ENTRIES : "logs"
+    USERS ||--o{ TIME_ENTRIES : "logs"
+    
+    PROJECTS ||--o{ PROJECT_LANGUAGES : "uses"
+    LANGUAGES ||--o{ PROJECT_LANGUAGES : "is used in"
+    
+    USERS ||--o{ NOTIFICATIONS : "receives"
+    
+    PROJECTS ||--o{ SPRINTS : "has"
+    SPRINTS ||--o{ SPRINT_TASKS : "includes"
+    TASKS ||--o{ SPRINT_TASKS : "is in"
     
     PROJECTS ||--o{ BOARDS : "has"
-    PROJECTS ||--o{ TASKS : "contains"
-    PROJECTS ||--o{ USER_PROJECT : "has members"
+    BOARDS ||--o{ BOARD_COLUMNS : "contains"
     
-    BOARDS ||--o{ SPRINTS : "has"
+    TASKS ||--o{ COMMENTS : "has"
     
-    SPRINTS ||--o{ TASKS : "contains"
+    TASKS ||--o{ TASK_STATUS_HISTORY : "has"
+    USERS ||--o{ TASK_STATUS_HISTORY : "updates"
     
-    TASKS ||--o{ ATTACHMENTS : "has"
-    TASKS ||--o{ WORK_LOGS : "has"
-    TASKS ||--o{ TASK_DEPENDENCIES : "depends on"
-    TASKS ||--o{ TASK_DEPENDENCIES : "is depended on by"
-   
+    PROJECTS ||--o{ PROJECT_ATTACHMENTS : "has"
+    
+    TASKS ||--o{ SUBTASKS : "contains"
+    USERS ||--o{ SUBTASKS : "assigned to"
