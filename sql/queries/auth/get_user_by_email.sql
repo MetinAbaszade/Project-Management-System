@@ -1,4 +1,4 @@
--- Get user details by email address
+
 SELECT 
     u.user_id,
     u.first_name,
