@@ -13,7 +13,6 @@ CREATE TABLE admin_settings (
     FOREIGN KEY (updated_by) REFERENCES users(user_id) ON DELETE SET NULL
 );
 
--- Default settings
 INSERT INTO admin_settings (setting_key, setting_value, category, description, data_type) VALUES
 ('default_task_due_days', '7', 'tasks', 'Default number of days for task deadlines', 'number'),
 ('allow_public_projects', 'false', 'security', 'Allow projects to be publicly viewable', 'boolean'),

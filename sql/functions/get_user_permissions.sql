@@ -1,50 +1,47 @@
--- Function to get a user's permissions for a specific project
 DELIMITER //
 
-CREATE FUNCTION get_user_permissions(user_id_param INT, project_id_param INT)
-RETURNS JSON
-DETERMINISTIC
+CREATE FUNCTION get_user_permissions(user_id_param INT, project_id_param INT) 
+RETURNS VARCHAR(255)
+READS SQL DATA
 BEGIN
+    DECLARE user_role VARCHAR(50);
+    DECLARE is_admin BOOLEAN DEFAULT FALSE;
     DECLARE is_project_owner BOOLEAN DEFAULT FALSE;
-    DECLARE is_system_admin BOOLEAN DEFAULT FALSE;
-    DECLARE member_type VARCHAR(20);
-    DECLARE role_in_project VARCHAR(50);
-    DECLARE permissions JSON;
+    DECLARE permissions VARCHAR(255) DEFAULT '';
+    
+    -- Check if user is admin
+    SELECT EXISTS (
+        SELECT 1 FROM user_roles ur
+        JOIN roles r ON ur.role_id = r.role_id
+        WHERE ur.user_id = user_id_param AND r.is_admin = TRUE
+    ) INTO is_admin;
     
     -- Check if user is project owner
-    SELECT (owner_id = user_id_param) INTO is_project_owner
-    FROM projects
-    WHERE project_id = project_id_param;
+    SELECT EXISTS (
+        SELECT 1 FROM projects
+        WHERE project_id = project_id_param AND owner_id = user_id_param
+    ) INTO is_project_owner;
     
-    -- Check if user is system admin
-    SELECT COALESCE(MAX(r.is_admin), FALSE) INTO is_system_admin
-    FROM user_roles ur
-    JOIN roles r ON ur.role_id = r.role_id
-    WHERE ur.user_id = user_id_param;
-    
-    -- Get project member info
-    SELECT pm.member_type, pm.role_in_project INTO member_type, role_in_project
+    -- Get user's role in the project
+    SELECT pm.role_in_project INTO user_role
     FROM project_members pm
-    WHERE pm.project_id = project_id_param AND pm.user_id = user_id_param;
+    WHERE pm.project_id = project_id_param AND pm.user_id = user_id_param
+    LIMIT 1;
     
-    -- Build permissions JSON
-    SET permissions = JSON_OBJECT(
-        'view_project', TRUE,
-        'edit_project', (is_project_owner OR is_system_admin OR member_type = 'Owner'),
-        'delete_project', (is_project_owner OR is_system_admin),
-        'manage_members', (is_project_owner OR is_system_admin OR member_type = 'Owner'),
-        'create_tasks', (is_project_owner OR is_system_admin OR member_type IS NOT NULL),
-        'edit_all_tasks', (is_project_owner OR is_system_admin OR member_type = 'Owner'),
-        'edit_own_tasks', TRUE,
-        'delete_tasks', (is_project_owner OR is_system_admin OR member_type = 'Owner'),
-        'manage_sprints', (is_project_owner OR is_system_admin OR member_type = 'Owner'),
-        'track_time', (is_project_owner OR is_system_admin OR member_type IS NOT NULL),
-        'view_reports', (is_project_owner OR is_system_admin OR member_type IS NOT NULL),
-        'manage_boards', (is_project_owner OR is_system_admin OR member_type = 'Owner'),
-        'user_role', IFNULL(role_in_project, 'none'),
-        'user_type', IFNULL(member_type, 'none'),
-        'is_admin', is_system_admin
-    );
+    -- Set permissions based on role
+    IF is_admin THEN
+        SET permissions = 'full_access';
+    ELSEIF is_project_owner THEN
+        SET permissions = 'owner_access';
+    ELSEIF user_role = 'Manager' THEN
+        SET permissions = 'read,write,assign,delete';
+    ELSEIF user_role = 'Developer' THEN
+        SET permissions = 'read,write,update_status';
+    ELSEIF user_role = 'Viewer' THEN
+        SET permissions = 'read';
+    ELSE
+        SET permissions = 'none';
+    END IF;
     
     RETURN permissions;
 END//

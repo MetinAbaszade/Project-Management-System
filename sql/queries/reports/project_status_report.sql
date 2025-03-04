@@ -1,70 +1,117 @@
--- Generate a comprehensive status report for a project
+-- File: queries/reports/project_status_report.sql
+
+-- Get overall project status report
 SELECT 
     p.project_id,
-    p.name AS project_name,
+    p.name,
     p.description,
     p.status,
     p.start_date,
     p.end_date,
-    DATEDIFF(p.end_date, CURRENT_DATE()) AS days_remaining,
     p.completion_percentage,
+    DATEDIFF(p.end_date, CURRENT_DATE()) AS days_remaining,
+    CASE 
+        WHEN DATEDIFF(p.end_date, p.start_date) > 0 
+        THEN ROUND(DATEDIFF(CURRENT_DATE(), p.start_date) / DATEDIFF(p.end_date, p.start_date) * 100, 2)
+        ELSE NULL
+    END AS time_elapsed_percentage,
     p.budget,
     p.budget_used,
-    (p.budget_used / p.budget * 100) AS budget_utilization_percentage,
-    CONCAT(u.first_name, ' ', u.last_name) AS owner_name,
-    
-    -- Progress breakdown
-    COUNT(t.task_id) AS total_tasks,
-    SUM(CASE WHEN t.status = 'Backlog' THEN 1 ELSE 0 END) AS backlog_tasks,
-    SUM(CASE WHEN t.status = 'Todo' THEN 1 ELSE 0 END) AS todo_tasks,
-    SUM(CASE WHEN t.status = 'InProgress' THEN 1 ELSE 0 END) AS in_progress_tasks,
-    SUM(CASE WHEN t.status = 'Review' THEN 1 ELSE 0 END) AS review_tasks,
-    SUM(CASE WHEN t.status = 'Done' THEN 1 ELSE 0 END) AS completed_tasks,
-    
-    -- Sprint status
-    (SELECT 
-        GROUP_CONCAT(CONCAT(s.name, ' (', s.status, ')') SEPARATOR ', ')
-     FROM 
-        sprints s
-     WHERE 
-        s.project_id = p.project_id
-     ORDER BY 
-        s.start_date DESC
-     LIMIT 3) AS recent_sprints,
-    
-    -- Team overview
-    (SELECT 
-        COUNT(*)
-     FROM 
-        project_members pm
-     WHERE 
-        pm.project_id = p.project_id) AS team_size,
-    
-    -- Activity metrics
-    (SELECT 
-        COUNT(*) 
-     FROM 
-        task_status_history tsh
-     JOIN 
-        tasks t2 ON tsh.task_id = t2.task_id
-     WHERE 
-        t2.project_id = p.project_id AND
-        tsh.updated_at >= DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)) AS status_changes_last_7_days,
-    
-    -- Risk assessment
-    CASE
-        WHEN p.end_date < CURRENT_DATE() AND p.status != 'Completed' THEN 'High'
-        WHEN (p.budget_used / p.budget) > 0.9 AND p.completion_percentage < 90 THEN 'High'
-        WHEN (p.budget_used / p.budget) > (p.completion_percentage / 100) THEN 'Medium'
-        ELSE 'Low'
-    END AS risk_level
+    CASE 
+        WHEN p.budget > 0 
+        THEN ROUND((p.budget_used / p.budget) * 100, 2)
+        ELSE NULL
+    END AS budget_utilized_percentage,
+    CONCAT(o.first_name, ' ', o.last_name) AS owner_name,
+    o.email AS owner_email,
+    (
+        SELECT COUNT(*) 
+        FROM project_members 
+        WHERE project_id = p.project_id
+    ) AS member_count,
+    (
+        SELECT COUNT(*) 
+        FROM tasks 
+        WHERE project_id = p.project_id
+    ) AS total_tasks,
+    (
+        SELECT COUNT(*) 
+        FROM tasks 
+        WHERE project_id = p.project_id 
+        AND status = 'Done'
+    ) AS completed_tasks,
+    (
+        SELECT COUNT(*) 
+        FROM tasks 
+        WHERE project_id = p.project_id 
+        AND priority IN ('High', 'Critical')
+        AND status != 'Done'
+    ) AS high_priority_open_tasks
 FROM 
     projects p
-LEFT JOIN 
-    users u ON p.owner_id = u.user_id
-LEFT JOIN 
+JOIN 
+    users o ON p.owner_id = o.user_id
+WHERE 
+    (COALESCE(:project_id, 0) = 0 OR p.project_id = :project_id)
+    AND (COALESCE(:status, '') = '' OR p.status = :status)
+ORDER BY 
+    CASE WHEN :status IS NULL OR :status = '' THEN 
+        CASE
+            WHEN p.status = 'Active' THEN 1
+            WHEN p.status = 'Planning' THEN 2
+            WHEN p.status = 'On Hold' THEN 3
+            WHEN p.status = 'Completed' THEN 4
+            WHEN p.status = 'Canceled' THEN 5
+        END
+    END,
+    CASE 
+        WHEN p.status = 'Active' OR p.status = 'Planning' THEN 
+            CASE 
+                WHEN DATEDIFF(p.end_date, CURRENT_DATE()) < 0 THEN 0  -- Overdue first
+                ELSE DATEDIFF(p.end_date, CURRENT_DATE())
+            END
+        ELSE p.updated_at
+    END;
+
+-- Get task status distribution by project
+SELECT 
+    p.project_id,
+    p.name AS project_name,
+    t.status,
+    COUNT(*) AS task_count,
+    ROUND(
+        (COUNT(*) / (
+            SELECT COUNT(*) 
+            FROM tasks 
+            WHERE project_id = p.project_id
+        )) * 100,
+        2
+    ) AS percentage
+FROM 
+    projects p
+JOIN 
     tasks t ON p.project_id = t.project_id
 WHERE 
-    p.project_id = ?
+    (COALESCE(:project_id, 0) = 0 OR p.project_id = :project_id)
+    AND (COALESCE(:status, '') = '' OR p.status = :status)
 GROUP BY 
-    p.project_id;
+    p.project_id, p.name, t.status
+ORDER BY 
+    project_name, 
+    FIELD(t.status, 'Backlog', 'Todo', 'InProgress', 'Review', 'Done');
+
+-- Get task completion trend over time
+SELECT 
+    DATE_FORMAT(tsh.updated_at, '%Y-%m-%d') AS date,
+    p.project_id,
+    p.name AS project_name,
+    COUNT(*) AS tasks_completed
+FROM 
+    task_status_history tsh
+JOIN 
+    tasks t ON tsh.task_id = t.task_id
+JOIN 
+    projects p ON t.project_id = p.project_id
+WHERE 
+    tsh.new_status = 'Done'
+    AND (

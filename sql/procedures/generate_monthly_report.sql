@@ -1,107 +1,116 @@
--- Procedure to generate monthly reports for all active projects
-CREATE PROCEDURE generate_monthly_report(
-    IN year_param INT,
-    IN month_param INT,
-    IN admin_user_id INT
+DELIMITER //
+
+CREATE PROCEDURE generate_monthly_reports(
+    IN report_month INT,
+    IN report_year INT,
+    IN user_id_param INT
 )
 BEGIN
     DECLARE report_start_date DATE;
     DECLARE report_end_date DATE;
-    DECLARE project_id_var INT;
-    DECLARE project_name_var VARCHAR(100);
-    DECLARE done INT DEFAULT FALSE;
-    DECLARE project_cursor CURSOR FOR
-        SELECT project_id, name
-        FROM projects
-        WHERE status = 'Active';
-    
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    DECLARE report_id INT;
     
     -- Set report period
-    SET report_start_date = CONCAT(year_param, '-', LPAD(month_param, 2, '0'), '-01');
+    SET report_start_date = CONCAT(report_year, '-', LPAD(report_month, 2, '0'), '-01');
     SET report_end_date = LAST_DAY(report_start_date);
     
-    -- Create temporary table for report data
-    CREATE TEMPORARY TABLE IF NOT EXISTS monthly_report_data (
-        project_id INT,
-        project_name VARCHAR(100),
+    -- Create reports table if it doesn't exist
+    CREATE TABLE IF NOT EXISTS monthly_reports (
+        report_id INT PRIMARY KEY AUTO_INCREMENT,
         report_period VARCHAR(20),
-        total_tasks INT,
-        completed_tasks INT,
-        completion_rate FLOAT,
-        total_hours FLOAT,
-        billable_hours FLOAT,
-        budget_used DECIMAL(15, 2),
-        budget_remaining DECIMAL(15, 2),
-        overdue_tasks INT,
-        active_members INT,
-        generated_at DATETIME,
-        generated_by INT
+        generated_by INT,
+        generated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        report_data JSON,
+        FOREIGN KEY (generated_by) REFERENCES users(user_id) ON DELETE SET NULL
     );
     
-    -- Clear any existing data for the reporting period
-    DELETE FROM monthly_report_data
-    WHERE report_period = CONCAT(year_param, '-', LPAD(month_param, 2, '0'));
+    -- Insert report metadata
+    INSERT INTO monthly_reports (report_period, generated_by)
+    VALUES (DATE_FORMAT(report_start_date, '%Y-%m'), user_id_param);
     
-    OPEN project_cursor;
+    -- Get the inserted report ID
+    SET report_id = LAST_INSERT_ID();
     
-    read_loop: LOOP
-        FETCH project_cursor INTO project_id_var, project_name_var;
-        
-        IF done THEN
-            LEAVE read_loop;
-        END IF;
-        
-        -- Insert report data for this project
-        INSERT INTO monthly_report_data
-        SELECT
-            p.project_id,
-            p.name AS project_name,
-            CONCAT(year_param, '-', LPAD(month_param, 2, '0')) AS report_period,
-            COUNT(t.task_id) AS total_tasks,
-            SUM(CASE WHEN t.status = 'Done' THEN 1 ELSE 0 END) AS completed_tasks,
-            (SUM(CASE WHEN t.status = 'Done' THEN 1 ELSE 0 END) / COUNT(t.task_id) * 100) AS completion_rate,
-            SUM(te.time_spent) AS total_hours,
-            SUM(CASE WHEN te.billable = TRUE THEN te.time_spent ELSE 0 END) AS billable_hours,
-            p.budget_used,
-            (p.budget - p.budget_used) AS budget_remaining,
-            SUM(CASE WHEN t.deadline < CURRENT_DATE() AND t.status != 'Done' THEN 1 ELSE 0 END) AS overdue_tasks,
-            COUNT(DISTINCT pm.user_id) AS active_members,
-            NOW() AS generated_at,
-            admin_user_id AS generated_by
-        FROM projects p
-        LEFT JOIN tasks t ON p.project_id = t.project_id
-        LEFT JOIN time_entries te ON t.task_id = te.task_id AND te.entry_date BETWEEN report_start_date AND report_end_date
-        LEFT JOIN project_members pm ON p.project_id = pm.project_id
-        WHERE p.project_id = project_id_var
-        GROUP BY p.project_id;
-        
-        -- Call the budget update function to ensure budget figures are current
-        SELECT update_budget_utilization(project_id_var);
-        
-    END LOOP;
-    
-    CLOSE project_cursor;
-    
-    -- Select the final report data
-    SELECT * FROM monthly_report_data WHERE report_period = CONCAT(year_param, '-', LPAD(month_param, 2, '0'));
+    -- Update with report data as JSON
+    UPDATE monthly_reports
+    SET report_data = (
+        SELECT JSON_OBJECT(
+            'period', DATE_FORMAT(report_start_date, '%Y-%m'),
+            'generated_at', NOW(),
+            'generated_by', (SELECT CONCAT(first_name, ' ', last_name) FROM users WHERE user_id = user_id_param),
+            'project_summary', (
+                SELECT JSON_ARRAYAGG(
+                    JSON_OBJECT(
+                        'project_id', p.project_id,
+                        'project_name', p.name,
+                        'status', p.status,
+                        'completion', p.completion_percentage,
+                        'budget_utilization', COALESCE((p.budget_used / p.budget) * 100, 0),
+                        'tasks_completed', (
+                            SELECT COUNT(*) 
+                            FROM tasks t
+                            WHERE t.project_id = p.project_id
+                            AND t.status = 'Done'
+                            AND t.updated_at BETWEEN report_start_date AND report_end_date
+                        ),
+                        'hours_logged', (
+                            SELECT COALESCE(SUM(time_spent), 0)
+                            FROM time_entries te
+                            JOIN tasks t ON te.task_id = t.task_id
+                            WHERE t.project_id = p.project_id
+                            AND te.entry_date BETWEEN report_start_date AND report_end_date
+                        )
+                    )
+                )
+                FROM projects p
+                WHERE EXISTS (
+                    SELECT 1 FROM tasks t
+                    JOIN time_entries te ON t.task_id = te.task_id
+                    WHERE t.project_id = p.project_id
+                    AND te.entry_date BETWEEN report_start_date AND report_end_date
+                )
+            ),
+            'user_productivity', (
+                SELECT JSON_ARRAYAGG(
+                    JSON_OBJECT(
+                        'user_id', u.user_id,
+                        'user_name', CONCAT(u.first_name, ' ', u.last_name),
+                        'hours_logged', COALESCE(SUM(te.time_spent), 0),
+                        'tasks_completed', (
+                            SELECT COUNT(DISTINCT t.task_id)
+                            FROM tasks t
+                            JOIN task_status_history tsh ON t.task_id = tsh.task_id
+                            WHERE tsh.user_id = u.user_id
+                            AND tsh.new_status = 'Done'
+                            AND tsh.updated_at BETWEEN report_start_date AND report_end_date
+                        )
+                    )
+                )
+                FROM users u
+                LEFT JOIN time_entries te ON u.user_id = te.user_id AND te.entry_date BETWEEN report_start_date AND report_end_date
+                WHERE EXISTS (
+                    SELECT 1 FROM time_entries
+                    WHERE user_id = u.user_id
+                    AND entry_date BETWEEN report_start_date AND report_end_date
+                )
+                GROUP BY u.user_id
+            )
+        )
+    )
+    WHERE report_id = report_id;
     
     -- Log report generation
     INSERT INTO audit_logs (
-        user_id,
-        action_type,
-        entity_type,
-        entity_id,
-        changes_made
-    ) VALUES (
-        admin_user_id,
-        'GENERATE_REPORT',
-        'SYSTEM',
-        NULL,
-        CONCAT('{"report_type":"monthly", "period":"', CONCAT(year_param, '-', LPAD(month_param, 2, '0')), '"}')
+        user_id, action_type, entity_type, entity_id,
+        action_time, changes_made
+    )
+    VALUES (
+        user_id_param, 'GENERATE', 'MONTHLY_REPORT', report_id,
+        NOW(), CONCAT('Generated monthly report for ', DATE_FORMAT(report_start_date, '%Y-%m'))
     );
     
-    -- Drop the temporary table
-    DROP TEMPORARY TABLE IF EXISTS monthly_report_data;
-    
-END;
+    -- Select the report ID to return to the caller
+    SELECT report_id;
+END//
+
+DELIMITER ;
