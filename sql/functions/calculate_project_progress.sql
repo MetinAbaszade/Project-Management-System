@@ -1,4 +1,6 @@
 -- Function to calculate project progress based on task completion
+DELIMITER //
+
 CREATE FUNCTION calculate_project_progress(project_id_param INT)
 RETURNS FLOAT
 DETERMINISTIC
@@ -46,6 +48,7 @@ BEGIN
                         ELSE 0.3
                     END
                 WHEN status = 'Todo' THEN 0.1
+                WHEN status = 'Backlog' THEN 0
                 ELSE 0
             END
         ) / 
@@ -61,5 +64,41 @@ BEGIN
     FROM tasks
     WHERE project_id = project_id_param;
     
+    -- Handle NULL case (can happen if all tasks are in Backlog)
+    IF weighted_progress IS NULL THEN
+        RETURN 0;
+    END IF;
+    
     RETURN ROUND(weighted_progress, 2);
-END;
+END//
+
+DELIMITER ;
+
+-- Procedure to update project completion percentages
+DELIMITER //
+
+CREATE PROCEDURE update_project_completion_percentages()
+BEGIN
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE curr_project_id INT;
+    DECLARE project_cursor CURSOR FOR SELECT project_id FROM projects;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    
+    OPEN project_cursor;
+    
+    read_loop: LOOP
+        FETCH project_cursor INTO curr_project_id;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+        
+        -- Update completion_percentage for each project
+        UPDATE projects 
+        SET completion_percentage = calculate_project_progress(curr_project_id)
+        WHERE project_id = curr_project_id;
+    END LOOP;
+    
+    CLOSE project_cursor;
+END//
+
+DELIMITER ;
