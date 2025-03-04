@@ -1,4 +1,6 @@
 -- Function to update project budget utilization based on time entries
+DELIMITER //
+
 CREATE FUNCTION update_budget_utilization(project_id_param INT)
 RETURNS DECIMAL(15, 2)
 DETERMINISTIC
@@ -28,4 +30,6 @@ BEGIN
     WHERE project_id = project_id_param;
     
     RETURN total_budget_used;
-END;
+END//
+
+DELIMITER ;
