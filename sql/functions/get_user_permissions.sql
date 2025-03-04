@@ -1,10 +1,12 @@
 -- Function to get a user's permissions for a specific project
+DELIMITER //
+
 CREATE FUNCTION get_user_permissions(user_id_param INT, project_id_param INT)
 RETURNS JSON
 DETERMINISTIC
 BEGIN
-    DECLARE is_project_owner BOOLEAN;
-    DECLARE is_system_admin BOOLEAN;
+    DECLARE is_project_owner BOOLEAN DEFAULT FALSE;
+    DECLARE is_system_admin BOOLEAN DEFAULT FALSE;
     DECLARE member_type VARCHAR(20);
     DECLARE role_in_project VARCHAR(50);
     DECLARE permissions JSON;
@@ -15,7 +17,7 @@ BEGIN
     WHERE project_id = project_id_param;
     
     -- Check if user is system admin
-    SELECT MAX(r.is_admin) INTO is_system_admin
+    SELECT COALESCE(MAX(r.is_admin), FALSE) INTO is_system_admin
     FROM user_roles ur
     JOIN roles r ON ur.role_id = r.role_id
     WHERE ur.user_id = user_id_param;
@@ -45,4 +47,6 @@ BEGIN
     );
     
     RETURN permissions;
-END;
+END//
+
+DELIMITER ;
