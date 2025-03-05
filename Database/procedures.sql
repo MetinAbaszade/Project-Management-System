@@ -1,6 +1,7 @@
 DELIMITER //
 
 -- Create a new project
+DROP PROCEDURE IF EXISTS sp_create_project;
 CREATE PROCEDURE sp_create_project (
     IN p_name VARCHAR(100),
     IN p_description TEXT,
@@ -21,6 +22,7 @@ END;
 //
 
 -- Update an existing project
+DROP PROCEDURE IF EXISTS sp_update_project;
 CREATE PROCEDURE sp_update_project (
     IN p_project_id INT,
     IN p_name VARCHAR(100),
@@ -38,6 +40,7 @@ END;
 //
 
 -- Delete a project
+DROP PROCEDURE IF EXISTS sp_delete_project;
 CREATE PROCEDURE sp_delete_project (
     IN p_project_id INT
 )
@@ -47,6 +50,7 @@ END;
 //
 
 -- Create a new task
+DROP PROCEDURE IF EXISTS sp_create_task;
 CREATE PROCEDURE sp_create_task (
     IN p_project_id INT,
     IN p_title VARCHAR(100),
