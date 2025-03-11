@@ -1,0 +1,10 @@
+# Created by venv; see https://docs.python.org/3/library/venv.html
+# Ignore everything
+*
+
+# But allow venv folder
+!venv/
+!venv/bin/
+!venv/lib/
+!venv/include/
+

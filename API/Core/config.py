@@ -19,5 +19,5 @@ DATABASE_CONFIG_SERVER = {
     "database": "Team7",  # Your database name
 }
 
-DATABASE_URL = URL.create(**DATABASE_CONFIG_LOCALHOST)
+DATABASE_URL = URL.create(**DATABASE_CONFIG_SERVER)
 print(DATABASE_URL)
