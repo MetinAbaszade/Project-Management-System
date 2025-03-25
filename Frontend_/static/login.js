@@ -516,31 +516,33 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log(password);
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/login", {
+            const response = await fetch("http://127.0.0.1:8000/auth/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                credentials: "include",  // 🔥 Fix for CORS credentials
                 body: JSON.stringify({ email, password }),
-            })
-
-            if (!response.ok) {
-                throw new Error("Login failed. Please check your credentials.");
-            }
-
+            });
+        
             const data = await response.json();
-
-            // 🔥 Store Token in Local Storage
+        
+            if (!response.ok) {
+                // Handle specific error returned from backend
+                throw new Error(data.detail || "Login failed.");
+            }
+        
+            // ✅ Store token
             localStorage.setItem("access_token", data.access_token);
             localStorage.setItem("token_type", data.token_type);
-
+        
             console.log("Login Success:", data);
-            alert("Login successful! Redirecting...");
-            window.location.href = "/dashboard";
+
+            window.location.href = "index.html"; // if you're already inside Frontend
         } catch (error) {
-            alert(error.message);
+            console.error("Login error:", error);
+            alert(error.message || "Something went wrong.");
         }
+        
     });
 });
 
@@ -577,3 +579,56 @@ async function fetchProtectedData() {
     }
 }
 
+// ✅ Bind click to registration button
+document.addEventListener("DOMContentLoaded", function () {
+    const registerBtn = document.getElementById("complete-registration-btn");
+
+    if (registerBtn) {
+        registerBtn.addEventListener("click", function (e) {
+            e.preventDefault(); // Stop form submission
+            registerUser();     // Call our function
+        });
+    }
+});
+
+// ✅ Function to register the user
+async function registerUser() {
+    const fullName = document.getElementById("full-name").value.trim();
+    const surname = document.getElementById("surname").value.trim();
+    const email = document.getElementById("register-email-display").textContent.trim(); // from OTP step
+    const password = document.getElementById("register-password").value.trim();
+
+    if (!fullName || !surname || !email || !password) {
+        alert("Please fill in all fields.");
+        return;
+    }
+
+    const payload = {
+        first_name: fullName,
+        last_name: surname,
+        email: email,
+        password: password
+    };
+
+    try {
+        const response = await fetch("http://127.0.0.1:8000/auth/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || "Registration failed.");
+        }
+
+        alert("✅ Registration successful!");
+        window.location.href = "login.html"; // change if your login page is different
+    } catch (error) {
+        console.error("Registration error:", error);
+        alert("🚫 " + error.message);
+    }
+}
