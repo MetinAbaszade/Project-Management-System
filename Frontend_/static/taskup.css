@@ -1,0 +1,151 @@
+@font-face {
+    font-family: 'Poppins';
+    src: url('../fonts/Poppins-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Poppins';
+    src: url('../fonts/Poppins/Poppins-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+body {
+    font-family: 'Poppins';
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+    overflow: hidden; /* Prevent body scrolling */
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background-color: #ffffff;
+    position: sticky;
+    top: 0;
+}
+
+.user_icon {
+    margin-left: 1px;
+    width: 40px; /* Adjust the width as needed */
+    height: 40px; /* Adjust the height as needed */
+}
+
+.page-name {
+    font-size: 20px;
+    margin-left: 40px;
+    font-weight: bold;
+}
+
+.logo {
+    font-size: 20px;
+    margin-left: 1020px;
+}
+
+.profile-icon {
+    font-size: 24px;
+}
+
+.page-name {
+    font-size: 20px;
+    transform: translateX(-10px);
+}
+
+.logo {
+    font-weight: bold;
+    font-size: 24px;
+}
+
+.search-bar {
+    display: flex;
+    padding: 10px 20px;
+    background-color: #ffffff;
+    width: calc(100% - 100px);
+    padding-left: 80px;
+    position: relative; /* Add position: relative; */
+}
+
+.search-input-container {
+    display: flex;
+    align-items: center;
+    width: 100%; /* Make it take the full width */
+}
+
+.search-icon {
+    width: 20px; /* Adjust size as needed */
+    height: 20px; /* Adjust size as needed */
+    margin-right: 5px; /* Add some spacing between icon and input */
+}
+
+.search-input {
+    padding-left: 10px; /* Adjust padding to accommodate the icon */
+    flex-grow: 1;
+    padding: 8px;
+    border: 2px solid #000000;
+    border-radius: 20px;
+    width: 100%;
+}
+
+/* Remove the old search-input::before styles */
+
+
+.content {
+    display: flex;
+    flex-grow: 1;
+}
+
+.sidebar {
+    padding-top: 80px;
+    width: 80px;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.sidebar-item {
+    font-size: 24px;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+.icon {
+    margin-bottom: 20px;
+    margin-left: 20px;
+    width: 38px; /* Adjust the width as needed */
+    height: 38px; /* Adjust the height as needed */
+}
+
+.main-content {
+    background-color: white;
+    margin: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-family: 'Poppins';
+    font-weight: normal;
+    overflow-y: auto;
+    flex-grow: 1; /* Added flex-grow: 1; */
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-around;
+    }
+    .main-content {
+        margin: 20px;
+        padding: 10px;
+    }
+}

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Login And Registration Form Using HTML CSS & Javascript | Codehal</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="forgot-password.css">
+</head>
+
+
+<body>
+    <div class="container">
+        
+
+        <div class="form-box forgot-password hidden">
+            <h1>Reset your password</h1>
+            <p>Enter the email address of your account.</p>
+            <div class="input-box">
+                <input type="email" id="forgot-email" placeholder="Email" required>
+                <i class='bx bxs-envelope' ></i>
+            </div>
+            <button type = "Submit" class="btn" id = "send-code">Continue</button>
+            <a href="login.html" class="back-link">Back to the Sign in page</a>
+        </div>
+
+
+
+       <div class="form-box login"> 
+            <form action="">
+                <h1>Login</h1>
+                <div class="input-box">
+                    <input type="email" placeholder="Email" required>
+                    <i class='bx bx-user-circle' ></i>
+                </div>
+                <div class="input-box">
+                    <input type="password" placeholder="Password" required>
+                    <i class='bx bxs-lock'></i>
+                </div>
+                <div class="forgot-link">
+                    <a href="forgot-password.html" id="forgot-password-link">Forgot password?</a>
+                </div>
+                <button type="Submit" class="btn"> Login </button>
+            </form>
+        </div>
+
+
+
+        <div class="form-box register"> 
+            <form action="">
+                <h1>Registration</h1>
+                <div class="input-box">
+                    <input type="email" id="register-email" placeholder="Email" required>
+                    <i class='bx bxs-envelope' ></i>
+                </div> 
+                <button type="button" class="btn" id="register-btn"> Register </button>
+                
+            </form>
+        </div>
+
+        
+        <div class="form-box register-otp hidden">
+            <h1>Check Your Email</h1>
+            <p>We have sent a 6-digit code to:</p>
+            <p id="register-email-display"></p>
+            
+            <div class="otp-input-container">
+                <input type="text" maxlength="1">
+                <input type="text" maxlength="1">
+                <input type="text" maxlength="1">
+                <input type="text" maxlength="1">
+                <input type="text" maxlength="1">
+                <input type="text" maxlength="1">
+            </div>
+        
+            <!-- OTP Verification Buttons (Only One Will Show at a Time) -->
+            <button class="btn hidden" id="verify-register-otp-btn">Verify</button>
+            <button class="btn hidden" id="verify-forgot-otp-btn">Verify</button>
+        
+            <p id="resend-text">Resend code in <span id="timer">30</span> seconds</p>
+            <button class="btn disabled" id="resend-code" disabled>Resend Code</button>
+            <p><a href="#" id="back-to-email">Back to Email</a></p>
+        </div>
+        
+
+                    <!-- New Password Form (After OTP Verification in Forgot Password) -->
+        <div class="form-box new-password hidden">
+            <h1>Set New Password</h1>
+            <p>Enter your new password and confirm it below:</p>
+            <div class="input-box">
+                <input type="password" id="new-password" placeholder="New Password" required>
+                <i class='bx bxs-lock'></i>
+            </div>
+            <div class="input-box">
+                <input type="password" id="confirm-password" placeholder="Confirm Password" required>
+                <i class='bx bxs-lock'></i>
+            </div>
+            <button type="button" class="btn" id="set-password-btn">Set Password</button>
+        </div>
+
+        
+        <!-- Registration Form (After OTP Verification in Register) -->
+        <div class="form-box registration-form hidden">
+            <h1>Complete Your Registration</h1>
+            <div class="input-box">
+                <input type="text" id="full-name" placeholder="Name" required>
+                <i class='bx bxs-user'></i>
+            </div>
+            <div class="input-box">
+                <input type="text" id="surname" placeholder="Surname" required>
+                <i class='bx bxs-user'></i>
+            </div>
+            <div class="input-box">
+                <input type="number" id="age" placeholder="Age" required>
+                <i class='bx bxs-calendar'></i>
+            </div>
+            <div class="input-box">
+                <input type="tel" id="phone-number" placeholder="Phone Number" required>
+                <i class='bx bxs-phone'></i>
+            </div>
+            <div class="input-box">
+                <input type="password" id="register-password" placeholder="Set Password" required>
+                <i class='bx bxs-lock'></i>
+            </div>
+            <button type="button" class="btn" id="complete-registration-btn">Complete Registration</button>
+        </div>
+
+
+        <div class="toggle-box">
+            <div class="toggle-panel toggle-left">
+                <h1>Hello, Welcome!</h1>
+                <p>Don't have an acount?</p>
+                <button class="btn register-btn">Register</button>
+            </div>
+            <div class="toggle-panel toggle-right">
+                <h1>Welcome Back!</h1>
+                <p>Already have an acount?</p>
+                <button class="btn login-btn">Login</button>
+            </div>
+        </div>
+    </div>
+    <script src="login.js"></script>
+</body>
+</html>

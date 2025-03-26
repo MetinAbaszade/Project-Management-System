@@ -1,0 +1,405 @@
+erDiagram
+      LANGUAGES {
+        int language_id PK
+        string language_name
+        string language_code
+        boolean is_active
+        int display_order
+    }
+    
+    ROLES {
+        int role_id PK
+        string role_name
+        boolean is_admin
+        string description
+        datetime created_at
+    }
+    
+    USERS {
+        int user_id PK
+        string first_name
+        string last_name
+        string email
+        string password
+        string image_url
+        boolean is_active
+        datetime created_at
+        datetime last_login
+        string reset_token
+        datetime reset_token_expires
+        int login_attempts
+        datetime last_password_change
+        boolean require_password_change
+    }
+    
+    PROJECTS {
+        int project_id PK
+        string name
+        string description
+        date start_date
+        date end_date
+        string status
+        decimal budget
+        decimal budget_used
+        int owner_id FK
+        boolean is_public
+        datetime created_at
+        datetime updated_at
+        float estimated_hours
+        float actual_hours
+        float completion_percentage
+    }
+    
+    TASK_TYPES {
+        int type_id PK
+        string type_name
+        string description
+        string color
+        string icon
+        datetime created_at
+        boolean is_active
+    }
+    
+    TASKS {
+        int task_id PK
+        int project_id FK
+        string title
+        string description
+        int type FK
+        string priority
+        string status
+        int created_by FK
+        int assigned_to FK
+        datetime created_at
+        datetime updated_at
+        datetime deadline
+        float estimated_hours
+        float actual_hours
+        decimal budget_used
+        string tags
+        boolean is_billable
+        float completion_percentage
+    }
+    
+    LABELS {
+        int label_id PK
+        string name
+        string color
+        int project_id FK
+        int created_by FK
+        datetime created_at
+    }
+    
+    TASK_LABELS {
+        int task_id PK, FK
+        int label_id PK, FK
+        int added_by FK
+        datetime added_at
+    }
+    
+    SUBTASKS {
+        int subtask_id PK
+        int parent_task_id FK
+        int assigned_to FK
+        string title
+        string description
+        string status
+        float estimated_hours
+        float actual_hours
+        datetime created_at
+        datetime updated_at
+        datetime deadline
+    }
+    
+    TASK_DEPENDENCIES {
+        int task_id PK, FK
+        int dependent_task_id PK, FK
+        string dependency_type
+        int created_by FK
+        datetime created_at
+    }
+    
+    TASK_STATUS_HISTORY {
+        int history_id PK
+        int task_id FK
+        int user_id FK
+        string old_status
+        string new_status
+        datetime updated_at
+        string notes
+        int time_in_status
+    }
+    
+    TASK_ATTACHMENTS {
+        int attachment_id PK
+        int task_id FK
+        string file_url
+        string file_name
+        int file_size
+        string file_type
+        int uploaded_by FK
+        datetime uploaded_at
+        string description
+    }
+    
+    TIME_ENTRIES {
+        int time_entry_id PK
+        int task_id FK
+        int user_id FK
+        float time_spent
+        date entry_date
+        time start_time
+        time end_time
+        string description
+        boolean billable
+        int approved_by FK
+        datetime approved_at
+        datetime created_at
+    }
+    
+    SPRINTS {
+        int sprint_id PK
+        int project_id FK
+        string name
+        date start_date
+        date end_date
+        string goal
+        string status
+        float capacity
+        float velocity
+        string retrospective_notes
+        int created_by FK
+        datetime created_at
+        datetime completed_at
+    }
+    
+    SPRINT_TASKS {
+        int sprint_id PK, FK
+        int task_id PK, FK
+        int added_by FK
+        datetime added_at
+        float story_points
+    }
+    
+    BOARDS {
+        int board_id PK
+        int project_id FK
+        string name
+        string board_type
+        string description
+        boolean is_default
+        int created_by FK
+        datetime created_at
+    }
+    
+    BOARD_COLUMNS {
+        int column_id PK
+        int board_id FK
+        string name
+        int order_index
+        int wip_limit
+        string task_status
+        string description
+        string color
+    }
+    
+    PROJECT_MEMBERS {
+        int project_member_id PK
+        int project_id FK
+        int user_id FK
+        string role_in_project
+        string member_type
+        float total_hours_worked
+        decimal hourly_rate
+        datetime joined_at
+        int invited_by FK
+    }
+    
+    PROJECT_ATTACHMENTS {
+        int attachment_id PK
+        int project_id FK
+        string file_url
+        string file_name
+        int file_size
+        string file_type
+        int uploaded_by FK
+        datetime uploaded_at
+        string description
+    }
+    
+    PROJECT_LANGUAGES {
+        int project_language_id PK
+        int project_id FK
+        int language_id FK
+        float usage_percentage
+        string notes
+    }
+    
+    NOTIFICATIONS {
+        int notification_id PK
+        int user_id FK
+        string title
+        string content
+        string notification_type
+        string entity_type
+        int entity_id
+        datetime created_at
+        boolean is_read
+        datetime read_at
+        string link
+        int source_user_id FK
+    }
+    
+    SYSTEM_NOTIFICATIONS {
+        int notification_id PK
+        string title
+        string content
+        string severity
+        datetime start_date
+        datetime end_date
+        boolean is_dismissible
+        string target_roles
+        string target_users
+        int created_by FK
+        datetime created_at
+        datetime updated_at
+    }
+    
+    ADMIN_SETTINGS {
+        int setting_id PK
+        string setting_key
+        string setting_value
+        string category
+        string description
+        boolean is_encrypted
+        string data_type
+        string validation_regex
+        string default_value
+        datetime last_updated
+        int updated_by FK
+    }
+    
+    AUDIT_LOGS {
+        int log_id PK
+        int user_id FK
+        string action_type
+        string entity_type
+        int entity_id
+        datetime action_time
+        string ip_address
+        string user_agent
+        string request_method
+        string request_path
+        string changes_made
+        int status_code
+    }
+    
+    COMMENTS {
+        int comment_id PK
+        int task_id FK
+        int user_id FK
+        string content
+        datetime created_at
+        datetime updated_at
+        int parent_comment_id FK
+        boolean is_edited
+        JSON mentions
+    }
+    
+    TEAMS {
+        int team_id PK
+        string name
+        string description
+        int lead_user_id FK
+        datetime created_at
+        datetime updated_at
+    }
+    
+    TEAM_MEMBERS {
+        int team_id PK, FK
+        int user_id PK, FK
+        string role
+        datetime joined_at
+        int invited_by FK
+    }
+    
+    PROJECT_TEAMS {
+        int project_id PK, FK
+        int team_id PK, FK
+        datetime assigned_at
+        int assigned_by FK
+    }
+    
+    USERS ||--o{ PROJECTS : "owns"
+    PROJECTS ||--o{ TASKS : "contains"
+    USERS ||--o{ TASKS : "created by"
+    USERS ||--o{ TASKS : "assigned to"
+    TASK_TYPES ||--o{ TASKS : "categorizes"
+    
+    PROJECTS ||--o{ LABELS : "has"
+    USERS ||--o{ LABELS : "created by"
+    
+    TASKS ||--o{ TASK_LABELS : "has"
+    LABELS ||--o{ TASK_LABELS : "applied to"
+    USERS ||--o{ TASK_LABELS : "added by"
+    
+    TASKS ||--o{ SUBTASKS : "contains"
+    USERS ||--o{ SUBTASKS : "assigned to"
+    
+    TASKS ||--o{ TASK_DEPENDENCIES : "depends on"
+    USERS ||--o{ TASK_DEPENDENCIES : "created dependency"
+    
+    TASKS ||--o{ TASK_STATUS_HISTORY : "status history"
+    USERS ||--o{ TASK_STATUS_HISTORY : "updated status"
+    
+    TASKS ||--o{ TASK_ATTACHMENTS : "has attachments"
+    USERS ||--o{ TASK_ATTACHMENTS : "uploaded by"
+    
+    TASKS ||--o{ TIME_ENTRIES : "logs time for"
+    USERS ||--o{ TIME_ENTRIES : "logged by"
+    USERS ||--o{ TIME_ENTRIES : "approved by"
+    
+    PROJECTS ||--o{ SPRINTS : "has sprints"
+    USERS ||--o{ SPRINTS : "created by"
+    
+    SPRINTS ||--o{ SPRINT_TASKS : "includes tasks"
+    TASKS ||--o{ SPRINT_TASKS : "in sprint"
+    USERS ||--o{ SPRINT_TASKS : "added by"
+    
+    PROJECTS ||--o{ BOARDS : "has boards"
+    USERS ||--o{ BOARDS : "created by"
+    
+    BOARDS ||--o{ BOARD_COLUMNS : "contains"
+    
+    PROJECTS ||--o{ PROJECT_MEMBERS : "has members"
+    USERS ||--o{ PROJECT_MEMBERS : "member"
+    USERS ||--o{ PROJECT_MEMBERS : "invited by"
+    
+    PROJECTS ||--o{ PROJECT_ATTACHMENTS : "has attachments"
+    USERS ||--o{ PROJECT_ATTACHMENTS : "uploaded by"
+    
+    PROJECTS ||--o{ PROJECT_LANGUAGES : "uses"
+    LANGUAGES ||--o{ PROJECT_LANGUAGES : "used in"
+    
+    USERS ||--o{ NOTIFICATIONS : "receives"
+    USERS ||--o{ NOTIFICATIONS : "source"
+    
+    USERS ||--o{ SYSTEM_NOTIFICATIONS : "created by"
+    
+    USERS ||--o{ ADMIN_SETTINGS : "updated by"
+    
+    USERS ||--o{ AUDIT_LOGS : "performed"
+    
+    TASKS ||--o{ COMMENTS : "has comments"
+    USERS ||--o{ COMMENTS : "commented by"
+    COMMENTS ||--o{ COMMENTS : "replies"
+    
+    TEAMS ||--o{ TEAM_MEMBERS : "has members"
+    USERS ||--o{ TEAM_MEMBERS : "member in"
+    USERS ||--o{ TEAM_MEMBERS : "invited by"
+    
+    USERS ||--o{ TEAMS : "leads team"
+    
+    PROJECTS ||--o{ PROJECT_TEAMS : "has teams"
+    TEAMS ||--o{ PROJECT_TEAMS : "part of"
+    USERS ||--o{ PROJECT_TEAMS : "assigned by"
