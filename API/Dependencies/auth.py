@@ -18,7 +18,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 # JWT Configuration
-SECRET_KEY = "Qabil_Fonzi_AYYY"
+SECRET_KEY = "Matin_DILDIL"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
