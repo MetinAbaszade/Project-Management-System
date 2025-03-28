@@ -8,13 +8,14 @@ class ProjectMember(Base):
 
     project_member_id = Column(Integer, primary_key=True, autoincrement=True)
     project_id = Column(Integer, ForeignKey("projects.project_id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     role_in_project = Column(String(50))
     member_type = Column(String(50), nullable=False, default="Collaborator")  # Owner or Collaborator
     total_hours_worked = Column(Float, default=0)
     hourly_rate = Column(DECIMAL(10, 2))
     joined_at = Column(DateTime, default=datetime.utcnow)
-    invited_by = Column(Integer, ForeignKey("users.user_id"), nullable=True)
+    invited_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+
 
     __table_args__ = (
         UniqueConstraint('project_id', 'user_id', name='unique_project_user'),
