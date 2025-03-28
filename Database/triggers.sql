@@ -1,40 +1,40 @@
 DELIMITER //
 
 DROP TRIGGER IF EXISTS trg_projects_audit_update;
--- Trigger to log changes in the projects table after an update.
+-- Trigger to log changes in the Projects table after an update.
 CREATE TRIGGER trg_projects_audit_update
-AFTER UPDATE ON projects
+AFTER UPDATE ON Projects
 FOR EACH ROW
 BEGIN
-    INSERT INTO audit_logs (
-      user_id,
-      action_type,
-      entity_type,
-      entity_id,
-      action_time,
-      ip_address,
-      request_method,
-      changes_made
+    INSERT INTO AuditLogs (
+      UserId,
+      ActionType,
+      EntityType,
+      EntityId,
+      ActionTime,
+      IpAddress,
+      RequestMethod,
+      ChangesMade
     )
     VALUES (
-      NEW.owner_id,
+      NEW.OwnerId,
       'UPDATE',
-      'projects',
-      NEW.project_id,
+      'Projects',
+      NEW.Id,
       CURRENT_TIMESTAMP,
-      '0.0.0.0',  -- Replace with actual IP 
-      CONCAT('Old Name: ', OLD.name, '; New Name: ', NEW.name)
+      '0.0.0.0',  -- Replace with actual IP if available
+      CONCAT('Old Name: ', OLD.Name, '; New Name: ', NEW.Name)
     );
 END;
 //
 
 DROP TRIGGER IF EXISTS trg_tasks_before_update;
--- Trigger to automatically update the "updated_at" column on tasks.
+-- Trigger to automatically update the UpdatedAt column on Tasks.
 CREATE TRIGGER trg_tasks_before_update
-BEFORE UPDATE ON tasks
+BEFORE UPDATE ON Tasks
 FOR EACH ROW
 BEGIN
-    SET NEW.updated_at = CURRENT_TIMESTAMP;
+    SET NEW.UpdatedAt = CURRENT_TIMESTAMP;
 END;
 //
 

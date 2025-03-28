@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey
+from sqlalchemy import Boolean, Column, String, Text, DateTime, ForeignKey
 from datetime import datetime
 from Db.session import Base
 from sqlalchemy.orm import relationship
@@ -12,6 +12,9 @@ class Label(Base):
     ProjectId = Column(String(36), ForeignKey("Projects.Id"), nullable=True)
     CreatedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
     CreatedAt = Column(DateTime, default=datetime.utcnow)
+
+    IsDeleted = Column(Boolean, default=False)
+
     __table_args__ = (
         # Unique constraint on (Name, ProjectId)
 

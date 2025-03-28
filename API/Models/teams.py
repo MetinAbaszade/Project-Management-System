@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey
+from sqlalchemy import Boolean, Column, String, Text, DateTime, ForeignKey
 from datetime import datetime
 from Db.session import Base
 from sqlalchemy.orm import relationship
@@ -13,3 +13,5 @@ class Team(Base):
     CreatedAt = Column(DateTime, default=datetime.utcnow)
     UpdatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     lead = relationship("User", foreign_keys=[LeadUserId])
+    
+    IsDeleted = Column(Boolean, default=False)

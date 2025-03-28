@@ -30,5 +30,7 @@ class Project(Base):
     ActualHours = Column(Float, default=0)
     CompletionPercentage = Column(Float, default=0)
     owner = relationship("User", back_populates="ProjectsOwned", foreign_keys=[OwnerId])
+    
+    IsDeleted = Column(Boolean, default=False)
 
 

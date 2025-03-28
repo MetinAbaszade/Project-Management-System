@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey
+from sqlalchemy import Boolean, Column, String, Integer, DateTime, ForeignKey, Text
 from datetime import datetime
 from Db.session import Base
 from sqlalchemy.orm import relationship
@@ -15,6 +15,8 @@ class ProjectAttachment(Base):
     UploadedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
     UploadedAt = Column(DateTime, default=datetime.utcnow)
     Description = Column(Text)
+
+    IsDeleted = Column(Boolean, default=False)
 
 
     Project = relationship("Project", backref="ProjectAttachments", foreign_keys=[ProjectId])

@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, ForeignKey, PrimaryKeyConstraint
+from sqlalchemy import Boolean, Column, String, DateTime, ForeignKey, PrimaryKeyConstraint
 from datetime import datetime
 from Db.session import Base
 from sqlalchemy.orm import relationship
@@ -9,6 +9,10 @@ class TaskLabel(Base):
     TaskId = Column(String(36), ForeignKey("Tasks.Id"), nullable=False)
     LabelId = Column(String(36), ForeignKey("Labels.Id"), nullable=False)
     AddedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+
+    
+    IsDeleted = Column(Boolean, default=False)
+    
     AddedAt = Column(DateTime, default=datetime.utcnow)
     __table_args__ = (
         PrimaryKeyConstraint('TaskId', 'LabelId'),

@@ -18,6 +18,9 @@ class TimeEntry(Base):
     ApprovedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
     ApprovedAt = Column(DateTime)
     CreatedAt = Column(DateTime, default=datetime.utcnow)
+    
+    IsDeleted = Column(Boolean, default=False)
+    
     # Relationships
     Task = relationship("Task", backref="TimeEntries", foreign_keys=[TaskId])
     User = relationship("User", foreign_keys=[UserId])

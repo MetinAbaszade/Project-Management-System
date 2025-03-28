@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Integer, Text, DateTime, ForeignKey
+from sqlalchemy import Boolean, Column, String, Integer, Text, DateTime, ForeignKey
 from datetime import datetime
 from Db.session import Base
 from sqlalchemy.orm import relationship
@@ -16,3 +16,5 @@ class TaskStatusHistory(Base):
     TimeInStatus = Column(Integer)
     Task = relationship("Task", backref="StatusHistory", foreign_keys=[TaskId])
     User = relationship("User", foreign_keys=[UserId])
+    
+    IsDeleted = Column(Boolean, default=False)

@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, ForeignKey, PrimaryKeyConstraint, Enum
+from sqlalchemy import Boolean, Column, String, DateTime, ForeignKey, PrimaryKeyConstraint, Enum
 from datetime import datetime
 from Db.session import Base
 import enum
@@ -17,6 +17,9 @@ class TaskDependency(Base):
     DependencyType = Column(Enum(DependencyType), default=DependencyType.Blocks)
     CreatedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
     CreatedAt = Column(DateTime, default=datetime.utcnow)
+    
+    IsDeleted = Column(Boolean, default=False)
+    
     __table_args__ = (
         PrimaryKeyConstraint('TaskId', 'DependentTaskId'),
     )

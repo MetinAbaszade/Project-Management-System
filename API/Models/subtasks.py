@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, DateTime, Float, ForeignKey, Enum
+from sqlalchemy import Boolean, Column, String, Text, DateTime, Float, ForeignKey, Enum
 from datetime import datetime
 from Db.session import Base
 import enum
@@ -23,6 +23,8 @@ class Subtask(Base):
     CreatedAt = Column(DateTime, default=datetime.utcnow)
     UpdatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     Deadline = Column(DateTime)
+    
+    IsDeleted = Column(Boolean, default=False)
 
     #test ede bilmedim, error cixsa parent_task a deyis.
     ParentTask = relationship("Task", backref="Subtasks", foreign_keys=[ParentTaskId])

@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, Enum, DateTime, Float, DECIMAL, ForeignKey
+from sqlalchemy import Boolean, Column, String, Text, Enum, DateTime, Float, DECIMAL, ForeignKey
 from datetime import datetime
 from Db.session import Base
 import enum
@@ -38,6 +38,9 @@ class Task(Base):
     Tags = Column(String(255))
     IsBillable = Column(Boolean, default=True)
     CompletionPercentage = Column(Float, default=0)
+
+    
+    IsDeleted = Column(Boolean, default=False)
 
 
     #relationshipleri yaxsi bilmirem sehv olmus ola biler 

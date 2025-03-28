@@ -1,5 +1,6 @@
+import enum
 import uuid
-from sqlalchemy import Column, String, Float, DECIMAL, DateTime, ForeignKey, Enum, PrimaryKeyConstraint
+from sqlalchemy import Boolean, Column, String, Float, DECIMAL, DateTime, ForeignKey, Enum, PrimaryKeyConstraint
 from datetime import datetime
 from Db.session import Base
 from sqlalchemy.orm import relationship
@@ -20,6 +21,10 @@ class ProjectMember(Base):
     HourlyRate = Column(DECIMAL(10,2))
     JoinedAt = Column(DateTime, default=datetime.utcnow)
     InvitedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    
+    
+    IsDeleted = Column(Boolean, default=False)
+    
     __table_args__ = (
         # lazim olsa sonraki lineni uncomment edersiz 
         # UniqueConstraint('ProjectId', 'UserId', name='UniqueProjectUser'),

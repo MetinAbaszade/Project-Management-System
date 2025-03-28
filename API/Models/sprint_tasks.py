@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, ForeignKey, PrimaryKeyConstraint, Float
+from sqlalchemy import Boolean, Column, String, DateTime, ForeignKey, PrimaryKeyConstraint, Float
 from datetime import datetime
 from Db.session import Base
 from sqlalchemy.orm import relationship
@@ -11,6 +11,9 @@ class SprintTask(Base):
     AddedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
     AddedAt = Column(DateTime, default=datetime.utcnow)
     StoryPoints = Column(Float)
+    
+    IsDeleted = Column(Boolean, default=False)
+    
     __table_args__ = (
         PrimaryKeyConstraint('SprintId', 'TaskId'),
     )
