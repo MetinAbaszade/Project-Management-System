@@ -26,5 +26,6 @@ class AdminSetting(Base):
     LastUpdated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     UpdatedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
     
+    IsDeleted = Column(Boolean, default=False)
     
     Updater = relationship("User", foreign_keys=[UpdatedBy])
