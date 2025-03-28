@@ -632,3 +632,13 @@ async function registerUser() {
         alert("🚫 " + error.message);
     }
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+    const token = localStorage.getItem("access_token");
+
+    // ✅ If token exists, user is already logged in
+    if (token) {
+        // Redirect to homepage (or dashboard)
+        window.location.href = "/Frontend_/static/index.html";  // Adjust path if needed
+    }
+});
