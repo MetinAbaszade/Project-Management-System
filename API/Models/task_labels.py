@@ -1,21 +1,18 @@
-from sqlalchemy import Column, Integer, DateTime, ForeignKey, PrimaryKeyConstraint
-from sqlalchemy.orm import relationship
-from Db.session import Base
+import uuid
+from sqlalchemy import Column, String, DateTime, ForeignKey, PrimaryKeyConstraint
 from datetime import datetime
+from Db.session import Base
+from sqlalchemy.orm import relationship
 
 class TaskLabel(Base):
-    __tablename__ = "task_labels"
-
-    task_id = Column(Integer, ForeignKey("tasks.task_id"), nullable=False)
-    label_id = Column(Integer, ForeignKey("labels.label_id"), nullable=False)
-    added_by = Column(Integer, ForeignKey("users.user_id"), nullable=True)
-    added_at = Column(DateTime, default=datetime.utcnow)
-
+    __tablename__ = "TaskLabels"
+    TaskId = Column(String(36), ForeignKey("Tasks.Id"), nullable=False)
+    LabelId = Column(String(36), ForeignKey("Labels.Id"), nullable=False)
+    AddedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    AddedAt = Column(DateTime, default=datetime.utcnow)
     __table_args__ = (
-        PrimaryKeyConstraint('task_id', 'label_id'),
+        PrimaryKeyConstraint('TaskId', 'LabelId'),
     )
-
-    # Relationships
-    task = relationship("Task", backref="task_labels", foreign_keys=[task_id])
-    label = relationship("Label", backref="task_labels", foreign_keys=[label_id])
-    adder = relationship("User", foreign_keys=[added_by])
+    Task = relationship("Task", backref="TaskLabels", foreign_keys=[TaskId])
+    Label = relationship("Label", backref="TaskLabels", foreign_keys=[LabelId])
+    Adder = relationship("User", foreign_keys=[AddedBy])

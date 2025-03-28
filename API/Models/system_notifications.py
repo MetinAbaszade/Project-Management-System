@@ -1,29 +1,27 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Enum, ForeignKey
-from sqlalchemy.orm import relationship
+import uuid
+from sqlalchemy import Column, String, Text, DateTime, Boolean, Enum, ForeignKey
+from datetime import datetime
 from Db.session import Base
 import enum
-from datetime import datetime
+from sqlalchemy.orm import relationship
 
-class Severity(enum.Enum):
+class SeverityEnum(enum.Enum):
     Info = "Info"
     Warning = "Warning"
     Critical = "Critical"
 
 class SystemNotification(Base):
-    __tablename__ = "system_notifications"
-
-    notification_id = Column(Integer, primary_key=True, autoincrement=True)
-    title = Column(String(100), nullable=False)
-    content = Column(Text, nullable=False)
-    severity = Column(Enum(Severity), default=Severity.Info)
-    start_date = Column(DateTime, nullable=False)
-    end_date = Column(DateTime)
-    is_dismissible = Column(Boolean, default=True)
-    target_roles = Column(String(255))
-    target_users = Column(String(255))
-    created_by = Column(Integer, ForeignKey("users.user_id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # Relationships
-    creator = relationship("User", foreign_keys=[created_by])
+    __tablename__ = "SystemNotifications"
+    Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    Title = Column(String(100), nullable=False)
+    Content = Column(Text, nullable=False)
+    Severity = Column(Enum(SeverityEnum), default=SeverityEnum.Info)
+    StartDate = Column(DateTime, nullable=False)
+    EndDate = Column(DateTime)
+    IsDismissible = Column(Boolean, default=True)
+    TargetRoles = Column(String(255))
+    TargetUsers = Column(String(255))
+    CreatedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    CreatedAt = Column(DateTime, default=datetime.utcnow)
+    UpdatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    Creator = relationship("User", foreign_keys=[CreatedBy])

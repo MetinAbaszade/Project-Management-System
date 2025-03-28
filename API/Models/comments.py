@@ -1,23 +1,22 @@
-from sqlalchemy import Column, Integer, Text, DateTime, Boolean, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.mysql import JSON
-from Db.session import Base
+import uuid
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey
 from datetime import datetime
+from Db.session import Base
+from sqlalchemy.dialects.mysql import JSON
+from sqlalchemy.orm import relationship
 
 class Comment(Base):
-    __tablename__ = "comments"
+    __tablename__ = "Comments"
+    Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    TaskId = Column(String(36), ForeignKey("Tasks.Id"), nullable=False)
+    UserId = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    Content = Column(Text, nullable=False)
+    CreatedAt = Column(DateTime, default=datetime.utcnow)
+    UpdatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    ParentCommentId = Column(String(36), ForeignKey("Comments.Id"), nullable=True)
+    IsEdited = Column(Boolean, default=False)
+    Mentions = Column(JSON)
 
-    comment_id = Column(Integer, primary_key=True, autoincrement=True)
-    task_id = Column(Integer, ForeignKey("tasks.task_id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=True)
-    content = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    parent_comment_id = Column(Integer, ForeignKey("comments.comment_id"), nullable=True)
-    is_edited = Column(Boolean, default=False)
-    mentions = Column(JSON)
-
-    # Relationships
-    task = relationship("Task", backref="comments", foreign_keys=[task_id])
-    user = relationship("User", foreign_keys=[user_id])
-    parent_comment = relationship("Comment", remote_side=[comment_id], backref="replies")
+    Task = relationship("Task", backref="Comments", foreign_keys=[TaskId])
+    User = relationship("User", foreign_keys=[UserId])
+    ParentComment = relationship("Comment", remote_side=[Id], backref="Replies")

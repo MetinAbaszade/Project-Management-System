@@ -1,21 +1,19 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
-from Db.session import Base
+import uuid
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey
 from datetime import datetime
+from Db.session import Base
+from sqlalchemy.orm import relationship
 
 class TaskAttachment(Base):
-    __tablename__ = "task_attachments"
-
-    attachment_id = Column(Integer, primary_key=True, autoincrement=True)
-    task_id = Column(Integer, ForeignKey("tasks.task_id"), nullable=False)
-    file_url = Column(String(255), nullable=False)
-    file_name = Column(String(100), nullable=False)
-    file_size = Column(Integer)
-    file_type = Column(String(50))
-    uploaded_by = Column(Integer, ForeignKey("users.user_id"), nullable=True)
-    uploaded_at = Column(DateTime, default=datetime.utcnow)
-    description = Column(Text)
-
-    # Relationships
-    task = relationship("Task", backref="attachments", foreign_keys=[task_id])
-    uploader = relationship("User", foreign_keys=[uploaded_by])
+    __tablename__ = "TaskAttachments"
+    Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    TaskId = Column(String(36), ForeignKey("Tasks.Id"), nullable=False)
+    FileUrl = Column(String(255), nullable=False)
+    FileName = Column(String(100), nullable=False)
+    FileSize = Column(Integer)
+    FileType = Column(String(50))
+    UploadedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    UploadedAt = Column(DateTime, default=datetime.utcnow)
+    Description = Column(Text)
+    Task = relationship("Task", backref="Attachments", foreign_keys=[TaskId])
+    Uploader = relationship("User", foreign_keys=[UploadedBy])

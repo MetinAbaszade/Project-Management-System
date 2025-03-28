@@ -1,8 +1,9 @@
-from sqlalchemy import Column, Integer, String, Text, Date, DateTime, Float, Enum, ForeignKey
-from sqlalchemy.orm import relationship
+import uuid
+from sqlalchemy import Column, String, Date, DateTime, Float, Text, Enum, ForeignKey
+from datetime import datetime
 from Db.session import Base
 import enum
-from datetime import datetime
+from sqlalchemy.orm import relationship
 
 class SprintStatus(enum.Enum):
     Planning = "Planning"
@@ -11,22 +12,19 @@ class SprintStatus(enum.Enum):
     Canceled = "Canceled"
 
 class Sprint(Base):
-    __tablename__ = "sprints"
-
-    sprint_id = Column(Integer, primary_key=True, autoincrement=True)
-    project_id = Column(Integer, ForeignKey("projects.project_id"), nullable=False)
-    name = Column(String(100), nullable=False)
-    start_date = Column(Date, nullable=False)
-    end_date = Column(Date, nullable=False)
-    goal = Column(Text)
-    status = Column(Enum(SprintStatus), default=SprintStatus.Planning)
-    capacity = Column(Float)
-    velocity = Column(Float)
-    retrospective_notes = Column(Text)
-    created_by = Column(Integer, ForeignKey("users.user_id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    completed_at = Column(DateTime)
-
-    # Relationships
-    project = relationship("Project", backref="sprints", foreign_keys=[project_id])
-    creator = relationship("User", foreign_keys=[created_by])
+    __tablename__ = "Sprints"
+    Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    ProjectId = Column(String(36), ForeignKey("Projects.Id"), nullable=False)
+    Name = Column(String(100), nullable=False)
+    StartDate = Column(Date, nullable=False)
+    EndDate = Column(Date, nullable=False)
+    Goal = Column(Text)
+    Status = Column(Enum(SprintStatus), default=SprintStatus.Planning)
+    Capacity = Column(Float)
+    Velocity = Column(Float)
+    RetrospectiveNotes = Column(Text)
+    CreatedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    CreatedAt = Column(DateTime, default=datetime.utcnow)
+    CompletedAt = Column(DateTime)
+    Project = relationship("Project", backref="Sprints", foreign_keys=[ProjectId])
+    Creator = relationship("User", foreign_keys=[CreatedBy])

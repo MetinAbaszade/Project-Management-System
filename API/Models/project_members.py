@@ -1,27 +1,29 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, DECIMAL, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship
-from Db.session import Base
+import uuid
+from sqlalchemy import Column, String, Float, DECIMAL, DateTime, ForeignKey, Enum, PrimaryKeyConstraint
 from datetime import datetime
+from Db.session import Base
+from sqlalchemy.orm import relationship
+
+# We use a simple Enum for MemberType
+class MemberTypeEnum(enum.Enum):
+    Owner = "Owner"
+    Collaborator = "Collaborator"
 
 class ProjectMember(Base):
-    __tablename__ = "project_members"
-
-    project_member_id = Column(Integer, primary_key=True, autoincrement=True)
-    project_id = Column(Integer, ForeignKey("projects.project_id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    role_in_project = Column(String(50))
-    member_type = Column(String(50), nullable=False, default="Collaborator")  # Owner or Collaborator
-    total_hours_worked = Column(Float, default=0)
-    hourly_rate = Column(DECIMAL(10, 2))
-    joined_at = Column(DateTime, default=datetime.utcnow)
-    invited_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-
-
+    __tablename__ = "ProjectMembers"
+    Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    ProjectId = Column(String(36), ForeignKey("Projects.Id"), nullable=False)
+    UserId = Column(String(36), ForeignKey("Users.Id"), nullable=False)
+    RoleInProject = Column(String(50))
+    MemberType = Column(Enum(MemberTypeEnum), default=MemberTypeEnum.Collaborator)
+    TotalHoursWorked = Column(Float, default=0)
+    HourlyRate = Column(DECIMAL(10,2))
+    JoinedAt = Column(DateTime, default=datetime.utcnow)
+    InvitedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
     __table_args__ = (
-        UniqueConstraint('project_id', 'user_id', name='unique_project_user'),
+        # lazim olsa sonraki lineni uncomment edersiz 
+        # UniqueConstraint('ProjectId', 'UserId', name='UniqueProjectUser'),
     )
-
-    # Relationships
-    project = relationship("Project", backref="project_members", foreign_keys=[project_id])
-    user = relationship("User", backref="project_memberships", foreign_keys=[user_id])
-    inviter = relationship("User", foreign_keys=[invited_by])
+    Project = relationship("Project", backref="ProjectMembers", foreign_keys=[ProjectId])
+    User = relationship("User", backref="ProjectMemberships", foreign_keys=[UserId])
+    Inviter = relationship("User", foreign_keys=[InvitedBy])

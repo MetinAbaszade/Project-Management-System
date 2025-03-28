@@ -1,22 +1,19 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, PrimaryKeyConstraint
-from sqlalchemy.orm import relationship
-from Db.session import Base
+import uuid
+from sqlalchemy import Column, String, DateTime, ForeignKey, PrimaryKeyConstraint
 from datetime import datetime
+from Db.session import Base
+from sqlalchemy.orm import relationship
 
 class TeamMember(Base):
-    __tablename__ = "team_members"
-
-    team_id = Column(Integer, ForeignKey("teams.team_id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
-    role = Column(String(50))
-    joined_at = Column(DateTime, default=datetime.utcnow)
-    invited_by = Column(Integer, ForeignKey("users.user_id"), nullable=True)
-
+    __tablename__ = "TeamMembers"
+    TeamId = Column(String(36), ForeignKey("Teams.Id"), nullable=False)
+    UserId = Column(String(36), ForeignKey("Users.Id"), nullable=False)
+    Role = Column(String(50))
+    JoinedAt = Column(DateTime, default=datetime.utcnow)
+    InvitedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
     __table_args__ = (
-        PrimaryKeyConstraint('team_id', 'user_id'),
+        PrimaryKeyConstraint('TeamId', 'UserId'),
     )
-
-    # Relationships
-    team = relationship("Team", backref="team_members", foreign_keys=[team_id])
-    user = relationship("User", foreign_keys=[user_id])
-    inviter = relationship("User", foreign_keys=[invited_by])
+    Team = relationship("Team", backref="TeamMembers", foreign_keys=[TeamId])
+    User = relationship("User", foreign_keys=[UserId])
+    Inviter = relationship("User", foreign_keys=[InvitedBy])
