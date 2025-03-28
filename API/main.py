@@ -1,11 +1,12 @@
-import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 
 # Routers
 from Router.LanguageRouter import router as language_router
 from Router.EmailRouter import router as email_router
 from Router.AuthRouter import router as auth_router
+from Router.ProjectRouter import router as project_router  # ✅ New import
 
 # Database
 from Db.session import engine, Base
@@ -16,16 +17,16 @@ app = FastAPI(
     description="Backend API for Task Management System"
 )
 
-# ✅ Enable CORS (for frontend running on localhost:5500)
+# ✅ CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5500"],  # VSCode Live Server or other local frontend
+    allow_origins=["http://127.0.0.1:5500"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ✅ Create DB tables on app startup
+# ✅ Create tables
 def init_db():
     Base.metadata.create_all(bind=engine)
 
@@ -33,16 +34,17 @@ def init_db():
 def on_startup():
     init_db()
 
-# ✅ Root route (for health check)
+# ✅ Health check route
 @app.get("/")
 def root():
     return {"message": "FastAPI is running 🚀"}
 
-# ✅ Include Routers
+# ✅ Register routers
 app.include_router(language_router)
 app.include_router(email_router)
-app.include_router(auth_router, prefix="/auth")  # Auth route is namespaced
+app.include_router(auth_router)
+app.include_router(project_router)  # ✅ Add this!
 
-# ✅ Only run uvicorn if executing directly
+# ✅ Run app
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
