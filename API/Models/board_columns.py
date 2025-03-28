@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Integer, Text, ForeignKey
+from sqlalchemy import Boolean, Column, String, Integer, Text, ForeignKey
 from Db.session import Base
 from datetime import datetime
 from sqlalchemy.orm import relationship
@@ -14,5 +14,7 @@ class BoardColumn(Base):
     TaskStatus = Column(String(20))
     Description = Column(Text)
     Color = Column(String(7))
+   
+    IsDeleted = Column(Boolean, default=False)
 
     Board = relationship("Board", backref="BoardColumns", foreign_keys=[BoardId])

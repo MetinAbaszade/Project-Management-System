@@ -19,5 +19,7 @@ class Notification(Base):
     Link = Column(String(255))
     SourceUserId = Column(String(36), ForeignKey("Users.Id"), nullable=True)
 
+    IsDeleted = Column(Boolean, default=False)
+
     User = relationship("User", foreign_keys=[UserId])
     SourceUser = relationship("User", foreign_keys=[SourceUserId])

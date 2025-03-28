@@ -10,3 +10,5 @@ class Role(Base):
     IsAdmin = Column(Boolean, default=False)
     Description = Column(String(255))
     CreatedAt = Column(DateTime, default=datetime.utcnow)
+    
+    IsDeleted = Column(Boolean, default=False)

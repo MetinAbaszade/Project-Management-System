@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey
+from sqlalchemy import Boolean, Column, String, Integer, DateTime, ForeignKey, Text
 from datetime import datetime
 from Db.session import Base
 from sqlalchemy.orm import relationship
@@ -17,3 +17,6 @@ class TaskAttachment(Base):
     Description = Column(Text)
     Task = relationship("Task", backref="Attachments", foreign_keys=[TaskId])
     Uploader = relationship("User", foreign_keys=[UploadedBy])
+    
+    IsDeleted = Column(Boolean, default=False)
+

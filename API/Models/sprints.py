@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Date, DateTime, Float, Text, Enum, ForeignKey
+from sqlalchemy import Boolean, Column, String, Date, DateTime, Float, Text, Enum, ForeignKey
 from datetime import datetime
 from Db.session import Base
 import enum
@@ -28,3 +28,6 @@ class Sprint(Base):
     CompletedAt = Column(DateTime)
     Project = relationship("Project", backref="Sprints", foreign_keys=[ProjectId])
     Creator = relationship("User", foreign_keys=[CreatedBy])
+
+    
+    IsDeleted = Column(Boolean, default=False)

@@ -21,6 +21,8 @@ class User(Base):
     LastPasswordChange = Column(DateTime)
     RequirePasswordChange = Column(Boolean, default=False)
     
+    IsDeleted = Column(Boolean, default=False)
+    
     #gpt projects.py da define ele demisdi 
     #error cixa biler 
 User.ProjectsOwned = relationship("Project", back_populates="owner")

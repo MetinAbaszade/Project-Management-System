@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey
+from sqlalchemy import Boolean, Column, String, Text, DateTime, ForeignKey
 from datetime import datetime
 from Db.session import Base
 from sqlalchemy.dialects.mysql import JSON
@@ -16,6 +16,8 @@ class Comment(Base):
     ParentCommentId = Column(String(36), ForeignKey("Comments.Id"), nullable=True)
     IsEdited = Column(Boolean, default=False)
     Mentions = Column(JSON)
+
+    IsDeleted = Column(Boolean, default=False)
 
     Task = relationship("Task", backref="Comments", foreign_keys=[TaskId])
     User = relationship("User", foreign_keys=[UserId])

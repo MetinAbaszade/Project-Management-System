@@ -11,4 +11,5 @@ class TaskType(Base):
     Color = Column(String(7))
     Icon = Column(String(50))
     CreatedAt = Column(DateTime, default=datetime.utcnow)
-    IsActive = Column(Boolean, default=True)
+    IsDeleted = Column(Boolean, default=False)
+    

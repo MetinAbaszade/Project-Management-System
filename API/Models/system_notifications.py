@@ -25,3 +25,5 @@ class SystemNotification(Base):
     CreatedAt = Column(DateTime, default=datetime.utcnow)
     UpdatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     Creator = relationship("User", foreign_keys=[CreatedBy])
+    
+    IsDeleted = Column(Boolean, default=False)
