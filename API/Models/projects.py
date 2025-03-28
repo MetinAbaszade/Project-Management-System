@@ -1,9 +1,22 @@
-from sqlalchemy import Column, Integer, String, Text, Date, Enum, DECIMAL, Boolean, DateTime, Float, ForeignKey
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Text,
+    Date,
+    Enum,
+    DECIMAL,
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    text  # ✅ Needed for CURRENT_TIMESTAMP default
+)
 from sqlalchemy.orm import relationship
 from Db.session import Base
 import enum
 
-# Define an Enum for project status
+# ✅ Enum for project status
 class ProjectStatus(enum.Enum):
     Planning = 'Planning'
     Active = 'Active'
@@ -22,13 +35,16 @@ class Project(Base):
     status = Column(Enum(ProjectStatus), default=ProjectStatus.Planning)
     budget = Column(DECIMAL(15, 2))
     budget_used = Column(DECIMAL(15, 2), default=0)
-    owner_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # ✅ Matches your User model now
     is_public = Column(Boolean, default=False)
-    created_at = Column(DateTime, server_default="CURRENT_TIMESTAMP")
-    updated_at = Column(DateTime, server_default="CURRENT_TIMESTAMP", server_onupdate="CURRENT_TIMESTAMP")
+
+    # ✅ FIXED TIMESTAMP DEFAULTS
+    created_at = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
+    updated_at = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"), server_onupdate=text("CURRENT_TIMESTAMP"))
+
     estimated_hours = Column(Float)
     actual_hours = Column(Float, default=0)
     completion_percentage = Column(Float, default=0)
 
-    # Relationships
+    # ✅ Relationship to User
     owner = relationship("User", back_populates="projects_owned", foreign_keys=[owner_id])
