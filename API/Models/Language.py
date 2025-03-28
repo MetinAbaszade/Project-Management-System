@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean
+import uuid
+from sqlalchemy import Column, String, Integer, Boolean
 from Db.session import Base
 
 class Language(Base):

@@ -14,7 +14,7 @@ class BoardColumn(Base):
     TaskStatus = Column(String(20))
     Description = Column(Text)
     Color = Column(String(7))
-   
+
     IsDeleted = Column(Boolean, default=False)
 
     Board = relationship("Board", backref="BoardColumns", foreign_keys=[BoardId])

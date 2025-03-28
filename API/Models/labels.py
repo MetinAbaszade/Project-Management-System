@@ -14,6 +14,7 @@ class Label(Base):
     CreatedAt = Column(DateTime, default=datetime.utcnow)
 
     IsDeleted = Column(Boolean, default=False)
+
     __table_args__ = (
         # Unique constraint on (Name, ProjectId)
 

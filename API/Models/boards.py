@@ -20,7 +20,7 @@ class Board(Base):
     IsDefault = Column(Boolean, default=False)
     CreatedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
     CreatedAt = Column(DateTime, default=datetime.utcnow)
-
+    
     IsDeleted = Column(Boolean, default=False)
 
     Project = relationship("Project", backref="Boards", foreign_keys=[ProjectId])

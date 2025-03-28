@@ -19,6 +19,7 @@ class Comment(Base):
 
     IsDeleted = Column(Boolean, default=False)
 
+
     Task = relationship("Task", backref="Comments", foreign_keys=[TaskId])
     User = relationship("User", foreign_keys=[UserId])
     ParentComment = relationship("Comment", remote_side=[Id], backref="Replies")

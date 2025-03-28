@@ -5,7 +5,7 @@ from datetime import datetime
 from Db.session import Base
 from sqlalchemy.orm import relationship
 
-
+# We use a simple Enum for MemberType
 class MemberTypeEnum(enum.Enum):
     Owner = "Owner"
     Collaborator = "Collaborator"
