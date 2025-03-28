@@ -1,22 +1,26 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship
-from Db.session import Base
+import uuid
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey
 from datetime import datetime
+from Db.session import Base
+from sqlalchemy.orm import relationship
 
 class Label(Base):
-    __tablename__ = "labels"
-
-    label_id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(50), nullable=False)
-    color = Column(String(7))
-    project_id = Column(Integer, ForeignKey("projects.project_id"), nullable=True)
-    created_by = Column(Integer, ForeignKey("users.user_id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
+    __tablename__ = "Labels"
+    Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    Name = Column(String(50), nullable=False)
+    Color = Column(String(7))
+    ProjectId = Column(String(36), ForeignKey("Projects.Id"), nullable=True)
+    CreatedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    CreatedAt = Column(DateTime, default=datetime.utcnow)
     __table_args__ = (
-        UniqueConstraint('name', 'project_id', name='unique_label_project'),
-    )
+        # Unique constraint on (Name, ProjectId)
 
+
+        
+        #lazim olsa bu lineni uncomment edin 
+        # UniqueConstraint('Name', 'ProjectId', name='UniqueLabelProject'),
+    )
+   
     # Relationships
-    project = relationship("Project", backref="labels")
-    creator = relationship("User", backref="created_labels", foreign_keys=[created_by])
+    Project = relationship("Project", backref="Labels")
+    Creator = relationship("User", backref="CreatedLabels", foreign_keys=[CreatedBy])

@@ -1,6 +1,6 @@
 -- 1. Languages
 CREATE TABLE IF NOT EXISTS Languages (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     LanguageName VARCHAR(50) NOT NULL UNIQUE,
     LanguageCode VARCHAR(10) NOT NULL UNIQUE,
     IsActive BOOLEAN DEFAULT TRUE,
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS Languages (
 
 -- 2. Roles
 CREATE TABLE IF NOT EXISTS Roles (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     RoleName VARCHAR(50) NOT NULL UNIQUE,
     IsAdmin BOOLEAN DEFAULT FALSE,
     Description VARCHAR(255),
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS Roles (
 
 -- 3. Users
 CREATE TABLE IF NOT EXISTS Users (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     FirstName VARCHAR(50) NOT NULL,
     LastName VARCHAR(50) NOT NULL,
     Email VARCHAR(100) NOT NULL UNIQUE,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS Users (
 
 -- 4. Projects
 CREATE TABLE IF NOT EXISTS Projects (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     Name VARCHAR(100) NOT NULL,
     Description TEXT,
     StartDate DATE,
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS Projects (
     Status ENUM('Planning', 'Active', 'On Hold', 'Completed', 'Canceled') DEFAULT 'Planning',
     Budget DECIMAL(15, 2),
     BudgetUsed DECIMAL(15, 2) DEFAULT 0,
-    OwnerId INT NOT NULL,
+    OwnerId CHAR(36) NOT NULL,
     IsPublic BOOLEAN DEFAULT FALSE,
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS Projects (
 
 -- 5. Task Types
 CREATE TABLE IF NOT EXISTS TaskTypes (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     TypeName VARCHAR(50) NOT NULL UNIQUE,
     Description VARCHAR(255),
     Color VARCHAR(7),
@@ -67,15 +67,15 @@ CREATE TABLE IF NOT EXISTS TaskTypes (
 
 -- 6. Tasks
 CREATE TABLE IF NOT EXISTS Tasks (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
-    ProjectId INT NOT NULL,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    ProjectId CHAR(36) NOT NULL,
     Title VARCHAR(100) NOT NULL,
     Description TEXT,
-    Type INT,
+    Type CHAR(36),
     Priority ENUM('Low', 'Medium', 'High', 'Critical') DEFAULT 'Medium',
     Status ENUM('Backlog', 'Todo', 'InProgress', 'Review', 'Done') DEFAULT 'Backlog',
-    CreatedBy INT,
-    AssignedTo INT,
+    CreatedBy CHAR(36),
+    AssignedTo CHAR(36),
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     Deadline DATETIME,
@@ -93,11 +93,11 @@ CREATE TABLE IF NOT EXISTS Tasks (
 
 -- 7. Labels
 CREATE TABLE IF NOT EXISTS Labels (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     Name VARCHAR(50) NOT NULL,
     Color VARCHAR(7),
-    ProjectId INT,
-    CreatedBy INT,
+    ProjectId CHAR(36),
+    CreatedBy CHAR(36),
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE,
     FOREIGN KEY (CreatedBy) REFERENCES Users(Id) ON DELETE SET NULL,
@@ -106,9 +106,9 @@ CREATE TABLE IF NOT EXISTS Labels (
 
 -- 8. Task Labels
 CREATE TABLE IF NOT EXISTS TaskLabels (
-    TaskId INT NOT NULL,
-    LabelId INT NOT NULL,
-    AddedBy INT,
+    TaskId CHAR(36) NOT NULL,
+    LabelId CHAR(36) NOT NULL,
+    AddedBy CHAR(36),
     AddedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (TaskId, LabelId),
     FOREIGN KEY (TaskId) REFERENCES Tasks(Id) ON DELETE CASCADE,
@@ -118,9 +118,9 @@ CREATE TABLE IF NOT EXISTS TaskLabels (
 
 -- 9. Subtasks
 CREATE TABLE IF NOT EXISTS Subtasks (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
-    ParentTaskId INT NOT NULL,
-    AssignedTo INT,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    ParentTaskId CHAR(36) NOT NULL,
+    AssignedTo CHAR(36),
     Title VARCHAR(100) NOT NULL,
     Description TEXT,
     Status ENUM('Todo', 'InProgress', 'Done') DEFAULT 'Todo',
@@ -135,10 +135,10 @@ CREATE TABLE IF NOT EXISTS Subtasks (
 
 -- 10. Task Dependencies
 CREATE TABLE IF NOT EXISTS TaskDependencies (
-    TaskId INT NOT NULL,
-    DependentTaskId INT NOT NULL,
+    TaskId CHAR(36) NOT NULL,
+    DependentTaskId CHAR(36) NOT NULL,
     DependencyType ENUM('Blocks', 'Is blocked by', 'Relates to') DEFAULT 'Blocks',
-    CreatedBy INT,
+    CreatedBy CHAR(36),
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (TaskId, DependentTaskId),
     FOREIGN KEY (TaskId) REFERENCES Tasks(Id) ON DELETE CASCADE,
@@ -148,9 +148,9 @@ CREATE TABLE IF NOT EXISTS TaskDependencies (
 
 -- 11. Task Status History
 CREATE TABLE IF NOT EXISTS TaskStatusHistory (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
-    TaskId INT NOT NULL,
-    UserId INT,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    TaskId CHAR(36) NOT NULL,
+    UserId CHAR(36),
     OldStatus VARCHAR(20) NOT NULL,
     NewStatus VARCHAR(20) NOT NULL,
     UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -162,13 +162,13 @@ CREATE TABLE IF NOT EXISTS TaskStatusHistory (
 
 -- 12. Task Attachments
 CREATE TABLE IF NOT EXISTS TaskAttachments (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
-    TaskId INT NOT NULL,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    TaskId CHAR(36) NOT NULL,
     FileUrl VARCHAR(255) NOT NULL,
     FileName VARCHAR(100) NOT NULL,
     FileSize INT,
     FileType VARCHAR(50),
-    UploadedBy INT,
+    UploadedBy CHAR(36),
     UploadedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     Description TEXT,
     FOREIGN KEY (TaskId) REFERENCES Tasks(Id) ON DELETE CASCADE,
@@ -177,16 +177,16 @@ CREATE TABLE IF NOT EXISTS TaskAttachments (
 
 -- 13. Time Entries
 CREATE TABLE IF NOT EXISTS TimeEntries (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
-    TaskId INT NOT NULL,
-    UserId INT NOT NULL,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    TaskId CHAR(36) NOT NULL,
+    UserId CHAR(36) NOT NULL,
     TimeSpent FLOAT NOT NULL,
     EntryDate DATE NOT NULL,
     StartTime TIME,
     EndTime TIME,
     Description TEXT,
     Billable BOOLEAN DEFAULT TRUE,
-    ApprovedBy INT,
+    ApprovedBy CHAR(36),
     ApprovedAt DATETIME,
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (TaskId) REFERENCES Tasks(Id) ON DELETE CASCADE,
@@ -196,8 +196,8 @@ CREATE TABLE IF NOT EXISTS TimeEntries (
 
 -- 14. Sprints
 CREATE TABLE IF NOT EXISTS Sprints (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
-    ProjectId INT NOT NULL,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    ProjectId CHAR(36) NOT NULL,
     Name VARCHAR(100) NOT NULL,
     StartDate DATE NOT NULL,
     EndDate DATE NOT NULL,
@@ -206,7 +206,7 @@ CREATE TABLE IF NOT EXISTS Sprints (
     Capacity FLOAT,
     Velocity FLOAT,
     RetrospectiveNotes TEXT,
-    CreatedBy INT,
+    CreatedBy CHAR(36),
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     CompletedAt DATETIME,
     FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE,
@@ -215,9 +215,9 @@ CREATE TABLE IF NOT EXISTS Sprints (
 
 -- 15. Sprint Tasks
 CREATE TABLE IF NOT EXISTS SprintTasks (
-    SprintId INT NOT NULL,
-    TaskId INT NOT NULL,
-    AddedBy INT,
+    SprintId CHAR(36) NOT NULL,
+    TaskId CHAR(36) NOT NULL,
+    AddedBy CHAR(36),
     AddedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     StoryPoints FLOAT,
     PRIMARY KEY (SprintId, TaskId),
@@ -228,13 +228,13 @@ CREATE TABLE IF NOT EXISTS SprintTasks (
 
 -- 16. Boards
 CREATE TABLE IF NOT EXISTS Boards (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
-    ProjectId INT NOT NULL,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    ProjectId CHAR(36) NOT NULL,
     Name VARCHAR(100) NOT NULL,
     BoardType ENUM('Kanban', 'Scrum', 'Custom') DEFAULT 'Kanban',
     Description TEXT,
     IsDefault BOOLEAN DEFAULT FALSE,
-    CreatedBy INT,
+    CreatedBy CHAR(36),
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE,
     FOREIGN KEY (CreatedBy) REFERENCES Users(Id) ON DELETE SET NULL
@@ -242,8 +242,8 @@ CREATE TABLE IF NOT EXISTS Boards (
 
 -- 17. Board Columns
 CREATE TABLE IF NOT EXISTS BoardColumns (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
-    BoardId INT NOT NULL,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    BoardId CHAR(36) NOT NULL,
     Name VARCHAR(50) NOT NULL,
     OrderIndex INT NOT NULL,
     WipLimit INT,
@@ -255,15 +255,15 @@ CREATE TABLE IF NOT EXISTS BoardColumns (
 
 -- 18. Project Members
 CREATE TABLE IF NOT EXISTS ProjectMembers (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
-    ProjectId INT NOT NULL,
-    UserId INT NOT NULL,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    ProjectId CHAR(36) NOT NULL,
+    UserId CHAR(36) NOT NULL,
     RoleInProject VARCHAR(50),
     MemberType ENUM('Owner', 'Collaborator') DEFAULT 'Collaborator',
     TotalHoursWorked FLOAT DEFAULT 0,
     HourlyRate DECIMAL(10,2),
     JoinedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    InvitedBy INT,
+    InvitedBy CHAR(36),
     FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE,
     FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE,
     FOREIGN KEY (InvitedBy) REFERENCES Users(Id) ON DELETE SET NULL,
@@ -272,13 +272,13 @@ CREATE TABLE IF NOT EXISTS ProjectMembers (
 
 -- 19. Project Attachments
 CREATE TABLE IF NOT EXISTS ProjectAttachments (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
-    ProjectId INT NOT NULL,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    ProjectId CHAR(36) NOT NULL,
     FileUrl VARCHAR(255) NOT NULL,
     FileName VARCHAR(100) NOT NULL,
     FileSize INT,
     FileType VARCHAR(50),
-    UploadedBy INT,
+    UploadedBy CHAR(36),
     UploadedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     Description TEXT,
     FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE,
@@ -287,9 +287,9 @@ CREATE TABLE IF NOT EXISTS ProjectAttachments (
 
 -- 20. Project Languages
 CREATE TABLE IF NOT EXISTS ProjectLanguages (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
-    ProjectId INT NOT NULL,
-    LanguageId INT NOT NULL,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    ProjectId CHAR(36) NOT NULL,
+    LanguageId CHAR(36) NOT NULL,
     UsagePercentage FLOAT DEFAULT 0,
     Notes TEXT,
     FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE,
@@ -299,18 +299,18 @@ CREATE TABLE IF NOT EXISTS ProjectLanguages (
 
 -- 21. Notifications
 CREATE TABLE IF NOT EXISTS Notifications (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
-    UserId INT NOT NULL,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    UserId CHAR(36) NOT NULL,
     Title VARCHAR(100),
     Content TEXT NOT NULL,
     NotificationType VARCHAR(50) NOT NULL,
     EntityType VARCHAR(50),
-    EntityId INT,
+    EntityId CHAR(36),
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     IsRead BOOLEAN DEFAULT FALSE,
     ReadAt DATETIME,
     Link VARCHAR(255),
-    SourceUserId INT,
+    SourceUserId CHAR(36),
     FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE,
     FOREIGN KEY (SourceUserId) REFERENCES Users(Id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
@@ -357,7 +357,7 @@ DROP PROCEDURE sp_create_index_notifications_entity;
 
 -- 22. System Notifications
 CREATE TABLE IF NOT EXISTS SystemNotifications (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     Title VARCHAR(100) NOT NULL,
     Content TEXT NOT NULL,
     Severity ENUM('Info','Warning','Critical') DEFAULT 'Info',
@@ -366,7 +366,7 @@ CREATE TABLE IF NOT EXISTS SystemNotifications (
     IsDismissible BOOLEAN DEFAULT TRUE,
     TargetRoles VARCHAR(255),
     TargetUsers VARCHAR(255),
-    CreatedBy INT,
+    CreatedBy CHAR(36),
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (CreatedBy) REFERENCES Users(Id) ON DELETE SET NULL
@@ -374,7 +374,7 @@ CREATE TABLE IF NOT EXISTS SystemNotifications (
 
 -- 23. Admin Settings
 CREATE TABLE IF NOT EXISTS AdminSettings (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     SettingKey VARCHAR(100) NOT NULL UNIQUE,
     SettingValue TEXT,
     Category VARCHAR(50) NOT NULL,
@@ -384,17 +384,17 @@ CREATE TABLE IF NOT EXISTS AdminSettings (
     ValidationRegex VARCHAR(255),
     DefaultValue TEXT,
     LastUpdated DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UpdatedBy INT,
+    UpdatedBy CHAR(36),
     FOREIGN KEY (UpdatedBy) REFERENCES Users(Id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- 24. Audit Logs
 CREATE TABLE IF NOT EXISTS AuditLogs (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
-    UserId INT,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    UserId CHAR(36),
     ActionType VARCHAR(50) NOT NULL,
     EntityType VARCHAR(50) NOT NULL,
-    EntityId INT,
+    EntityId CHAR(36),
     ActionTime DATETIME DEFAULT CURRENT_TIMESTAMP,
     IpAddress VARCHAR(45),
     UserAgent TEXT,
@@ -407,13 +407,13 @@ CREATE TABLE IF NOT EXISTS AuditLogs (
 
 -- 25. Comments
 CREATE TABLE IF NOT EXISTS Comments (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
-    TaskId INT NOT NULL,
-    UserId INT,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+    TaskId CHAR(36) NOT NULL,
+    UserId CHAR(36),
     Content TEXT NOT NULL,
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    ParentCommentId INT,
+    ParentCommentId CHAR(36),
     IsEdited BOOLEAN DEFAULT FALSE,
     Mentions JSON,
     FOREIGN KEY (TaskId) REFERENCES Tasks(Id) ON DELETE CASCADE,
@@ -423,10 +423,10 @@ CREATE TABLE IF NOT EXISTS Comments (
 
 -- 26. Teams
 CREATE TABLE IF NOT EXISTS Teams (
-    Id INT PRIMARY KEY AUTO_INCREMENT,
+    Id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
     Name VARCHAR(100) NOT NULL,
     Description TEXT,
-    LeadUserId INT,
+    LeadUserId CHAR(36),
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     UpdatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (LeadUserId) REFERENCES Users(Id) ON DELETE SET NULL
@@ -434,11 +434,11 @@ CREATE TABLE IF NOT EXISTS Teams (
 
 -- 27. Team Members
 CREATE TABLE IF NOT EXISTS TeamMembers (
-    TeamId INT NOT NULL,
-    UserId INT NOT NULL,
+    TeamId CHAR(36) NOT NULL,
+    UserId CHAR(36) NOT NULL,
     Role VARCHAR(50),
     JoinedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    InvitedBy INT,
+    InvitedBy CHAR(36),
     PRIMARY KEY (TeamId, UserId),
     FOREIGN KEY (TeamId) REFERENCES Teams(Id) ON DELETE CASCADE,
     FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE,
@@ -447,10 +447,10 @@ CREATE TABLE IF NOT EXISTS TeamMembers (
 
 -- 28. Project Teams
 CREATE TABLE IF NOT EXISTS ProjectTeams (
-    ProjectId INT NOT NULL,
-    TeamId INT NOT NULL,
+    ProjectId CHAR(36) NOT NULL,
+    TeamId CHAR(36) NOT NULL,
     AssignedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    AssignedBy INT,
+    AssignedBy CHAR(36),
     PRIMARY KEY (ProjectId, TeamId),
     FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE,
     FOREIGN KEY (TeamId) REFERENCES Teams(Id) ON DELETE CASCADE,

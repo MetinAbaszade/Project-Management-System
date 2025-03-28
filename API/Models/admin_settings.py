@@ -1,9 +1,11 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, Enum, ForeignKey
-from Db.session import Base
+import uuid
+from sqlalchemy import Column, String, Text, DateTime, Boolean, Enum, ForeignKey
 from datetime import datetime
+from Db.session import Base
 import enum
+from sqlalchemy.orm import relationship
 
-class DataType(enum.Enum):
+class DataTypeEnum(enum.Enum):
     string = "string"
     number = "number"
     boolean = "boolean"
@@ -11,19 +13,18 @@ class DataType(enum.Enum):
     date = "date"
 
 class AdminSetting(Base):
-    __tablename__ = "admin_settings"
-
-    setting_id = Column(Integer, primary_key=True, autoincrement=True)
-    setting_key = Column(String(100), nullable=False, unique=True)
-    setting_value = Column(Text)
-    category = Column(String(50), nullable=False)
-    description = Column(Text)
-    is_encrypted = Column(Boolean, default=False)
-    data_type = Column(Enum(DataType), default=DataType.string)
-    validation_regex = Column(String(255))
-    default_value = Column(Text)
-    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    updated_by = Column(Integer, ForeignKey("users.user_id"), nullable=True)
-
-    # Relationships
-    updater = relationship("User", foreign_keys=[updated_by])
+    __tablename__ = "AdminSettings"
+    Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    SettingKey = Column(String(100), nullable=False, unique=True)
+    SettingValue = Column(Text)
+    Category = Column(String(50), nullable=False)
+    Description = Column(Text)
+    IsEncrypted = Column(Boolean, default=False)
+    DataType = Column(Enum(DataTypeEnum), default=DataTypeEnum.string)
+    ValidationRegex = Column(String(255))
+    DefaultValue = Column(Text)
+    LastUpdated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    UpdatedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    
+    
+    Updater = relationship("User", foreign_keys=[UpdatedBy])

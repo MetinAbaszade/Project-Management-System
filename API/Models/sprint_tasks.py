@@ -1,22 +1,19 @@
-from sqlalchemy import Column, Integer, Float, DateTime, ForeignKey, PrimaryKeyConstraint
-from sqlalchemy.orm import relationship
-from Db.session import Base
+import uuid
+from sqlalchemy import Column, String, DateTime, ForeignKey, PrimaryKeyConstraint, Float
 from datetime import datetime
+from Db.session import Base
+from sqlalchemy.orm import relationship
 
 class SprintTask(Base):
-    __tablename__ = "sprint_tasks"
-
-    sprint_id = Column(Integer, ForeignKey("sprints.sprint_id"), nullable=False)
-    task_id = Column(Integer, ForeignKey("tasks.task_id"), nullable=False)
-    added_by = Column(Integer, ForeignKey("users.user_id"), nullable=True)
-    added_at = Column(DateTime, default=datetime.utcnow)
-    story_points = Column(Float)
-
+    __tablename__ = "SprintTasks"
+    SprintId = Column(String(36), ForeignKey("Sprints.Id"), nullable=False)
+    TaskId = Column(String(36), ForeignKey("Tasks.Id"), nullable=False)
+    AddedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    AddedAt = Column(DateTime, default=datetime.utcnow)
+    StoryPoints = Column(Float)
     __table_args__ = (
-        PrimaryKeyConstraint('sprint_id', 'task_id'),
+        PrimaryKeyConstraint('SprintId', 'TaskId'),
     )
-
-    # Relationships
-    sprint = relationship("Sprint", backref="sprint_tasks", foreign_keys=[sprint_id])
-    task = relationship("Task", foreign_keys=[task_id])
-    adder = relationship("User", foreign_keys=[added_by])
+    Sprint = relationship("Sprint", backref="SprintTasks", foreign_keys=[SprintId])
+    Task = relationship("Task", foreign_keys=[TaskId])
+    Adder = relationship("User", foreign_keys=[AddedBy])
