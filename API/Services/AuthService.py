@@ -3,14 +3,15 @@ from sqlalchemy.orm import Session
 from Repositories.AuthRepository import AuthRepository
 from Schemas.AuthSchema import RegisterSchema, LoginSchema
 from Dependencies.auth import verify_password, create_access_token
-from Db.session import SessionLocal
+# from Db.session import SessionLocal
+from Dependencies.db import get_db
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# def get_db():
+#     db = SessionLocal()
+#     try:
+#         yield db
+#     finally:
+#         db.close()
 
 class AuthService:
     def __init__(self, db: Session = Depends(get_db)):  # ✅ CORRECT
@@ -28,5 +29,5 @@ class AuthService:
         if not user or not verify_password(user_data.password, user.hashed_password):
             raise HTTPException(status_code=401, detail="Invalid email or password")
 
-        access_token = create_access_token({"sub": user.email})
+        access_token = create_access_token({"sub": str(user.id)})
         return {"access_token": access_token, "token_type": "bearer"}
