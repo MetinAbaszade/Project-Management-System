@@ -1,9 +1,9 @@
 from pydantic import BaseModel, EmailStr
 
 class ResponseDTO(BaseModel):
-    success: bool
-    message: str
+    Success: bool
+    Message: str
 
 class CheckVerificationCodeDTO(BaseModel):
-    email: EmailStr
-    verification_code: str
+    Email: EmailStr
+    VerificationCode: str

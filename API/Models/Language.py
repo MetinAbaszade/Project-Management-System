@@ -3,7 +3,7 @@ from sqlalchemy import Column, String, Integer, Boolean
 from Db.session import Base
 
 class Language(Base):
-    __tablename__ = "languages"
+    __tablename__ = "Languages"
 
     Id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     LanguageName = Column(String(50), unique=True, nullable=False)

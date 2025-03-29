@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from sshtunnel import SSHTunnelForwarder
+from sqlalchemy import create_engine
 
 # Routers
 from Router.LanguageRouter import router as language_router
@@ -33,6 +35,7 @@ def init_db():
 @app.on_event("startup")
 def on_startup():
     init_db()
+
 
 # ✅ Health check route
 @app.get("/")

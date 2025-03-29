@@ -18,7 +18,6 @@ def create_language(
 
 @router.get("/", response_model=List[LanguageResponse], summary="Get all languages")
 def list_languages(languageService: LanguageService = Depends()):
-    print(f"Received request to send verification code to")
     return languageService.fetch_all_languages()
 
 @router.get("/{language_id}", response_model=LanguageResponse, summary="Get a specific language")

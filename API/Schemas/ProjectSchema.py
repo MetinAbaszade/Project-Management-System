@@ -11,40 +11,40 @@ from Models.projects import ProjectStatus
 #     Canceled = 'Canceled'
 
 class ProjectCreate(BaseModel):
-    name: str
-    description: Optional[str]
-    start_date: Optional[date]
-    end_date: Optional[date]
-    status: Optional[ProjectStatus] = ProjectStatus.Planning
-    budget: Optional[float]
-    is_public: Optional[bool] = False
-    estimated_hours: Optional[float]
+    Name: str
+    Description: Optional[str]
+    StartDate: Optional[date]
+    EndDate: Optional[date]
+    Status: Optional[ProjectStatus] = ProjectStatus.Planning
+    Budget: Optional[float]
+    IsPublic: Optional[bool] = False
+    EstimatedHours: Optional[float]
 
 class ProjectOut(BaseModel):
-    project_id: int
-    name: str
-    description: Optional[str]
-    start_date: Optional[date]
-    end_date: Optional[date]
-    status: ProjectStatus
-    budget: Optional[float]
-    budget_used: float
-    is_public: bool
-    created_at: datetime
-    updated_at: datetime
-    estimated_hours: Optional[float]
-    actual_hours: float
-    completion_percentage: float
-    owner_id: int
+    Id: int
+    Name: str
+    Description: Optional[str]
+    StartDate: Optional[date]
+    EndDate: Optional[date]
+    Status: ProjectStatus
+    Budget: Optional[float]
+    BudgetUsed: float
+    IsPublic: bool
+    CreatedAt: datetime
+    UpdatedAt: datetime
+    EstimatedHours: Optional[float]
+    ActualHours: float
+    CompletionPercentage: float
+    OwnerId: int
 
     class Config:
         orm_mode = True
 
+
 class ProjectMemberCreate(BaseModel):
-    user_id: int
-    role_in_project: str
-    member_type: str = "Collaborator"  # Optional with default
+    UserId: int
+    RoleInProject: str
+    MemberType: str = "Collaborator"  # Optional with default
 
     class Config:
         from_attributes = True  # Pydantic v2
-

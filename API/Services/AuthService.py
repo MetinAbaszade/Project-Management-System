@@ -6,12 +6,6 @@ from Dependencies.auth import verify_password, create_access_token
 # from Db.session import SessionLocal
 from Dependencies.db import get_db
 
-# def get_db():
-#     db = SessionLocal()
-#     try:
-#         yield db
-#     finally:
-#         db.close()
 
 class AuthService:
     def __init__(self, db: Session = Depends(get_db)):  # ✅ CORRECT
