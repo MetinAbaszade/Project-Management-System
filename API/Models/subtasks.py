@@ -1,8 +1,9 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Float, ForeignKey, Enum
-from sqlalchemy.orm import relationship
+import uuid
+from sqlalchemy import Boolean, Column, String, Text, DateTime, Float, ForeignKey, Enum
+from datetime import datetime
 from Db.session import Base
 import enum
-from datetime import datetime
+from sqlalchemy.orm import relationship
 
 class SubtaskStatus(enum.Enum):
     Todo = "Todo"
@@ -10,20 +11,21 @@ class SubtaskStatus(enum.Enum):
     Done = "Done"
 
 class Subtask(Base):
-    __tablename__ = "subtasks"
+    __tablename__ = "Subtasks"
+    Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    ParentTaskId = Column(String(36), ForeignKey("Tasks.Id"), nullable=False)
+    AssignedTo = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    Title = Column(String(100), nullable=False)
+    Description = Column(Text)
+    Status = Column(Enum(SubtaskStatus), default=SubtaskStatus.Todo)
+    EstimatedHours = Column(Float)
+    ActualHours = Column(Float, default=0)
+    CreatedAt = Column(DateTime, default=datetime.utcnow)
+    UpdatedAt = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    Deadline = Column(DateTime)
+    
+    IsDeleted = Column(Boolean, default=False)
 
-    subtask_id = Column(Integer, primary_key=True, autoincrement=True)
-    parent_task_id = Column(Integer, ForeignKey("tasks.task_id"), nullable=False)
-    assigned_to = Column(Integer, ForeignKey("users.user_id"), nullable=True)
-    title = Column(String(100), nullable=False)
-    description = Column(Text)
-    status = Column(Enum(SubtaskStatus), default=SubtaskStatus.Todo)
-    estimated_hours = Column(Float)
-    actual_hours = Column(Float, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    deadline = Column(DateTime)
-
-    # Relationships
-    parent_task = relationship("Task", backref="subtasks", foreign_keys=[parent_task_id])
-    assignee = relationship("User", foreign_keys=[assigned_to])
+    #test ede bilmedim, error cixsa parent_task a deyis.
+    ParentTask = relationship("Task", backref="Subtasks", foreign_keys=[ParentTaskId])
+    Assignee = relationship("User", foreign_keys=[AssignedTo])

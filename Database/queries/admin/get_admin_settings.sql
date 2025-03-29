@@ -1,2 +1,2 @@
 SELECT *
-FROM admin_settings;
+FROM AdminSettings;

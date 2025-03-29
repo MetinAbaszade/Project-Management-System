@@ -1,24 +1,25 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey
-from sqlalchemy.orm import relationship
-from Db.session import Base
+import uuid
+from sqlalchemy import Column, String, Text, DateTime, Boolean, ForeignKey
 from datetime import datetime
+from Db.session import Base
+from sqlalchemy.orm import relationship
 
 class Notification(Base):
-    __tablename__ = "notifications"
+    __tablename__ = "Notifications"
+    Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    UserId = Column(String(36), ForeignKey("Users.Id"), nullable=False)
+    Title = Column(String(100))
+    Content = Column(Text, nullable=False)
+    NotificationType = Column(String(50), nullable=False)
+    EntityType = Column(String(50))
+    EntityId = Column(String(36))
+    CreatedAt = Column(DateTime, default=datetime.utcnow)
+    IsRead = Column(Boolean, default=False)
+    ReadAt = Column(DateTime)
+    Link = Column(String(255))
+    SourceUserId = Column(String(36), ForeignKey("Users.Id"), nullable=True)
 
-    notification_id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
-    title = Column(String(100))
-    content = Column(Text, nullable=False)
-    notification_type = Column(String(50), nullable=False)
-    entity_type = Column(String(50))
-    entity_id = Column(Integer)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    is_read = Column(Boolean, default=False)
-    read_at = Column(DateTime)
-    link = Column(String(255))
-    source_user_id = Column(Integer, ForeignKey("users.user_id"), nullable=True)
+    IsDeleted = Column(Boolean, default=False)
 
-    # Relationships
-    user = relationship("User", foreign_keys=[user_id])
-    source_user = relationship("User", foreign_keys=[source_user_id])
+    User = relationship("User", foreign_keys=[UserId])
+    SourceUser = relationship("User", foreign_keys=[SourceUserId])

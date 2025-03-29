@@ -1,14 +1,15 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
-from Db.session import Base
+import uuid
+from sqlalchemy import Column, String, Integer, Boolean, DateTime
 from datetime import datetime
+from Db.session import Base
 
 class TaskType(Base):
-    __tablename__ = "task_types"
-
-    type_id = Column(Integer, primary_key=True, autoincrement=True)
-    type_name = Column(String(50), nullable=False, unique=True)
-    description = Column(String(255))
-    color = Column(String(7))
-    icon = Column(String(50))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    is_active = Column(Boolean, default=True)
+    __tablename__ = "TaskTypes"
+    Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    TypeName = Column(String(50), nullable=False, unique=True)
+    Description = Column(String(255))
+    Color = Column(String(7))
+    Icon = Column(String(50))
+    CreatedAt = Column(DateTime, default=datetime.utcnow)
+    IsDeleted = Column(Boolean, default=False)
+    

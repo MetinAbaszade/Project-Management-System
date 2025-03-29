@@ -1,21 +1,22 @@
-from sqlalchemy import Column, Integer, DateTime, ForeignKey, PrimaryKeyConstraint
-from sqlalchemy.orm import relationship
-from Db.session import Base
+import uuid
+from sqlalchemy import Boolean, Column, String, DateTime, ForeignKey, PrimaryKeyConstraint
 from datetime import datetime
+from Db.session import Base
+from sqlalchemy.orm import relationship
 
 class ProjectTeam(Base):
-    __tablename__ = "project_teams"
+    __tablename__ = "ProjectTeams"
+    ProjectId = Column(String(36), ForeignKey("Projects.Id"), nullable=False)
+    TeamId = Column(String(36), ForeignKey("Teams.Id"), nullable=False)
+    AssignedAt = Column(DateTime, default=datetime.utcnow)
+    AssignedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
 
-    project_id = Column(Integer, ForeignKey("projects.project_id"), nullable=False)
-    team_id = Column(Integer, ForeignKey("teams.team_id"), nullable=False)
-    assigned_at = Column(DateTime, default=datetime.utcnow)
-    assigned_by = Column(Integer, ForeignKey("users.user_id"), nullable=True)
-
+    
+    IsDeleted = Column(Boolean, default=False)
+    
     __table_args__ = (
-        PrimaryKeyConstraint('project_id', 'team_id'),
+        PrimaryKeyConstraint('ProjectId', 'TeamId'),
     )
-
-    # Relationships
-    project = relationship("Project", backref="project_teams", foreign_keys=[project_id])
-    team = relationship("Team", backref="project_teams", foreign_keys=[team_id])
-    assigner = relationship("User", foreign_keys=[assigned_by])
+    Project = relationship("Project", backref="ProjectTeams", foreign_keys=[ProjectId])
+    Team = relationship("Team", backref="ProjectTeams", foreign_keys=[TeamId])
+    Assigner = relationship("User", foreign_keys=[AssignedBy])

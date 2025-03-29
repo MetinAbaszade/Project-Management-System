@@ -1,6 +1,5 @@
--- seeds.sql
 -- Insert default languages
-INSERT IGNORE INTO languages (language_name, language_code, display_order) VALUES
+INSERT IGNORE INTO Languages (LanguageName, LanguageCode, DisplayOrder) VALUES
 ('JavaScript', 'js', 1),
 ('Python', 'py', 2),
 ('Java', 'java', 3),
@@ -13,7 +12,7 @@ INSERT IGNORE INTO languages (language_name, language_code, display_order) VALUE
 ('Kotlin', 'kt', 10);
 
 -- Insert default admin settings
-INSERT IGNORE INTO admin_settings (setting_key, setting_value, category, description, data_type) VALUES
+INSERT IGNORE INTO AdminSettings (SettingKey, SettingValue, Category, Description, DataType) VALUES
 ('default_task_due_days', '7', 'tasks', 'Default number of days for task deadlines', 'number'),
 ('allow_public_projects', 'false', 'security', 'Allow projects to be publicly viewable', 'boolean'),
 ('max_file_size_mb', '10', 'uploads', 'Maximum file size for uploads in MB', 'number'),

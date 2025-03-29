@@ -1,28 +1,30 @@
-from sqlalchemy import Column, Integer, DateTime, ForeignKey, Enum, PrimaryKeyConstraint
-from sqlalchemy.orm import relationship
-from Db.session import Base
+import uuid
+from sqlalchemy import Boolean, Column, String, DateTime, ForeignKey, PrimaryKeyConstraint, Enum
 from datetime import datetime
+from Db.session import Base
 import enum
+from sqlalchemy.orm import relationship
 
 class DependencyType(enum.Enum):
     Blocks = "Blocks"
-    IsBlockedBy = "Is blocked by"
-    RelatesTo = "Relates to"
+    Is_blocked_by = "Is blocked by"
+    Relates_to = "Relates to"
 
 class TaskDependency(Base):
-    __tablename__ = "task_dependencies"
-
-    task_id = Column(Integer, ForeignKey("tasks.task_id"), nullable=False)
-    dependent_task_id = Column(Integer, ForeignKey("tasks.task_id"), nullable=False)
-    dependency_type = Column(Enum(DependencyType), default=DependencyType.Blocks)
-    created_by = Column(Integer, ForeignKey("users.user_id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
+    __tablename__ = "TaskDependencies"
+    TaskId = Column(String(36), ForeignKey("Tasks.Id"), nullable=False)
+    DependentTaskId = Column(String(36), ForeignKey("Tasks.Id"), nullable=False)
+    DependencyType = Column(Enum(DependencyType), default=DependencyType.Blocks)
+    CreatedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    CreatedAt = Column(DateTime, default=datetime.utcnow)
+    
+    IsDeleted = Column(Boolean, default=False)
+    
     __table_args__ = (
-        PrimaryKeyConstraint('task_id', 'dependent_task_id'),
+        PrimaryKeyConstraint('TaskId', 'DependentTaskId'),
     )
+    task = relationship("Task", foreign_keys=[TaskId], backref="Dependencies")
 
-    # Relationships
-    task = relationship("Task", foreign_keys=[task_id], backref="dependencies")
-    dependent_task = relationship("Task", foreign_keys=[dependent_task_id])
-    creator = relationship("User", foreign_keys=[created_by])
+    #error cixsa dependent_task a deyis
+    DependentTask = relationship("Task", foreign_keys=[DependentTaskId])
+    Creator = relationship("User", foreign_keys=[CreatedBy])

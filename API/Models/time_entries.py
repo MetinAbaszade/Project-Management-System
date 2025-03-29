@@ -1,25 +1,27 @@
-from sqlalchemy import Column, Integer, Float, Date, Time, Text, Boolean, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
-from Db.session import Base
+import uuid
+from sqlalchemy import Column, String, Float, Date, Time, Text, Boolean, DateTime, ForeignKey
 from datetime import datetime
+from Db.session import Base
+from sqlalchemy.orm import relationship
 
 class TimeEntry(Base):
-    __tablename__ = "time_entries"
-
-    time_entry_id = Column(Integer, primary_key=True, autoincrement=True)
-    task_id = Column(Integer, ForeignKey("tasks.task_id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
-    time_spent = Column(Float, nullable=False)
-    entry_date = Column(Date, nullable=False)
-    start_time = Column(Time)
-    end_time = Column(Time)
-    description = Column(Text)
-    billable = Column(Boolean, default=True)
-    approved_by = Column(Integer, ForeignKey("users.user_id"), nullable=True)
-    approved_at = Column(DateTime)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
+    __tablename__ = "TimeEntries"
+    Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    TaskId = Column(String(36), ForeignKey("Tasks.Id"), nullable=False)
+    UserId = Column(String(36), ForeignKey("Users.Id"), nullable=False)
+    TimeSpent = Column(Float, nullable=False)
+    EntryDate = Column(Date, nullable=False)
+    StartTime = Column(Time)
+    EndTime = Column(Time)
+    Description = Column(Text)
+    Billable = Column(Boolean, default=True)
+    ApprovedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    ApprovedAt = Column(DateTime)
+    CreatedAt = Column(DateTime, default=datetime.utcnow)
+    
+    IsDeleted = Column(Boolean, default=False)
+    
     # Relationships
-    task = relationship("Task", backref="time_entries", foreign_keys=[task_id])
-    user = relationship("User", foreign_keys=[user_id])
-    approver = relationship("User", foreign_keys=[approved_by])
+    Task = relationship("Task", backref="TimeEntries", foreign_keys=[TaskId])
+    User = relationship("User", foreign_keys=[UserId])
+    Approver = relationship("User", foreign_keys=[ApprovedBy])

@@ -3,73 +3,76 @@ DELIMITER //
 -- Create a new project
 DROP PROCEDURE IF EXISTS sp_create_project;
 CREATE PROCEDURE sp_create_project (
-    IN p_name VARCHAR(100),
-    IN p_description TEXT,
-    IN p_start_date DATE,
-    IN p_end_date DATE,
-    IN p_status ENUM('Planning','Active','On Hold','Completed','Canceled'),
-    IN p_budget DECIMAL(15,2),
-    IN p_owner_id INT,
-    IN p_is_public BOOLEAN,
-    IN p_estimated_hours FLOAT
+    IN p_Name VARCHAR(100),
+    IN p_Description TEXT,
+    IN p_StartDate DATE,
+    IN p_EndDate DATE,
+    IN p_Status ENUM('Planning','Active','On Hold','Completed','Canceled'),
+    IN p_Budget DECIMAL(15,2),
+    IN p_OwnerId CHAR(36),
+    IN p_IsPublic BOOLEAN,
+    IN p_EstimatedHours FLOAT
 )
 BEGIN
-    INSERT INTO projects 
-      (name, description, start_date, end_date, status, budget, owner_id, is_public, estimated_hours)
+    INSERT INTO Projects 
+      (Name, Description, StartDate, EndDate, Status, Budget, OwnerId, IsPublic, EstimatedHours)
     VALUES 
-      (p_name, p_description, p_start_date, p_end_date, p_status, p_budget, p_owner_id, p_is_public, p_estimated_hours);
+      (p_Name, p_Description, p_StartDate, p_EndDate, p_Status, p_Budget, p_OwnerId, p_IsPublic, p_EstimatedHours);
 END;
 //
 
 -- Update an existing project
 DROP PROCEDURE IF EXISTS sp_update_project;
 CREATE PROCEDURE sp_update_project (
-    IN p_project_id INT,
-    IN p_name VARCHAR(100),
-    IN p_description TEXT,
-    IN p_status ENUM('Planning','Active','On Hold','Completed','Canceled')
+    IN p_ProjectId CHAR(36),
+    IN p_Name VARCHAR(100),
+    IN p_Description TEXT,
+    IN p_Status ENUM('Planning','Active','On Hold','Completed','Canceled')
 )
 BEGIN
-    UPDATE projects 
-    SET name = p_name,
-        description = p_description,
-        status = p_status,
-        updated_at = CURRENT_TIMESTAMP
-    WHERE project_id = p_project_id;
+    UPDATE Projects 
+    SET Name = p_Name,
+        Description = p_Description,
+        Status = p_Status,
+        UpdatedAt = CURRENT_TIMESTAMP
+    WHERE Id = p_ProjectId;
 END;
 //
 
--- Delete a project
+-- Soft-delete a project (set IsDeleted to 1)
 DROP PROCEDURE IF EXISTS sp_delete_project;
 CREATE PROCEDURE sp_delete_project (
-    IN p_project_id INT
+    IN p_ProjectId CHAR(36)
 )
 BEGIN
-    DELETE FROM projects WHERE project_id = p_project_id;
+    UPDATE Projects 
+    SET IsDeleted = 1,
+        UpdatedAt = CURRENT_TIMESTAMP
+    WHERE Id = p_ProjectId;
 END;
 //
 
 -- Create a new task
 DROP PROCEDURE IF EXISTS sp_create_task;
 CREATE PROCEDURE sp_create_task (
-    IN p_project_id INT,
-    IN p_title VARCHAR(100),
-    IN p_description TEXT,
-    IN p_type INT,
-    IN p_priority ENUM('Low','Medium','High','Critical'),
-    IN p_status ENUM('Backlog','Todo','InProgress','Review','Done'),
-    IN p_created_by INT,
-    IN p_assigned_to INT,
-    IN p_deadline DATETIME,
-    IN p_estimated_hours FLOAT,
-    IN p_is_billable BOOLEAN
+    IN p_ProjectId CHAR(36),
+    IN p_Title VARCHAR(100),
+    IN p_Description TEXT,
+    IN p_Type CHAR(36),
+    IN p_Priority ENUM('Low','Medium','High','Critical'),
+    IN p_Status ENUM('Backlog','Todo','InProgress','Review','Done'),
+    IN p_CreatedBy CHAR(36),
+    IN p_AssignedTo CHAR(36),
+    IN p_Deadline DATETIME,
+    IN p_EstimatedHours FLOAT,
+    IN p_IsBillable BOOLEAN
 )
 BEGIN
-    INSERT INTO tasks (
-      project_id, title, description, type, priority, status, created_by, assigned_to, deadline, estimated_hours, is_billable
+    INSERT INTO Tasks (
+      ProjectId, Title, Description, Type, Priority, Status, CreatedBy, AssignedTo, Deadline, EstimatedHours, IsBillable
     )
     VALUES (
-      p_project_id, p_title, p_description, p_type, p_priority, p_status, p_created_by, p_assigned_to, p_deadline, p_estimated_hours, p_is_billable
+      p_ProjectId, p_Title, p_Description, p_Type, p_Priority, p_Status, p_CreatedBy, p_AssignedTo, p_Deadline, p_EstimatedHours, p_IsBillable
     );
 END;
 //

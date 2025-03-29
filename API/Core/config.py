@@ -9,24 +9,23 @@ from sqlalchemy.engine.url import URL
 #     "password": "YU3TIV",  # Your MySQL password
 #     "database": "Team7",  # Your database name
 # }
-
-DATABASE_CONFIG_LOCALHOST = {
-    "drivername": "mysql+pymysql",
-    "host": "localhost",
-    "port": "3306",
-    "username": "gbabayev",  
-    "password": "1892",  
-    "database": "ProjectManagement",  
-}
-
 # DATABASE_CONFIG_LOCALHOST = {
 #     "drivername": "mysql+pymysql",
 #     "host": "localhost",
 #     "port": "3306",
-#     "username": "gabilmajidov",  
-#     "password": "11221122",  
-#     "database": "Taskup",  
+#     "username": "gbabayev",  
+#     "password": "1892",  
+#     "database": "ProjectManagement",  
 # }
+
+DATABASE_CONFIG_LOCALHOST = {
+     "drivername": "mysql+pymysql",
+     "host": "localhost",
+     "port": "3306",
+     "username": "gabilmajidov",  
+     "password": "11221122",  
+     "database": "Taskup",  
+}
 
 DATABASE_CONFIG_SERVER = {
     "drivername": "mysql+pymysql",
