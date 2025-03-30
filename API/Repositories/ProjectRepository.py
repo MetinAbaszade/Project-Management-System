@@ -4,42 +4,39 @@ from Schemas.ProjectSchema import ProjectCreate, ProjectMemberCreate
 from Models.projects import Project
 from Models.project_members import ProjectMember
 
-def create_project(db: Session, project_data: ProjectCreate, owner_id: int):
-    new_project = Project(
-        name=project_data.name,
-        description=project_data.description,
-        start_date=project_data.start_date,
-        end_date=project_data.end_date,
-        status=project_data.status,
-        budget=project_data.budget,
-        is_public=project_data.is_public,
-        estimated_hours=project_data.estimated_hours,
-        owner_id=owner_id
+def CreateProject(db: Session, projectData: ProjectCreate, ownerId: int):
+    newProject = Project(
+        Name=projectData.Name,
+        Description=projectData.Description,
+        StartDate=projectData.StartDate,
+        EndDate=projectData.EndDate,
+        Status=projectData.Status,
+        Budget=projectData.Budget,
+        IsPublic=projectData.IsPublic,
+        EstimatedHours=projectData.EstimatedHours,
+        OwnerId=ownerId
     )
-    db.add(new_project)
+    db.add(newProject)
     db.commit()
-    db.refresh(new_project)
-    return new_project
+    db.refresh(newProject)
+    return newProject
 
 
-def get_projects_by_user(db: Session, user_id: int):
-    # Get owned projects
-    owned_projects = db.query(Project).filter(Project.owner_id == user_id)
+def GetProjectsByUser(db: Session, userId: int):
+    ownedProjects = db.query(Project).filter(Project.OwnerId == userId)
 
-    # Get member projects
-    member_project_ids = db.query(ProjectMember.project_id).filter(ProjectMember.user_id == user_id)
-    member_projects = db.query(Project).filter(Project.project_id.in_(member_project_ids))
+    memberProjectIds = db.query(ProjectMember.ProjectId).filter(ProjectMember.UserId == userId)
+    memberProjects = db.query(Project).filter(Project.Id.in_(memberProjectIds))
 
-    # Union both queries
-    return owned_projects.union(member_projects).all()
+    return ownedProjects.union(memberProjects).all()
 
 
-def add_member_to_project(db: Session, project_id: int, member_data: ProjectMemberCreate):
+def AddMemberToProject(db: Session, ProjectId: int, MemberData: ProjectMemberCreate):
     member = ProjectMember(
-        project_id=project_id,
-        user_id=member_data.user_id,
-        role_in_project=member_data.role_in_project,
-        member_type=member_data.member_type
+        projectId=ProjectId,
+        userId=MemberData.UserId,
+        roleInProject=MemberData.RoleInProject,
+        memberType=MemberData.MemberType
     )
     db.add(member)
     db.commit()

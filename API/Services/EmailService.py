@@ -17,7 +17,7 @@ class EmailService:
         self.sender_email = "abaszadamatin@gmail.com"
         self.sender_password = "kist anui czqz dery"
 
-    def send_email(self, recipient_email: str, subject: str, body: str):
+    def SendEmail(self, recipient_email: str, subject: str, body: str):
         """ Sends an email to the recipient. """
         try:
             msg = MIMEMultipart()
@@ -35,11 +35,11 @@ class EmailService:
         except Exception as e:
             print(f"Failed to send email: {e}")
 
-    def generate_verification_code(self) -> str:
+    def GenerateVerificationCode(self) -> str:
         """ Generates a 6-digit random verification code. """
         return "".join(random.choices(string.digits, k=6))
 
-    def generate_verification_email(self, verification_code: str) -> str:
+    def GenerateVerificationEmail(self, verification_code: str) -> str:
         """ Generates an email body with the verification code. """
         return f"""
         <html>
@@ -51,7 +51,7 @@ class EmailService:
         </html>
         """
 
-    def send_verification_code(self, recipient_email: str) -> ResponseDTO:
+    def SendVerificationCode(self, recipientEmail: str) -> ResponseDTO:
         """ Sends a verification email and stores the code in memory for 2 minutes. """
         print("Inside send_verification_code")
         print(self.cache)
@@ -67,19 +67,19 @@ class EmailService:
 
         return ResponseDTO(success=True, message="Verification code sent successfully")
 
-    def can_request_verification_code(self, email: str) -> bool:
+    def CanRequestVerificationCode(self, email: str) -> bool:
         """ Checks if a verification code can be requested. Returns False if a code exists in cache. """
         if email in self.cache:
             print(f"Request blocked: A verification code was recently sent to {email}. Wait for expiration.")
             return False
         return True
 
-    def store_verification_code_in_cache(self, email: str, verification_code: str):
+    def StoreVerificationCodeInCache(self, email: str, verification_code: str):
         """ Stores the verification code in memory with a 2-minute expiration. """
         self.cache[email] = verification_code
         print(f"Stored verification code for {email}: {verification_code} (expires in 2 minutes)")
 
-    def check_verification_code(self, verification_code_dto: CheckVerificationCodeDTO) -> ResponseDTO:
+    def CheckVerificationCode(self, verificationCodeDto: CheckVerificationCodeDTO) -> ResponseDTO:
         """ Validates the user's verification code. """
         email = verification_code_dto.email
         provided_code = verification_code_dto.verification_code

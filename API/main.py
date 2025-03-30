@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from sshtunnel import SSHTunnelForwarder
 from sqlalchemy import create_engine
+from Models import *
 
 # Routers
 from Router.LanguageRouter import router as language_router

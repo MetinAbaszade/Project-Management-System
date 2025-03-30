@@ -1,14 +1,8 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional
 from datetime import date, datetime
 from Models.projects import ProjectStatus
-
-# class ProjectStatus(str, Enum):
-#     Planning = 'Planning'
-#     Active = 'Active'
-#     OnHold = 'On Hold'
-#     Completed = 'Completed'
-#     Canceled = 'Canceled'
+from uuid import UUID
 
 class ProjectCreate(BaseModel):
     Name: str
@@ -20,8 +14,21 @@ class ProjectCreate(BaseModel):
     IsPublic: Optional[bool] = False
     EstimatedHours: Optional[float]
 
+    @model_validator(mode="after")
+    def check_dates(cls, values):
+        start_date = values.get("StartDate")
+        end_date = values.get("EndDate")
+
+        if start_date and end_date:
+            if start_date == end_date:
+                raise ValueError("StartDate and EndDate cannot be the same.")
+            if start_date > end_date:
+                raise ValueError("StartDate cannot be after EndDate.")
+
+        return values
+
 class ProjectOut(BaseModel):
-    Id: int
+    Id: UUID
     Name: str
     Description: Optional[str]
     StartDate: Optional[date]
@@ -35,16 +42,16 @@ class ProjectOut(BaseModel):
     EstimatedHours: Optional[float]
     ActualHours: float
     CompletionPercentage: float
-    OwnerId: int
+    OwnerId: UUID
 
     class Config:
         orm_mode = True
 
 
 class ProjectMemberCreate(BaseModel):
-    UserId: int
+    UserId: UUID
     RoleInProject: str
-    MemberType: str = "Collaborator"  # Optional with default
+    MemberType: str = "Collaborator" 
 
     class Config:
-        from_attributes = True  # Pydantic v2
+        from_attributes = True  

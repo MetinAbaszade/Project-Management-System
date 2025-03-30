@@ -7,53 +7,53 @@ from fastapi.security.api_key import APIKeyHeader
 
 from sqlalchemy.orm import Session
 from Models.Users import User
-from Dependencies.db import get_db
+from Dependencies.db import GetDb
 
 # Secure password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+PWD_CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+def HashPassword(password: str) -> str:
+    return PWD_CONTEXT.hash(password)
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+def VerifyPassword(plainPassword: str, hashedPassword: str) -> bool:
+    return PWD_CONTEXT.verify(plainPassword, hashedPassword)
 
 # JWT Configuration
 SECRET_KEY = "Qabil_Fonzi_AAAIIYYY"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-def create_access_token(data: dict, expires_delta: timedelta = None):
-    to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+def CreateAccessToken(data: dict, expiresDelta: timedelta = None):
+    toEncode = data.copy()
+    expire = datetime.now(timezone.utc) + (expiresDelta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    toEncode.update({"exp": expire})
+    return jwt.encode(toEncode, SECRET_KEY, algorithm=ALGORITHM)
 
 api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
 
-def get_current_user(token: str = Security(api_key_header), db: Session = Depends(get_db)) -> User:
-    credentials_exception = HTTPException(
+def GetCurrentUser(token: str = Security(api_key_header), db: Session = Depends(GetDb)) -> User:
+    credentialsException = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials.",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
     if not token:
-        raise credentials_exception  # ✅ this prevents jwt.decode(None, ...) crash
+        raise credentialsException  
 
     if token.startswith("Bearer "):
         token = token.split(" ", 1)[1]
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            raise credentials_exception
+        userId: str = payload.get("sub")
+        if userId is None:
+            raise credentialsException
     except JWTError:
-        raise credentials_exception
+        raise credentialsException
 
-    user = db.query(User).filter(User.Id == user_id).first()
+    user = db.query(User).filter(User.Id == userId).first()
     if user is None:
-        raise credentials_exception
+        raise credentialsException
 
     return user
