@@ -15,7 +15,8 @@ class ProjectLanguage(Base):
     
     Notes = Column(Text)
     __table_args__ = (
-        # lazim olsa uncomment edin 
+        # lazim olsa uncomment edin
+        # oldu brat - Matin Abaszada 👍🏿
 
         # UniqueConstraint('ProjectId', 'LanguageId', name='UniqueProjLang'),
     )
