@@ -1,20 +1,20 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
-from Db.session import Base
+import uuid
+from sqlalchemy import Boolean, Column, String, Integer, Text, DateTime, ForeignKey
 from datetime import datetime
+from Db.session import Base
+from sqlalchemy.orm import relationship
 
 class TaskStatusHistory(Base):
-    __tablename__ = "task_status_history"
-
-    history_id = Column(Integer, primary_key=True, autoincrement=True)
-    task_id = Column(Integer, ForeignKey("tasks.task_id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=True)
-    old_status = Column(String(20), nullable=False)
-    new_status = Column(String(20), nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow)
-    notes = Column(Text)
-    time_in_status = Column(Integer)
-
-    # Relationships
-    task = relationship("Task", backref="status_history", foreign_keys=[task_id])
-    user = relationship("User", foreign_keys=[user_id])
+    __tablename__ = "TaskStatusHistory"
+    Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    TaskId = Column(String(36), ForeignKey("Tasks.Id"), nullable=False)
+    UserId = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    OldStatus = Column(String(20), nullable=False)
+    NewStatus = Column(String(20), nullable=False)
+    UpdatedAt = Column(DateTime, default=datetime.utcnow)
+    Notes = Column(Text)
+    TimeInStatus = Column(Integer)
+    Task = relationship("Task", backref="StatusHistory", foreign_keys=[TaskId])
+    User = relationship("User", foreign_keys=[UserId])
+    
+    IsDeleted = Column(Boolean, default=False)

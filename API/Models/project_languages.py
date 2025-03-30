@@ -1,20 +1,23 @@
-from sqlalchemy import Column, Integer, Float, Text, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship
+import uuid
+from sqlalchemy import Boolean, Column, String, Float, Text, ForeignKey, PrimaryKeyConstraint
 from Db.session import Base
+from datetime import datetime
+from sqlalchemy.orm import relationship
 
 class ProjectLanguage(Base):
-    __tablename__ = "project_languages"
+    __tablename__ = "ProjectLanguages"
+    Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    ProjectId = Column(String(36), ForeignKey("Projects.Id"), nullable=False)
+    LanguageId = Column(String(36), ForeignKey("Languages.Id"), nullable=False)
+    UsagePercentage = Column(Float, default=0)
 
-    project_language_id = Column(Integer, primary_key=True, autoincrement=True)
-    project_id = Column(Integer, ForeignKey("projects.project_id"), nullable=False)
-    language_id = Column(Integer, ForeignKey("languages.language_id"), nullable=False)
-    usage_percentage = Column(Float, default=0)
-    notes = Column(Text)
-
+    IsDeleted = Column(Boolean, default=False)
+    
+    Notes = Column(Text)
     __table_args__ = (
-        UniqueConstraint('project_id', 'language_id', name='unique_proj_lang'),
-    )
+        # lazim olsa uncomment edin 
 
-    # Relationships
-    project = relationship("Project", backref="project_languages", foreign_keys=[project_id])
-    language = relationship("Language", backref="project_languages", foreign_keys=[language_id])
+        # UniqueConstraint('ProjectId', 'LanguageId', name='UniqueProjLang'),
+    )
+    Project = relationship("Project", backref="ProjectLanguages", foreign_keys=[ProjectId])
+    Language = relationship("Language", backref="ProjectLanguages", foreign_keys=[LanguageId])

@@ -1,25 +1,28 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
-from datetime import datetime, timezone
+import uuid
+from sqlalchemy import Column, String, DateTime, Boolean, Integer
+from datetime import datetime
 from Db.session import Base
 from sqlalchemy.orm import relationship
 
 class User(Base):
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True, index=True)
-    first_name = Column(String(50), index=True, nullable=False)
-    last_name = Column(String(50), index=True, nullable=False)
-    email = Column(String(100), unique=True, index=True, nullable=False)
-    hashed_password = Column(String(255), nullable=False)
-
-    is_active = Column(Boolean, default=True, nullable=False)
-    image_url = Column(String(255), nullable=True)
-
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc)) 
-    last_login = Column(DateTime, nullable=True)
-
-    reset_token = Column(String(255), nullable=True, unique=True)
-    reset_token_expires = Column(DateTime, nullable=True)
-
-    # ✅ Relationship goes here — inside the class!
-    projects_owned = relationship("Project", back_populates="owner")
+    __tablename__ = "Users"
+    Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    FirstName = Column(String(50), nullable=False)
+    LastName = Column(String(50), nullable=False)
+    Email = Column(String(100), nullable=False, unique=True)
+    Password = Column(String(255), nullable=False)
+    ImageUrl = Column(String(255))
+    CreatedAt = Column(DateTime, default=datetime.utcnow)
+    LastLogin = Column(DateTime)
+    ResetToken = Column(String(255))
+    ResetTokenExpires = Column(DateTime)
+    LoginAttempts = Column(Integer, default=0)
+    LastPasswordChange = Column(DateTime)
+    RequirePasswordChange = Column(Boolean, default=False)
+    
+    IsDeleted = Column(Boolean, default=False)
+    ProjectsOwned = relationship("Project", back_populates="owner")
+    
+    #gpt projects.py da define ele demisdi 
+    #error cixa biler 
+    # Qozumuzaki -- matin, gazanfar

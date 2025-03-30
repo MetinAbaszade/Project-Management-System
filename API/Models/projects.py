@@ -1,50 +1,36 @@
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    Text,
-    Date,
-    Enum,
-    DECIMAL,
-    Boolean,
-    DateTime,
-    Float,
-    ForeignKey,
-    text  # ✅ Needed for CURRENT_TIMESTAMP default
-)
-from sqlalchemy.orm import relationship
+import uuid
+from sqlalchemy import Column, String, Text, Date, Enum, DECIMAL, Boolean, DateTime, Float, ForeignKey, text
+from datetime import datetime
 from Db.session import Base
 import enum
+from sqlalchemy.orm import relationship
 
-# ✅ Enum for project status
 class ProjectStatus(enum.Enum):
     Planning = 'Planning'
     Active = 'Active'
-    OnHold = 'On Hold'
+    On_Hold = 'On Hold'
     Completed = 'Completed'
     Canceled = 'Canceled'
 
 class Project(Base):
-    __tablename__ = "projects"
+    __tablename__ = "Projects"
+    Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    Name = Column(String(100), nullable=False)
+    Description = Column(Text)
+    StartDate = Column(Date)
+    EndDate = Column(Date)
+    Status = Column(Enum(ProjectStatus), default=ProjectStatus.Planning)
+    Budget = Column(DECIMAL(15, 2))
+    BudgetUsed = Column(DECIMAL(15, 2), default=0)
+    OwnerId = Column(String(36), ForeignKey("Users.Id"), nullable=False)
+    IsPublic = Column(Boolean, default=False)
+    CreatedAt = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
+    UpdatedAt = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"), server_onupdate=text("CURRENT_TIMESTAMP"))
+    EstimatedHours = Column(Float)
+    ActualHours = Column(Float, default=0)
+    CompletionPercentage = Column(Float, default=0)
+    owner = relationship("User", back_populates="ProjectsOwned", foreign_keys=[OwnerId])
+    
+    IsDeleted = Column(Boolean, default=False)
 
-    project_id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(100), nullable=False)
-    description = Column(Text)
-    start_date = Column(Date)
-    end_date = Column(Date)
-    status = Column(Enum(ProjectStatus), default=ProjectStatus.Planning)
-    budget = Column(DECIMAL(15, 2))
-    budget_used = Column(DECIMAL(15, 2), default=0)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # ✅ Matches your User model now
-    is_public = Column(Boolean, default=False)
 
-    # ✅ FIXED TIMESTAMP DEFAULTS
-    created_at = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
-    updated_at = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"), server_onupdate=text("CURRENT_TIMESTAMP"))
-
-    estimated_hours = Column(Float)
-    actual_hours = Column(Float, default=0)
-    completion_percentage = Column(Float, default=0)
-
-    # ✅ Relationship to User
-    owner = relationship("User", back_populates="projects_owned", foreign_keys=[owner_id])

@@ -1,50 +1,57 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional
 from datetime import date, datetime
 from Models.projects import ProjectStatus
-
-# class ProjectStatus(str, Enum):
-#     Planning = 'Planning'
-#     Active = 'Active'
-#     OnHold = 'On Hold'
-#     Completed = 'Completed'
-#     Canceled = 'Canceled'
+from uuid import UUID
 
 class ProjectCreate(BaseModel):
-    name: str
-    description: Optional[str]
-    start_date: Optional[date]
-    end_date: Optional[date]
-    status: Optional[ProjectStatus] = ProjectStatus.Planning
-    budget: Optional[float]
-    is_public: Optional[bool] = False
-    estimated_hours: Optional[float]
+    Name: str
+    Description: Optional[str]
+    StartDate: Optional[date]
+    EndDate: Optional[date]
+    Status: Optional[ProjectStatus] = ProjectStatus.Planning
+    Budget: Optional[float]
+    IsPublic: Optional[bool] = False
+    EstimatedHours: Optional[float]
+
+    @model_validator(mode="after")
+    def check_dates(cls, values):
+        start_date = values.get("StartDate")
+        end_date = values.get("EndDate")
+
+        if start_date and end_date:
+            if start_date == end_date:
+                raise ValueError("StartDate and EndDate cannot be the same.")
+            if start_date > end_date:
+                raise ValueError("StartDate cannot be after EndDate.")
+
+        return values
 
 class ProjectOut(BaseModel):
-    project_id: int
-    name: str
-    description: Optional[str]
-    start_date: Optional[date]
-    end_date: Optional[date]
-    status: ProjectStatus
-    budget: Optional[float]
-    budget_used: float
-    is_public: bool
-    created_at: datetime
-    updated_at: datetime
-    estimated_hours: Optional[float]
-    actual_hours: float
-    completion_percentage: float
-    owner_id: int
+    Id: UUID
+    Name: str
+    Description: Optional[str]
+    StartDate: Optional[date]
+    EndDate: Optional[date]
+    Status: ProjectStatus
+    Budget: Optional[float]
+    BudgetUsed: float
+    IsPublic: bool
+    CreatedAt: datetime
+    UpdatedAt: datetime
+    EstimatedHours: Optional[float]
+    ActualHours: float
+    CompletionPercentage: float
+    OwnerId: UUID
 
     class Config:
         orm_mode = True
 
+
 class ProjectMemberCreate(BaseModel):
-    user_id: int
-    role_in_project: str
-    member_type: str = "Collaborator"  # Optional with default
+    UserId: UUID
+    RoleInProject: str
+    MemberType: str = "Collaborator" 
 
     class Config:
-        from_attributes = True  # Pydantic v2
-
+        from_attributes = True  

@@ -5,13 +5,13 @@ from Schemas.AuthSchema import RegisterSchema, LoginSchema
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.get("/test")
-def test_auth():
+def TestAuth():
     return {"message": "Authentication API is working!"}
 
 @router.post("/register")
-def register_user(user_data: RegisterSchema, auth_service: AuthService = Depends()):
-    return auth_service.register_user(user_data)
+def RegisterUser(userData: RegisterSchema, authService: AuthService = Depends()):
+    return authService.RegisterUser(userData)
 
 @router.post("/login")
-def login_user(user_data: LoginSchema, auth_service: AuthService = Depends()):
-    return auth_service.login_user(user_data)
+def LoginUser(userData: LoginSchema, authService: AuthService = Depends()):
+    return authService.LoginUser(userData)

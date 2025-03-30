@@ -1,16 +1,18 @@
 from pydantic import BaseModel
+import uuid
+
 
 class LanguageBase(BaseModel):
-    language_name: str
-    language_code: str
-    is_active: bool = True
-    display_order: int = 0
+    LanguageName: str
+    LanguageCode: str
+    IsDeleted: bool = True
+    DisplayOrder: int = 0
 
 class LanguageCreate(LanguageBase):
     pass
 
 class LanguageResponse(LanguageBase):
-    language_id: int
+    Id: uuid.UUID
 
     class Config:
         from_attributes = True
