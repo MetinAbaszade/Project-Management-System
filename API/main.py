@@ -1,8 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from sshtunnel import SSHTunnelForwarder
-from sqlalchemy import create_engine
 from Models import *
 
 # Routers
@@ -31,6 +29,7 @@ app.add_middleware(
 
 # ✅ Create tables
 def init_db():
+    print(Base.metadata.tables.keys())
     Base.metadata.create_all(bind=engine)
 
 @app.on_event("startup")

@@ -4,13 +4,13 @@ from .board_columns import *
 from .boards import *
 from .comments import *
 from .labels import *
-from .language import *
 from .notifications import *
+from .projects import *
+from .Language import *
 from .project_attachments import *
 from .project_languages import *
 from .project_members import *
 from .project_teams import *
-from .projects import *
 from .roles import *
 from .sprint_tasks import *
 from .sprints import *
@@ -20,3 +20,9 @@ from .task_attachments import *
 from .task_dependencies import *
 from .task_labels import *
 from .task_status_history import *
+from .task_types import *
+from .tasks import *
+from .team_members import *
+from .teams import *
+from .time_entries import *
+from .Users import *
