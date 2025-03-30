@@ -1,21 +1,22 @@
 from Repositories import ProjectRepository
 from Schemas.ProjectSchema import ProjectCreate, ProjectMemberCreate
 from sqlalchemy.orm import Session
-from Dependencies.db import get_db
+from Dependencies.db import GetDb
 from fastapi import Depends
+from uuid import UUID
 
 
 class ProjectService:
-    def __init__(self, db: Session = Depends(get_db)):
+    def __init__(self, db: Session = Depends(GetDb)):
         self.db = db
 
-    def create_project(self, project_data: ProjectCreate, owner_id: int):
-        return ProjectRepository.create_project(self.db, project_data, owner_id)
+    def CreateProject(self, projectData: ProjectCreate, ownerId: UUID):
+        return ProjectRepository.CreateProject(self.db, projectData, ownerId)
     
-    def get_user_projects(self, db: Session, user_id: int):
-        return ProjectRepository.get_projects_by_user(db, user_id)
+    def GetUserProjects(self, db: Session, userId: UUID):
+        return ProjectRepository.GetProjectsByUser(db, userId)
 
-    def add_project_member(self, project_id: int, member_data: ProjectMemberCreate):
-        return ProjectRepository.add_member_to_project(self.db, project_id, member_data)
+    def AddProjectMember(self, projectId: UUID, memberData: ProjectMemberCreate):
+        return ProjectRepository.AddMemberToProject(self.db, projectId, memberData)
 
 

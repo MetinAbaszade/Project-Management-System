@@ -12,7 +12,6 @@ class User(Base):
     Email = Column(String(100), nullable=False, unique=True)
     Password = Column(String(255), nullable=False)
     ImageUrl = Column(String(255))
-    IsActive = Column(Boolean, default=True)
     CreatedAt = Column(DateTime, default=datetime.utcnow)
     LastLogin = Column(DateTime)
     ResetToken = Column(String(255))
@@ -22,7 +21,8 @@ class User(Base):
     RequirePasswordChange = Column(Boolean, default=False)
     
     IsDeleted = Column(Boolean, default=False)
+    ProjectsOwned = relationship("Project", back_populates="owner")
     
     #gpt projects.py da define ele demisdi 
     #error cixa biler 
-User.ProjectsOwned = relationship("Project", back_populates="owner")
+    # Qozumuzaki -- matin, gazanfar
