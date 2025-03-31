@@ -29,13 +29,18 @@ def GetProjectsByUser(db: Session, userId: UUID):
         Project.IsDeleted == False
     )
 
-    memberProjectIds = db.query(ProjectMember.ProjectId).filter(ProjectMember.UserId == userId)
+    memberProjectIds = db.query(ProjectMember.ProjectId).filter(
+        ProjectMember.UserId == userId,
+        ProjectMember.IsDeleted == False 
+    )
+
     memberProjects = db.query(Project).filter(
         Project.Id.in_(memberProjectIds),
         Project.IsDeleted == False
     )
 
     return ownedProjects.union(memberProjects).all()
+
 
 def AddMemberToProject(db: Session, ProjectId: UUID, MemberData: ProjectMemberCreate):
     member = ProjectMember(
@@ -65,7 +70,7 @@ def SoftDeleteProject(db: Session, projectId: UUID, userId: UUID):
 
     project.IsDeleted = True
     db.query(ProjectMember).filter(ProjectMember.ProjectId == str(projectId)).update({"IsDeleted": True})
-    db.query(Task).filter(Task.ProjectId == str(projectId)).update({"IsDeleted": True})
+    # db.query(Task).filter(Task.ProjectId == str(projectId)).update({"IsDeleted": True})
     db.commit()
 
     return {"message": "Project deleted successfully"}
