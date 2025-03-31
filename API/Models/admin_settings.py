@@ -13,7 +13,7 @@ class DataTypeEnum(enum.Enum):
     date = "date"
 
 class AdminSetting(Base):
-    __tablename__ = "AdminSettings"
+    _tablename_ = "AdminSettings"
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     SettingKey = Column(String(100), nullable=False, unique=True)
     SettingValue = Column(Text)
