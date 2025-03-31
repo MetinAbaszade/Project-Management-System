@@ -14,4 +14,5 @@ def RegisterUser(userData: RegisterSchema, authService: AuthService = Depends())
 
 @router.post("/login")
 def LoginUser(userData: LoginSchema, authService: AuthService = Depends()):
+    print("Received login request:", userData)
     return authService.LoginUser(userData)
