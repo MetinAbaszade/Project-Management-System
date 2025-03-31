@@ -516,12 +516,13 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log(password);
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/auth/login", {
+            const response = await fetch("http://127.0.0.1:8001/auth/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ email, password }),
+                mode: "cors",
+                body: JSON.stringify({ Email: email, Password: password }),
             });
         
             const data = await response.json();
@@ -604,7 +605,7 @@ async function registerUser() {
     }
 
     const payload = {
-        first_name: fullName,
+        FirstName: fullName,
         last_name: surname,
         email: email,
         password: password
