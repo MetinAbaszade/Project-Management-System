@@ -42,5 +42,15 @@
             </div>
         </div>
     </div>
+    
+    <script>
+        //Prevent entering main page, without log in
+        // Redirect unauthorized users
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          window.location.href = "/login.html"; // or whatever your login page path is
+        }
+      </script>
+      
 </body>
 </html>
