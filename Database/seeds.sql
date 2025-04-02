@@ -11,8 +11,8 @@ INSERT IGNORE INTO Languages (LanguageName, LanguageCode, DisplayOrder) VALUES
 ('Go', 'go', 9),
 ('Kotlin', 'kt', 10);
 
--- Insert default admin settings
-INSERT IGNORE INTO AdminSettings (SettingKey, SettingValue, Category, Description, DataType) VALUES
+
+INSERT INTO admin_settings (setting_key, setting_value, category, description, data_type) VALUES
 ('default_task_due_days', '7', 'tasks', 'Default number of days for task deadlines', 'number'),
 ('allow_public_projects', 'false', 'security', 'Allow projects to be publicly viewable', 'boolean'),
 ('max_file_size_mb', '10', 'uploads', 'Maximum file size for uploads in MB', 'number'),
