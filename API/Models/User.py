@@ -1,11 +1,12 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, Boolean, Integer
 from datetime import datetime
-from Db.session import Base
+from sqlalchemy import Column, String, DateTime, Boolean, Integer
 from sqlalchemy.orm import relationship
+from db.session import Base
+
 
 class User(Base):
-    __tablename__ = "Users"
+    _tablename_ = "User"
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     FirstName = Column(String(50), nullable=False)
     LastName = Column(String(50), nullable=False)
@@ -20,9 +21,12 @@ class User(Base):
     LoginAttempts = Column(Integer, default=0)
     LastPasswordChange = Column(DateTime)
     RequirePasswordChange = Column(Boolean, default=False)
-    
     IsDeleted = Column(Boolean, default=False)
-    
-    #gpt projects.py da define ele demisdi 
-    #error cixa biler 
-User.ProjectsOwned = relationship("Project", back_populates="owner")
+
+    # Relationships
+    ProjectOwned = relationship("Project", back_populates="Owner", cascade="all, delete-orphan")
+    ProjectMember = relationship("ProjectMember", back_populates="User", cascade="all, delete-orphan")
+    TeamMember = relationship("TeamMember", back_populates="User", cascade="all, delete-orphan")
+    ChatMessage = relationship("ChatMessage", back_populates="User", cascade="all, delete-orphan")
+    TaskAssigned = relationship("Task", secondary="TaskAssignment", back_populates="AssignedUser")
+    Comment = relationship("Comment", back_populates="User", cascade="all, delete-orphan")

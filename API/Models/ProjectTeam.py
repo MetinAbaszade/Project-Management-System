@@ -5,11 +5,11 @@ from Db.session import Base
 from sqlalchemy.orm import relationship
 
 class ProjectTeam(Base):
-    __tablename__ = "ProjectTeams"
-    ProjectId = Column(String(36), ForeignKey("Projects.Id"), nullable=False)
-    TeamId = Column(String(36), ForeignKey("Teams.Id"), nullable=False)
+    __tablename__ = "ProjectTeam"
+    ProjectId = Column(String(36), ForeignKey("Project.Id"), nullable=False)
+    TeamId = Column(String(36), ForeignKey("Team.Id"), nullable=False)
     AssignedAt = Column(DateTime, default=datetime.utcnow)
-    AssignedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    AssignedBy = Column(String(36), ForeignKey("User.Id"), nullable=True)
 
     
     IsDeleted = Column(Boolean, default=False)
@@ -17,6 +17,6 @@ class ProjectTeam(Base):
     __table_args__ = (
         PrimaryKeyConstraint('ProjectId', 'TeamId'),
     )
-    Project = relationship("Project", backref="ProjectTeams", foreign_keys=[ProjectId])
-    Team = relationship("Team", backref="ProjectTeams", foreign_keys=[TeamId])
+    Project = relationship("Project", backref="ProjectTeam", foreign_keys=[ProjectId])
+    Team = relationship("Team", backref="ProjectTeam", foreign_keys=[TeamId])
     Assigner = relationship("User", foreign_keys=[AssignedBy])

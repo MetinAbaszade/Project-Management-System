@@ -13,7 +13,7 @@ class DataTypeEnum(enum.Enum):
     date = "date"
 
 class AdminSetting(Base):
-    __tablename__ = "AdminSettings"
+    __tablename__ = "AdminSetting"
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     SettingKey = Column(String(100), nullable=False, unique=True)
     SettingValue = Column(Text)
@@ -24,7 +24,7 @@ class AdminSetting(Base):
     ValidationRegex = Column(String(255))
     DefaultValue = Column(Text)
     LastUpdated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    UpdatedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    UpdatedBy = Column(String(36), ForeignKey("User.Id"), nullable=True)
     
     IsDeleted = Column(Boolean, default=False)
     
