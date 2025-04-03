@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
-from Services.AuthService import AuthService
-from Schemas.AuthSchema import RegisterSchema, LoginSchema
+from API.Services.AuthService import AuthService
+from API.Schemas.AuthSchema import RegisterSchema, LoginSchema
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 

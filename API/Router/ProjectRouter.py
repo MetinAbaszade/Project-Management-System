@@ -3,11 +3,11 @@ from sqlalchemy.orm import Session
 from typing import List 
 from uuid import UUID
 
-from Schemas.ProjectSchema import ProjectCreate, ProjectOut, ProjectMemberCreate
-from Services.ProjectService import ProjectService
-from Dependencies.db import GetDb 
-from Dependencies.auth import GetCurrentUser
-from Models.Users import User
+from API.Schemas.ProjectSchema import ProjectCreate, ProjectOut, ProjectMemberCreate
+from API.Services.ProjectService import ProjectService
+from API.Dependencies.db import GetDb
+from API.Dependencies.auth import GetCurrentUser
+from API.Models.User import User
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 

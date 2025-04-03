@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from Schemas.ProjectSchema import ProjectCreate, ProjectMemberCreate
-from Models.projects import Project
-from Models.project_members import ProjectMember
+from API.Schemas.ProjectSchema import ProjectCreate, ProjectMemberCreate
+from API.Models.Project import Project
+from API.Models import ProjectMember
 from uuid import UUID
-from Models.tasks import Task
+from API.Models import Task
 
 def CreateProject(db: Session, projectData: ProjectCreate, ownerId: UUID):
     newProject = Project(

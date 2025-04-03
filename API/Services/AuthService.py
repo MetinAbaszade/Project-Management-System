@@ -1,10 +1,10 @@
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
-from Repositories.AuthRepository import AuthRepository
-from Schemas.AuthSchema import RegisterSchema, LoginSchema
-from Dependencies.auth import VerifyPassword, CreateAccessToken
+from API.Repositories.AuthRepository import AuthRepository
+from API.Schemas.AuthSchema import RegisterSchema, LoginSchema
+from API.Dependencies.auth import VerifyPassword, CreateAccessToken
 # from Db.session import SessionLocal
-from Dependencies.db import GetDb
+from API.Dependencies.db import GetDb
 
 
 class AuthService:

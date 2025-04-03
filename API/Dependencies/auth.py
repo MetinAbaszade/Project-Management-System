@@ -6,8 +6,8 @@ from fastapi.security.api_key import APIKeyHeader
 
 
 from sqlalchemy.orm import Session
-from Models.Users import User
-from Dependencies.db import GetDb
+from API.Models.User import User
+from API.Dependencies.db import GetDb
 
 # Secure password hashing
 PWD_CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")

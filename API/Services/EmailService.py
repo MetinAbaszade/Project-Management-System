@@ -4,7 +4,7 @@ import string
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from cachetools import TTLCache
-from Schemas.EmailSchema import ResponseDTO, CheckVerificationCodeDTO
+from API.Schemas.EmailSchema import ResponseDTO, CheckVerificationCodeDTO
 
 # Use a Global Cache to persist verification codes across multiple API calls
 verification_cache = TTLCache(maxsize=1000, ttl=120)

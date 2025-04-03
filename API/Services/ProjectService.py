@@ -1,7 +1,7 @@
-from Repositories import ProjectRepository
-from Schemas.ProjectSchema import ProjectCreate, ProjectMemberCreate
+from API.Repositories import ProjectRepository
+from API.Schemas.ProjectSchema import ProjectCreate, ProjectMemberCreate
 from sqlalchemy.orm import Session
-from Dependencies.db import GetDb
+from API.Dependencies.db import GetDb
 from fastapi import Depends
 from uuid import UUID
 

@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, DateTime, Boolean, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship
-from db.session import Base
+from API.Db.session import Base
 
 
 class Project(Base):

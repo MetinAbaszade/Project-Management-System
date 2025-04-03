@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy import Column, String, Text, DateTime, Boolean, Enum, ForeignKey
 from datetime import datetime
-from Db.session import Base
+from API.Db.session import Base
 import enum
 from sqlalchemy.orm import relationship
 
@@ -13,7 +13,7 @@ class DataTypeEnum(enum.Enum):
     date = "date"
 
 class AdminSetting(Base):
-    _tablename_ = "AdminSetting"
+    __tablename__ = "AdminSetting"
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     SettingKey = Column(String(100), nullable=False, unique=True)
     SettingValue = Column(Text)

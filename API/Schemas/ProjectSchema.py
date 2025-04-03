@@ -1,7 +1,7 @@
 from pydantic import BaseModel, model_validator
 from typing import Optional
 from datetime import date, datetime
-from Models.projects import ProjectStatus
+from API.Models import ProjectStatus
 from uuid import UUID
 
 class ProjectCreate(BaseModel):
@@ -47,7 +47,7 @@ class ProjectOut(BaseModel):
 class ProjectMemberCreate(BaseModel):
     UserId: UUID
     RoleInProject: str
-    MemberType: str = "Collaborator" 
+    MemberType: str = "Collaborator"
 
     class Config:
-        from_attributes = True  
+        from_attributes = True

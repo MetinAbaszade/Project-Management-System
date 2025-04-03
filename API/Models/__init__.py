@@ -18,3 +18,4 @@ from .Stakeholder import *
 from .TaskAssignment import *
 from .TaskPriority import *
 from .TaskStatus import *
+from .Language import *

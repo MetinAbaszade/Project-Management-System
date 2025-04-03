@@ -1,13 +1,14 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from Models import *
+from API.Models import *
+
 
 # Routers
-from Router.LanguageRouter import router as language_router
-from Router.EmailRouter import router as email_router
-from Router.AuthRouter import router as auth_router
-from Router.ProjectRouter import router as project_router  # ✅ New import
+from API.Router.LanguageRouter import router as language_router
+from API.Router.EmailRouter import router as email_router
+from API.Router.AuthRouter import router as auth_router
+from API.Router.ProjectRouter import router as project_router  # ✅ New import
 
 # Database
 from Db.session import engine, Base

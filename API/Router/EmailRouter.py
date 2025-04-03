@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
-from Services.EmailService import EmailService
-from Schemas.EmailSchema import ResponseDTO, CheckVerificationCodeDTO
+from API.Services.EmailService import EmailService
+from API.Schemas.EmailSchema import ResponseDTO, CheckVerificationCodeDTO
 
 router = APIRouter(
     prefix="/email",
