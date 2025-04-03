@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, model_validator
 from typing import Optional
 from datetime import date, datetime
 from Models.projects import ProjectStatus
@@ -15,17 +15,13 @@ class ProjectCreate(BaseModel):
     EstimatedHours: Optional[float]
 
     @model_validator(mode="after")
-    def check_dates(cls, values):
-        start_date = values.get("StartDate")
-        end_date = values.get("EndDate")
-
-        if start_date and end_date:
-            if start_date == end_date:
+    def check_dates(self):
+        if self.StartDate and self.EndDate:
+            if self.StartDate == self.EndDate:
                 raise ValueError("StartDate and EndDate cannot be the same.")
-            if start_date > end_date:
+            if self.StartDate > self.EndDate:
                 raise ValueError("StartDate cannot be after EndDate.")
-
-        return values
+        return self
 
 class ProjectOut(BaseModel):
     Id: UUID

@@ -18,5 +18,14 @@ class ProjectService:
 
     def AddProjectMember(self, projectId: UUID, memberData: ProjectMemberCreate):
         return ProjectRepository.AddMemberToProject(self.db, projectId, memberData)
+    
+    def SoftDeleteProject(self, projectId: UUID, userId: UUID):
+        return ProjectRepository.SoftDeleteProject(self.db, projectId, userId)
+    
+    def SoftDeleteProjectMember(self, projectId: UUID, memberId: UUID):
+        return ProjectRepository.SoftDeleteProjectMember(self.db, projectId, memberId)
+
+
+
 
 

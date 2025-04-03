@@ -15,6 +15,7 @@ class LanguageRepository:
         return language
 
     def GetAllLanguages(self):
+        print(self.db.query(Language).all())
         return self.db.query(Language).all()
 
     def GetLanguageById(self, languageId: int):

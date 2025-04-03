@@ -417,40 +417,65 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+
+
+    //Also, sends to backend to save new password 
     // Click "Set Password" (After Forgot Password OTP)
-    setPasswordBtn.addEventListener("click", function () {
+    setPasswordBtn.addEventListener("click", async function () {
         const newPassword = document.getElementById("new-password").value;
         const confirmPassword = document.getElementById("confirm-password").value;
-
-        if (newPassword === "" || confirmPassword === "") {
+        const email = document.getElementById("register-email-display").textContent.trim(); // get from display
+    
+        if (!newPassword || !confirmPassword) {
             alert("Please enter your new password.");
             return;
         }
-
+    
         if (newPassword !== confirmPassword) {
             alert("Passwords do not match.");
             return;
         }
-
-        alert("Password successfully reset! Redirecting to login...");
-
-        // Hide New Password form, reset all sections instantly
-        newPasswordForm.classList.remove("active");
-        otpForm.classList.remove("active");
-        registerForm.classList.remove("active");
-
-        // Transition back to login instantly with less delay
-        setTimeout(() => {
-            loginForm.classList.add("active");
-            container.classList.remove("active"); // Restore blue section
-        }, 900); // Reduced transition time for faster switch
-
-        // Faster reload after transition (no unnecessary delay)
-        setTimeout(() => {
-            window.location.reload();
-        }, 900); // Speed optimized for smooth experience
+    
+        try {
+            const response = await fetch("http://127.0.0.1:8001/auth/reset-password", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    email: email,
+                    new_password: newPassword
+                }),
+            });
+    
+            const data = await response.json();
+    
+            if (!response.ok) {
+                throw new Error(data.detail || "Password reset failed.");
+            }
+    
+            alert("✅ Password successfully reset! Redirecting to login...");
+    
+            // ✅ UI transitions (keep your logic)
+            newPasswordForm.classList.remove("active");
+            otpForm.classList.remove("active");
+            registerForm.classList.remove("active");
+    
+            setTimeout(() => {
+                loginForm.classList.add("active");
+                container.classList.remove("active"); // Restore blue section
+            }, 900);
+    
+            setTimeout(() => {
+                window.location.href = "login.html"; // Redirect to login page
+            }, 900);
+            
+        } catch (error) {
+            console.error("Reset error:", error);
+            alert("🚫 " + error.message);
+        }
     });
-
+    
         // Click "Complete Registration" (Return to Login)
         completeRegBtn.addEventListener("click", function () {
             alert("Registration successful! Redirecting to login...");
@@ -492,6 +517,19 @@ document.getElementById("send-code").addEventListener("click", function () {
 
 
 
+//Saved in cookies, not local storage, for 1 hour
+function setCookie(name, value, maxAgeInSeconds = 3600) {
+    document.cookie = `${name}=${value}; path=/; max-age=${maxAgeInSeconds}; SameSite=Strict`;
+}
+
+function getCookie(name) {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+        const [key, val] = cookie.trim().split('=');
+        if (key === name) return val;
+    }
+    return null;
+}
 
 document.addEventListener("DOMContentLoaded", function () {
     const loginForm = document.querySelector(".form-box.login form");
@@ -511,17 +549,15 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Please enter both email and password.");
             return;
         }
-        
-        console.log(email);
-        console.log(password);
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/auth/login", {
+            const response = await fetch("http://127.0.0.1:8001/auth/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ email, password }),
+                mode: "cors",
+                body: JSON.stringify({ Email: email, Password: password }),
             });
         
             const data = await response.json();
@@ -532,8 +568,10 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         
             // ✅ Store token
-            localStorage.setItem("access_token", data.access_token);
-            localStorage.setItem("token_type", data.token_type);
+// ✅ Store token in cookies instead of localStorage
+            setCookie("access_token", data.access_token);
+            setCookie("token_type", data.token_type);
+
         
             console.log("Login Success:", data);
 
@@ -550,9 +588,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 async function fetchProtectedData() {
-    const token = localStorage.getItem("access_token");
-    const tokenType = localStorage.getItem("token_type");
-
+    const token = getCookie("access_token");
+    const tokenType = getCookie("token_type");
+    
     if (!token) {
         alert("You are not authenticated. Please log in.");
         window.location.href = "/login"; // Redirect to login page
@@ -604,14 +642,14 @@ async function registerUser() {
     }
 
     const payload = {
-        first_name: fullName,
-        last_name: surname,
-        email: email,
-        password: password
+        FirstName: fullName,
+        Last_name: surname,
+        Email: email,
+        Password: password
     };
 
     try {
-        const response = await fetch("http://127.0.0.1:8000/auth/register", {
+        const response = await fetch("http://127.0.0.1:8001/auth/register", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -634,7 +672,7 @@ async function registerUser() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    const token = localStorage.getItem("access_token");
+    const token = getCookie("access_token");
 
     // ✅ If token exists, user is already logged in
     if (token) {

@@ -14,11 +14,11 @@ def create_language(
     language_data: LanguageCreate,
     languageService: LanguageService = Depends()
 ):
-    return languageService.add_language(language_data)
+    return languageService.AddLanguage(language_data)
 
 @router.get("/", response_model=List[LanguageResponse], summary="Get all languages")
 def list_languages(languageService: LanguageService = Depends()):
-    return languageService.fetch_all_languages()
+    return languageService.FetchAllLanguages()
 
 @router.get("/{language_id}", response_model=LanguageResponse, summary="Get a specific language")
 def retrieve_language(

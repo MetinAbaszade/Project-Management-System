@@ -36,4 +36,19 @@ def AddMember(
 ):
     return projectService.AddProjectMember(projectId, memberData)
 
+@router.delete("/{projectId}/delete", status_code=status.HTTP_200_OK)
+def deleteProject(
+    projectId: UUID,
+    currentUser: User = Depends(GetCurrentUser),
+    projectService: ProjectService = Depends(ProjectService)
+):
+    return projectService.SoftDeleteProject(projectId, currentUser.Id)
 
+@router.delete("/{projectId}/remove-member/{memberId}", status_code=status.HTTP_200_OK)
+def removeMemberFromProject(
+    projectId: UUID,
+    memberId: UUID,
+    # currentUser: User = Depends(GetCurrentUser),
+    projectService: ProjectService = Depends(ProjectService)
+):
+    return projectService.SoftDeleteProjectMember(projectId, memberId)
