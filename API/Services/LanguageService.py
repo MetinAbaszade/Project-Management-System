@@ -1,6 +1,6 @@
 from fastapi import Depends
-from API.Repositories.LanguageRepository import LanguageRepository
-from API.Schemas.LanguageSchema import LanguageCreate
+from Repositories.LanguageRepository import LanguageRepository
+from Schemas.LanguageSchema import LanguageCreate
 
 class LanguageService:
     def __init__(self, languageRepository: LanguageRepository = Depends()):

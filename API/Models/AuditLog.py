@@ -2,13 +2,13 @@ import uuid
 from sqlalchemy import Boolean, Column, String, Integer, DateTime, ForeignKey, Text
 
 from datetime import datetime
-from API.Db.session import Base
+from Db.session import Base
 from sqlalchemy.orm import relationship
 
 class AuditLog(Base):
     __tablename__ = "AuditLog"
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    UserId = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    UserId = Column(String(36), ForeignKey("User.Id"), nullable=True)
     ActionType = Column(String(50), nullable=False)
     EntityType = Column(String(50), nullable=False)
     EntityId = Column(String(36))

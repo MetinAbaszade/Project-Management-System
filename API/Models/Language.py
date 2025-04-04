@@ -1,6 +1,6 @@
 import uuid
 from sqlalchemy import Column, String, Integer, Boolean
-from API.Db.session import Base
+from Db.session import Base
 
 class Language(Base):
     __tablename__ = "Language"

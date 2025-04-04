@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy import Column, String, Text, DateTime, Boolean, Enum, ForeignKey
 from datetime import datetime
-from API.Db.session import Base
+from Db.session import Base
 import enum
 from sqlalchemy.orm import relationship
 
@@ -24,7 +24,7 @@ class AdminSetting(Base):
     ValidationRegex = Column(String(255))
     DefaultValue = Column(Text)
     LastUpdated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    UpdatedBy = Column(String(36), ForeignKey("Users.Id"), nullable=True)
+    UpdatedBy = Column(String(36), ForeignKey("User.Id"), nullable=True)
     
     IsDeleted = Column(Boolean, default=False)
     

@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, DateTime, Boolean, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship
-from API.Db.session import Base
+from Db.session import Base
 
 
 class User(Base):
@@ -30,3 +30,4 @@ class User(Base):
     ChatMessage = relationship("ChatMessage", back_populates="User", cascade="all, delete-orphan")
     TaskAssigned = relationship("Task", secondary="TaskAssignment", back_populates="AssignedUser")
     Comment = relationship("Comment", back_populates="User", cascade="all, delete-orphan")
+    Notification = relationship("Notification", back_populates="user")

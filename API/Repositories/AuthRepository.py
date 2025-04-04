@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
-from API.Models.User import User
-from API.Schemas.AuthSchema import RegisterSchema
-from API.Dependencies.auth import HashPassword
+from Models.User import User
+from Schemas.AuthSchema import RegisterSchema
+from Dependencies.auth import HashPassword
 
 class AuthRepository:
     def __init__(self, db: Session):

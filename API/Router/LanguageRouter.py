@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Path
 from typing import List
-from API.Schemas.LanguageSchema import LanguageCreate, LanguageResponse
-from API.Services.LanguageService import LanguageService
+from Schemas.LanguageSchema import LanguageCreate, LanguageResponse
+from Services.LanguageService import LanguageService
 
 router = APIRouter(
     prefix="/languages",

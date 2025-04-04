@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
-from API.Models.Language import Language
-from API.Schemas.LanguageSchema import LanguageCreate
-from API.Db.session import SessionLocal
+from Models.Language import Language
+from Schemas.LanguageSchema import LanguageCreate
+from Db.session import SessionLocal
 
 class LanguageRepository:
     def __init__(self):

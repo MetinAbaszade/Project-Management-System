@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy import Column, String, ForeignKey, Integer
 from sqlalchemy.orm import relationship
-from API.Db.session import Base
+from Db.session import Base
 
 
 class Stakeholder(Base):
