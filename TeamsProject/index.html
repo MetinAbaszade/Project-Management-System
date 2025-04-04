@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Management Dashboard</title>
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script defer src="./script.js"></script>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="login-page" class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>Task_Up</h1>
+                <p>Team Management Dashboard</p>
+            </div>
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="primary-btn login-btn">Sign In</button>
+            </form>
+            <div class="login-footer">
+                <p>Demo credentials: <span>user / password</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app-container" class="app-container hidden">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Task_Up</h2>
+                <div class="avatar-container">
+                    <div class="avatar">JD</div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active"><i class="fas fa-users"></i> Teams</li>
+                    <li><i class="fas fa-tasks"></i> Tasks</li>
+                    <li><i class="fas fa-chart-bar"></i> Analytics</li>
+                    <li><i class="fas fa-cog"></i> Settings</li>
+                </ul>
+            </nav>
+            <div class="sidebar-bottom">
+                <button id="theme-toggle" class="sidebar-btn"><i class="fas fa-moon"></i><span>Dark Mode</span></button>
+                <button id="wide-toggle" class="sidebar-btn"><i class="fas fa-expand"></i><span>Wide Mode</span></button>
+                <button id="logout-btn" class="sidebar-btn"><i class="fas fa-sign-out-alt"></i><span>Logout</span></button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="main-header">
+                <h1>Team Management</h1>
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search teams or members...">
+                </div>
+            </header>
+
+            <div class="content-area">
+                <div class="section-header">
+                    <h2>Your Teams</h2>
+                    <button id="create-team-btn" class="primary-btn"><i class="fas fa-plus"></i> Create Team</button>
+                </div>
+
+                <!-- Team creation modal -->
+                <div id="team-modal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Create New Team</h3>
+                            <button class="close-modal"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="team-name-input">Team Name</label>
+                                <input type="text" id="team-name-input" placeholder="Enter team name">
+                            </div>
+                            <div class="form-group">
+                                <label>Team Color</label>
+                                <div class="color-options">
+                                    <span class="color-option" data-color="#4CAF50"></span>
+                                    <span class="color-option" data-color="#2196F3"></span>
+                                    <span class="color-option" data-color="#F44336"></span>
+                                    <span class="color-option" data-color="#9C27B0"></span>
+                                    <span class="color-option" data-color="#FF9800"></span>
+                                    <span class="color-option" data-color="#607D8B"></span>
+                                    <span class="color-option" data-color="#795548"></span>
+                                    <span class="color-option" data-color="#009688"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="cancel-btn">Cancel</button>
+                            <button id="add-team-btn" class="primary-btn">Create Team</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit team modal -->
+                <div id="edit-team-modal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Edit Team</h3>
+                            <button class="close-modal"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="edit-team-name-input">Team Name</label>
+                                <input type="text" id="edit-team-name-input" placeholder="Enter team name">
+                            </div>
+                            <div class="form-group">
+                                <label>Team Color</label>
+                                <div class="color-options" id="edit-color-options">
+                                    <span class="color-option" data-color="#4CAF50"></span>
+                                    <span class="color-option" data-color="#2196F3"></span>
+                                    <span class="color-option" data-color="#F44336"></span>
+                                    <span class="color-option" data-color="#9C27B0"></span>
+                                    <span class="color-option" data-color="#FF9800"></span>
+                                    <span class="color-option" data-color="#607D8B"></span>
+                                    <span class="color-option" data-color="#795548"></span>
+                                    <span class="color-option" data-color="#009688"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="cancel-btn">Cancel</button>
+                            <button id="save-team-btn" class="primary-btn">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Members modal -->
+                <div id="members-modal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="team-title">Team Members</h3>
+                            <button class="close-modal"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="add-member-form">
+                                <input type="text" id="member-name-input" placeholder="Enter member name">
+                                <button id="add-member-btn" class="primary-btn"><i class="fas fa-plus"></i> Add Member</button>
+                            </div>
+                            <ul id="member-list" class="member-list"></ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teams Container -->
+                <div id="teams-container" class="teams-grid"></div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
