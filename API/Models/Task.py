@@ -25,7 +25,7 @@ class Task(Base):
     Project = relationship("Project", back_populates="Task")
     Team = relationship("Team", back_populates="Task")
     AssignedUser = relationship("User", secondary="TaskAssignment", back_populates="TaskAssigned")
-    Subtask = relationship("Task", backref="ParentTask", remote_side=[Id], cascade="all, delete-orphan")
+    Subtask = relationship("Task", backref="ParentTask", remote_side=[Id])
     Comment = relationship("Comment", back_populates="Task", cascade="all, delete-orphan")
     Attachment = relationship("Attachment", back_populates="Task", cascade="all, delete-orphan")
     TaskPriority = relationship("TaskPriority", back_populates="Task")
