@@ -2,20 +2,17 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from Schemas.ProjectSchema import ProjectCreate, ProjectMemberCreate
 from Models.Project import Project
-from Models import ProjectMember
+from Models.ProjectMember import ProjectMember
 from uuid import UUID
-from Models import Task
+from Models.Task import Task
 
 def CreateProject(db: Session, projectData: ProjectCreate, ownerId: UUID):
     newProject = Project(
         Name=projectData.Name,
         Description=projectData.Description,
-        StartDate=projectData.StartDate,
-        EndDate=projectData.EndDate,
-        Status=projectData.Status,
+        Deadline=projectData.Deadline,
+        StatusId=projectData.StatusId,
         Budget=projectData.Budget,
-        IsPublic=projectData.IsPublic,
-        EstimatedHours=projectData.EstimatedHours,
         OwnerId=ownerId
     )
     db.add(newProject)
@@ -24,7 +21,7 @@ def CreateProject(db: Session, projectData: ProjectCreate, ownerId: UUID):
     return newProject
 
 def GetProjectsByUser(db: Session, userId: UUID):
-    ownedProjects = db.query(Project).filter(
+    ownedProjects= db.query(Project).filter(
         Project.OwnerId == userId,
         Project.IsDeleted == False
     )
@@ -46,8 +43,6 @@ def AddMemberToProject(db: Session, ProjectId: UUID, MemberData: ProjectMemberCr
     member = ProjectMember(
         ProjectId=ProjectId,
         UserId=MemberData.UserId,
-        RoleInProject=MemberData.RoleInProject,
-        MemberType=MemberData.MemberType
     )
 
     db.add(member)

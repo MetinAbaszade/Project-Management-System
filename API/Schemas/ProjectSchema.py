@@ -1,56 +1,40 @@
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel
 from typing import Optional
-from datetime import date, datetime
+from datetime import datetime
 from uuid import UUID
 
 from Schemas.ProjectStatusSchema import ProjectStatusOut
 
 
 class ProjectCreate(BaseModel):
-    name: str
-    description: Optional[str]
-    startDate: Optional[date]
-    endDate: Optional[date]
-    status: Optional[UUID]  
-    budget: Optional[float]
-    isPublic: Optional[bool] = False
-    estimatedHours: Optional[float]
+    Name: str
+    Description: Optional[str] = None
+    Deadline: Optional[datetime] = None
+    StatusId: UUID  
+    Budget: Optional[int] = 0
+    IsDeleted: Optional[bool] = False
 
-    @model_validator(mode="after")
-    def check_dates(self):
-        if self.startDate and self.endDate:
-            if self.startDate == self.endDate:
-                raise ValueError("StartDate and EndDate cannot be the same.")
-            if self.startDate > self.endDate:
-                raise ValueError("StartDate cannot be after EndDate.")
-        return self
+    class Config:
+        from_attributes = True
 
 
 class ProjectOut(BaseModel):
-    id: UUID
-    name: str
-    description: Optional[str]
-    startDate: Optional[date]
-    endDate: Optional[date]
-    status: ProjectStatusOut  
-    budget: Optional[float]
-    budgetUsed: float
-    isPublic: bool
-    createdAt: datetime
-    updatedAt: datetime
-    estimatedHours: Optional[float]
-    actualHours: float
-    completionPercentage: float
-    ownerId: UUID
+    Id: UUID
+    Name: str
+    Description: Optional[str]
+    Deadline: Optional[datetime]
+    StatusId: UUID
+    Budget: int
+    CreatedAt: datetime
+    IsDeleted: bool
+    OwnerId: UUID
 
     class Config:
-        from_attributes = True  
+        from_attributes = True
 
 
 class ProjectMemberCreate(BaseModel):
-    userId: UUID
-    roleInProject: str
-    memberType: str = "Collaborator"
+    UserId: UUID
 
     class Config:
         from_attributes = True

@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, ForeignKey
+from sqlalchemy import Column, String, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 <<<<<<< HEAD
 from Db.session import Base
@@ -16,6 +16,7 @@ class ProjectMember(Base):
     UserId = Column(String(36), ForeignKey("User.Id", ondelete="CASCADE"), nullable=False)
     RoleId = Column(String(36), ForeignKey("Role.Id", ondelete="CASCADE"), nullable=False)
     JoinedAt = Column(DateTime, default=datetime.utcnow)
+    IsDeleted = Column(Boolean, default=False)
 
     # Relationships
     Project = relationship("Project", back_populates="ProjectMember")
