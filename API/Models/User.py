@@ -30,4 +30,4 @@ class User(Base):
     ChatMessage = relationship("ChatMessage", back_populates="User", cascade="all, delete-orphan")
     TaskAssigned = relationship("Task", secondary="TaskAssignment", back_populates="AssignedUser")
     Comment = relationship("Comment", back_populates="User", cascade="all, delete-orphan")
-    Notification = relationship("Notification", back_populates="user")
+    Notification = relationship("Notification", back_populates="User")
