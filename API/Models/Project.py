@@ -2,7 +2,11 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, DateTime, Boolean, Integer, Text, ForeignKey
 from sqlalchemy.orm import relationship
+<<<<<<< HEAD
 from Db.session import Base
+=======
+from db.session import Base
+>>>>>>> 0fb02ba86c837b9c7c7d5708ffb61fa58f329f95
 
 
 class Project(Base):
@@ -29,4 +33,8 @@ class Project(Base):
     ProjectMember = relationship("ProjectMember", back_populates="Project", cascade="all, delete-orphan")
     Stakeholder = relationship("Stakeholder", back_populates="Project", cascade="all, delete-orphan")
     Attachment = relationship("Attachment", back_populates="Project", cascade="all, delete-orphan")
+<<<<<<< HEAD
     ProjectStatus = relationship("ProjectStatus", back_populates="Project")
+=======
+    ProjectStatus = relationship("ProjectStatus", back_populates="Project", cascade="all, delete-orphan")
+>>>>>>> 0fb02ba86c837b9c7c7d5708ffb61fa58f329f95
