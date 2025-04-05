@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from Models.Users import User
+from Models.User import User
 from Schemas.AuthSchema import RegisterSchema
 from Dependencies.auth import HashPassword
 
