@@ -5,9 +5,9 @@ from uuid import UUID
 
 from Schemas.ProjectSchema import ProjectCreate, ProjectOut, ProjectMemberCreate
 from Services.ProjectService import ProjectService
-from Dependencies.db import GetDb 
+from Dependencies.db import GetDb
 from Dependencies.auth import GetCurrentUser
-from Models.Users import User
+from Models.User import User
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
