@@ -2,7 +2,11 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
+<<<<<<< HEAD
 from Db.session import Base
+=======
+from db.session import Base
+>>>>>>> 0fb02ba86c837b9c7c7d5708ffb61fa58f329f95
 
 
 class ProjectMember(Base):
