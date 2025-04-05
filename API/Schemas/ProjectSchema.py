@@ -1,53 +1,40 @@
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel
 from typing import Optional
-from datetime import date, datetime
-from Models.projects import ProjectStatus
+from datetime import datetime
 from uuid import UUID
+
+from Schemas.ProjectStatusSchema import ProjectStatusOut
+
 
 class ProjectCreate(BaseModel):
     Name: str
-    Description: Optional[str]
-    StartDate: Optional[date]
-    EndDate: Optional[date]
-    Status: Optional[ProjectStatus] = ProjectStatus.Planning
-    Budget: Optional[float]
-    IsPublic: Optional[bool] = False
-    EstimatedHours: Optional[float]
+    Description: Optional[str] = None
+    Deadline: Optional[datetime] = None
+    StatusId: UUID  
+    Budget: Optional[int] = 0
+    IsDeleted: Optional[bool] = False
 
-    @model_validator(mode="after")
-    def check_dates(self):
-        if self.StartDate and self.EndDate:
-            if self.StartDate == self.EndDate:
-                raise ValueError("StartDate and EndDate cannot be the same.")
-            if self.StartDate > self.EndDate:
-                raise ValueError("StartDate cannot be after EndDate.")
-        return self
+    class Config:
+        from_attributes = True
+
 
 class ProjectOut(BaseModel):
     Id: UUID
     Name: str
     Description: Optional[str]
-    StartDate: Optional[date]
-    EndDate: Optional[date]
-    Status: ProjectStatus
-    Budget: Optional[float]
-    BudgetUsed: float
-    IsPublic: bool
+    Deadline: Optional[datetime]
+    StatusId: UUID
+    Budget: int
     CreatedAt: datetime
-    UpdatedAt: datetime
-    EstimatedHours: Optional[float]
-    ActualHours: float
-    CompletionPercentage: float
+    IsDeleted: bool
     OwnerId: UUID
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ProjectMemberCreate(BaseModel):
     UserId: UUID
-    RoleInProject: str
-    MemberType: str = "Collaborator" 
 
     class Config:
-        from_attributes = True  
+        from_attributes = True

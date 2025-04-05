@@ -1,5 +1,5 @@
 from sqlalchemy import Table, Column, String, ForeignKey
-from db.session import Base
+from Db.session import Base
 
 TaskAssignment = Table(
     "TaskAssignment", Base.metadata,

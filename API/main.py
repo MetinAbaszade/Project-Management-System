@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from Models import *
 
+
 # Routers
 from Router.LanguageRouter import router as language_router
 from Router.EmailRouter import router as email_router
