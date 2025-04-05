@@ -650,3 +650,17 @@
 
 
 /*Registratiion Form Ends*/
+
+.input-box.error input {
+    border: 1px solid red;
+}
+
+.input-box.success input {
+    border: 1px solid green;
+}
+
+.input-box .error {
+    color: red;
+    font-size: 12px;
+    margin-top: 4px;
+}

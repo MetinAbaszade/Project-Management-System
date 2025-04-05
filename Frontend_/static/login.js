@@ -18,61 +18,96 @@ document.addEventListener("DOMContentLoaded", function () {
     const forgotPasswordLink = document.getElementById("forgot-password-link");
     const sendCodeBtn = document.getElementById("send-code");
     const verifyCodeBtn = document.getElementById("verify-code");
-    
+
     const container = document.querySelector(".container");
     const loginForm = document.querySelector(".form-box.login");
     const forgotForm = document.querySelector(".form-box.forgot-password");
-    const otpForm = document.querySelector(".form-box.register-otp"); // ✅ Correct class for OTP form
+    const otpForm = document.querySelector(".form-box.register-otp");
 
     const emailInput = document.getElementById("forgot-email");
     const emailDisplay = document.getElementById("register-email-display");
-    
-    // When "Forgot Password?" is clicked
-    forgotPasswordLink.addEventListener("click", function (e) {
-        e.preventDefault(); // Prevent default link behavior
 
-        // Hide login form, hide blue section
+    if (!forgotForm || !emailInput || !sendCodeBtn) {
+        console.error("Forgot password form or elements not found!");
+        return;
+    }
+
+    // 🔹 Show forgot form
+    forgotPasswordLink.addEventListener("click", function (e) {
+        e.preventDefault();
         loginForm.classList.add("hidden");
         container.classList.add("no-blue");
-
-        // Show forgot password form
         setTimeout(() => {
             forgotForm.classList.add("active");
-        }, 300); // Delay so transition looks smooth
+        }, 300);
     });
 
-    // When "Send Code" is clicked
-    sendCodeBtn.addEventListener("click", function () {
-        const email = emailInput.value.trim();
+    // 🔹 Handle Continue (Send Code)
+    sendCodeBtn.addEventListener("click", function (e) {
+        e.preventDefault();
 
-        if (email === "") {
-            alert("Please enter a valid email address.");
-            return;
+        const emailValue = emailInput.value.trim();
+        let valid = true;
+
+        resetInput(emailInput, "Email");
+
+        if (emailValue === '') {
+            setError(emailInput, 'Email is required');
+            valid = false;
+        } else if (!isValidEmail(emailValue)) {
+            setError(emailInput, 'Provide a valid email address');
+            valid = false;
+        } else {
+            setSuccess(emailInput);
         }
 
-        // Display the email entered
-        emailDisplay.textContent = email;
+        if (!valid) return;
 
-        // Hide email input form
+        // ✅ Transition to OTP screen
+        emailDisplay.textContent = emailValue;
         forgotForm.classList.remove("active");
 
-        // Show OTP input form
         setTimeout(() => {
             otpForm.classList.add("active");
         }, 300);
     });
 
-    // When "Verify" is clicked
-    verifyCodeBtn.addEventListener("click", function () {
+    // 🔹 Handle OTP verification (optional logic)
+    verifyCodeBtn?.addEventListener("click", function () {
         const authCode = document.getElementById("register-otp-code").value.trim();
-
         if (authCode.length === 6) {
-            alert("Verification successful! Redirecting to reset password...");
-            // Here you can redirect the user to the reset password page
+            alert("Verification successful! Redirecting...");
         } else {
             alert("Please enter a valid 6-digit code.");
         }
     });
+
+    // ✅ Reuse login-style helpers
+    function setError(element, message) {
+        const inputControl = element.parentElement;
+        const errorDisplay = inputControl.querySelector('.error');
+        errorDisplay.innerText = message;
+        inputControl.classList.add('error');
+        inputControl.classList.remove('success');
+    }
+
+    function setSuccess(element) {
+        const inputControl = element.parentElement;
+        const errorDisplay = inputControl.querySelector('.error');
+        errorDisplay.innerText = '';
+        inputControl.classList.add('success');
+        inputControl.classList.remove('error');
+    }
+
+    function resetInput(element, placeholderText) {
+        element.placeholder = placeholderText;
+        setSuccess(element);
+    }
+
+    function isValidEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email.toLowerCase());
+    }
 });
 
 
@@ -132,7 +167,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
-/*Going to verify part STARTS*/
+/Going to verify part STARTS/
 document.addEventListener("DOMContentLoaded", function () {
     const container = document.querySelector(".container");
 
@@ -179,7 +214,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 registerForm.classList.remove("hidden");
                 registerForm.classList.add("active");
     
-                // 🛠️ Ensure visibility is reset (Fixes blank screen issue)
+                // 🛠 Ensure visibility is reset (Fixes blank screen issue)
                 registerForm.style.display = "block"; // Ensure it's visible
             }
         }, 600);
@@ -278,7 +313,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-/*Going to verify part ENDS*/
+/Going to verify part ENDS/
 
 
 
@@ -330,14 +365,21 @@ document.addEventListener("DOMContentLoaded", function () {
             otpForm.classList.add("active");
 
             // Hide both buttons first
-            verifyRegisterOtpBtn.classList.add("hidden");
-            verifyForgotOtpBtn.classList.add("hidden");
+            document.getElementById("back-to-email").classList.add("hidden");
+            document.getElementById("back-to-main").classList.add("hidden");
+            document.getElementById("verify-register-otp-btn").classList.add("hidden");
+            document.getElementById("verify-forgot-otp-btn").classList.add("hidden");
 
             // Show the correct button
-            if (type === "register") {
-                verifyRegisterOtpBtn.classList.remove("hidden");
-            } else if (type === "forgot-password") {
-                verifyForgotOtpBtn.classList.remove("hidden");
+            if (type === "forgot-password") {
+                document.getElementById("back-to-email").classList.remove("hidden");
+            } else if (type === "register") {
+                document.getElementById("back-to-main").classList.remove("hidden");
+            }
+            if (type === "forgot-password") {
+                document.getElementById("verify-forgot-otp-btn").classList.remove("hidden");
+            } else if (type === "register") {
+                document.getElementById("verify-register-otp-btn").classList.remove("hidden");
             }
         }, 600);
     }
@@ -399,6 +441,44 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    document.getElementById("back-to-email").addEventListener("click", function (e) {
+        e.preventDefault();
+    
+        const forgotForm = document.querySelector(".form-box.forgot-password");
+        const otpForm = document.querySelector(".form-box.register-otp");
+    
+        // Hide OTP Form
+        otpForm.classList.remove("active");
+        setTimeout(() => {
+            otpForm.classList.add("hidden");
+    
+            // Show the Forgot Password email input form
+            forgotForm.classList.remove("hidden");
+            setTimeout(() => {
+                forgotForm.classList.add("active");
+            }, 50);
+        }, 300);
+    });
+
+    document.getElementById("back-to-main").addEventListener("click", function (e) {
+        e.preventDefault();
+    
+        const container = document.querySelector(".container");
+        const otpForm = document.querySelector(".form-box.register-otp");
+    
+        // ✅ Start fade-out effect
+        otpForm.classList.remove("active");
+    
+        // ✅ Set flag before reload
+        sessionStorage.setItem("goToRegister", "true");
+    
+        // ✅ Wait for the fade-out to finish (adjust timing if needed)
+        setTimeout(() => {
+            window.location.reload();
+        }, 300); // match your CSS transition duration
+    });
+    
+    
     // Click "Verify" in Registration OTP (SHOW REGISTRATION FORM)
     verifyRegisterOtpBtn.addEventListener("click", function () {
         let otpCode = "";
@@ -417,27 +497,25 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-
-
-    //Also, sends to backend to save new password 
     // Click "Set Password" (After Forgot Password OTP)
     setPasswordBtn.addEventListener("click", async function () {
         const newPassword = document.getElementById("new-password").value;
         const confirmPassword = document.getElementById("confirm-password").value;
-        const email = document.getElementById("register-email-display").textContent.trim(); // get from display
-    
+
+        const email = document.getElementById("register-email-display").textContent.trim(); 
+
         if (!newPassword || !confirmPassword) {
             alert("Please enter your new password.");
             return;
         }
-    
+
         if (newPassword !== confirmPassword) {
             alert("Passwords do not match.");
             return;
         }
-    
+
         try {
-            const response = await fetch("http://127.0.0.1:8001/auth/reset-password", {
+            const response = await fetch("http://127.0.0.1:8000/auth/reset-password", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -475,9 +553,23 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("🚫 " + error.message);
         }
     });
-    
+
         // Click "Complete Registration" (Return to Login)
         completeRegBtn.addEventListener("click", function () {
+        const password = document.getElementById("register-password").value.trim();
+        const confirmPassword = document.getElementById("confirm-register-password").value.trim();
+
+            
+        if (password === "" || confirmPassword === "") {
+            alert("Please enter your new password.");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            alert("Passwords do not match.");
+            return;
+        }
+
             alert("Registration successful! Redirecting to login...");
     
             // Hide Registration form smoothly
@@ -513,13 +605,8 @@ document.getElementById("send-code").addEventListener("click", function () {
     showOtpForm(emailInput, "forgot-password");
 });
 
-
-
-
-
-//Saved in cookies, not local storage, for 1 hour
 function setCookie(name, value, maxAgeInSeconds = 3600) {
-    document.cookie = `${name}=${value}; path=/; max-age=${maxAgeInSeconds}; SameSite=Strict`;
+    document.cookie = `${name}=${value};path=/; max-age=${maxAgeInSeconds}; SameSite=Strict`;
 }
 
 function getCookie(name) {
@@ -529,26 +616,24 @@ function getCookie(name) {
         if (key === name) return val;
     }
     return null;
-}
+ }
 
 document.addEventListener("DOMContentLoaded", function () {
     const loginForm = document.querySelector(".form-box.login form");
+    const emailInput = document.getElementById("email-input");
+    const passwordInput = document.getElementById("password-input");
 
-    if (!loginForm) {
-        console.error("Login form not found!");
+    if (!loginForm || !emailInput || !passwordInput) {
+        console.error("Form or inputs not found!");
         return;
     }
 
     loginForm.addEventListener("submit", async function (e) {
         e.preventDefault();
 
-        const email = loginForm.querySelector('input[type="email"]').value.trim();
-        const password = loginForm.querySelector('input[type="password"]').value.trim();
+        const isValid = validateInputs();
 
-        if (!email || !password) {
-            alert("Please enter both email and password.");
-            return;
-        }
+        if (!isValid) return;
 
         try {
             const response = await fetch("http://127.0.0.1:8001/auth/login", {
@@ -556,33 +641,78 @@ document.addEventListener("DOMContentLoaded", function () {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                mode: "cors",
-                body: JSON.stringify({ Email: email, Password: password }),
+                body: JSON.stringify({
+                    Email: emailInput.value.trim(),
+                    Password: passwordInput.value.trim()
+                }),
             });
-        
+
             const data = await response.json();
-        
+
             if (!response.ok) {
-                // Handle specific error returned from backend
                 throw new Error(data.detail || "Login failed.");
             }
-        
-            // ✅ Store token
-// ✅ Store token in cookies instead of localStorage
+
             setCookie("access_token", data.access_token);
             setCookie("token_type", data.token_type);
 
-        
             console.log("Login Success:", data);
-
-            window.location.href = "index.html"; // if you're already inside Frontend
+            window.location.href = "index.html";
         } catch (error) {
             console.error("Login error:", error);
-            alert(error.message || "Something went wrong.");
+            setError(emailInput, error.message || "Something went wrong.");
         }
-        
     });
+
+    const validateInputs = () => {
+        const emailValue = emailInput.value.trim();
+        const passwordValue = passwordInput.value.trim();
+        let valid = true;
+
+        if (emailValue === '') {
+            setError(emailInput, 'Email is required');
+            valid = false;
+        } else if (!isValidEmail(emailValue)) {
+            setError(emailInput, 'Provide a valid email address');
+            valid = false;
+        } else {
+            setSuccess(emailInput);
+        }
+
+        if (passwordValue === '') {
+            setError(passwordInput, 'Password is required');
+            valid = false;
+        } else {
+            setSuccess(passwordInput);
+        }
+
+        return valid;
+    }
+
+    const setError = (element, message) => {
+        const inputControl = element.parentElement;
+        const errorDisplay = inputControl.querySelector('.error');
+
+        errorDisplay.innerText = message;
+        inputControl.classList.add('error');
+        inputControl.classList.remove('success');
+    }
+
+    const setSuccess = element => {
+        const inputControl = element.parentElement;
+        const errorDisplay = inputControl.querySelector('.error');
+
+        errorDisplay.innerText = '';
+        inputControl.classList.add('success');
+        inputControl.classList.remove('error');
+    }
+
+    const isValidEmail = email => {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(String(email).toLowerCase());
+    }
 });
+
 
 
 
@@ -590,7 +720,7 @@ document.addEventListener("DOMContentLoaded", function () {
 async function fetchProtectedData() {
     const token = getCookie("access_token");
     const tokenType = getCookie("token_type");
-    
+
     if (!token) {
         alert("You are not authenticated. Please log in.");
         window.location.href = "/login"; // Redirect to login page
@@ -601,7 +731,7 @@ async function fetchProtectedData() {
         const response = await fetch("http://127.0.0.1:8000/protected-route", {
             method: "GET",
             headers: {
-                "Authorization": `${tokenType} ${token}`, // Sends "Bearer <token>"
+                "Authorization": '${tokenType} ${token}', // Sends "Bearer <token>"
                 "Content-Type": "application/json",
             },
         });
@@ -642,14 +772,15 @@ async function registerUser() {
     }
 
     const payload = {
-        FirstName: fullName,
+        first_name: fullName,
         Last_name: surname,
         Email: email,
         Password: password
     };
 
     try {
-        const response = await fetch("http://127.0.0.1:8001/auth/register", {
+        
+        const response = await fetch("http://127.0.0.1:8000/auth/register", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -669,14 +800,67 @@ async function registerUser() {
         console.error("Registration error:", error);
         alert("🚫 " + error.message);
     }
+
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const token = getCookie("access_token");
+    
+        // ✅ If token exists, user is already logged in
+        if (token) {
+            // Redirect to homepage (or dashboard)
+            window.location.href = "/Frontend_/static/index.html";  // Adjust path if needed
+        }
+    });
+}
+// === OTP Countdown Timer ===
+let timerDisplay = document.getElementById("timer");
+let resendButton = document.getElementById("resend-code");
+let countdownInterval;
+
+function startOTPTimer(duration) {
+    let remaining = duration;
+
+    resendButton.classList.add("disabled");
+    resendButton.classList.remove("enabled");
+    resendButton.disabled = true;
+
+    updateTimerDisplay(remaining);
+
+    countdownInterval = setInterval(() => {
+        remaining--;
+        updateTimerDisplay(remaining);
+
+        if (remaining <= 0) {
+            clearInterval(countdownInterval);
+            resendButton.disabled = false;
+            resendButton.classList.remove("disabled");
+            resendButton.classList.add("enabled");
+            timerDisplay.textContent = "0";
+        }
+    }, 1000);
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    const token = getCookie("access_token");
+function updateTimerDisplay(seconds) {
+    const display = seconds < 10 ? `0${seconds}` : seconds;
+    timerDisplay.textContent = display;
+}
 
-    // ✅ If token exists, user is already logged in
-    if (token) {
-        // Redirect to homepage (or dashboard)
-        window.location.href = "/Frontend_/static/index.html";  // Adjust path if needed
+// === Resend Code Button Click ===
+resendButton.addEventListener("click", () => {
+    // Here you'd trigger the actual resend OTP function (AJAX/fetch)
+    console.log("Resend OTP triggered!");
+
+    startOTPTimer(60); // Restart the 60s timer after resending
+});
+
+// === Start timer initially when OTP form is shown ===
+const otpForm = document.querySelector(".form-box.register-otp");
+
+const observer = new MutationObserver(() => {
+    if (!otpForm.classList.contains("hidden")) {
+        startOTPTimer(60); // Start when the form becomes visible
     }
 });
+
+observer.observe(otpForm, { attributes: true, attributeFilter: ['class'] });
