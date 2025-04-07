@@ -1,40 +1,55 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, Boolean, Integer, Text, ForeignKey
+from sqlalchemy import Column, String, DateTime, Boolean, Integer, Text, ForeignKey, Numeric
 from sqlalchemy.orm import relationship
-<<<<<<< HEAD
 from Db.session import Base
-=======
-from db.session import Base
->>>>>>> 0fb02ba86c837b9c7c7d5708ffb61fa58f329f95
 
 
 class Project(Base):
     __tablename__ = "Project"
+
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    OwnerId = Column(String(36), ForeignKey("User.Id", ondelete="CASCADE"), nullable=False)
     Name = Column(String(100), nullable=False)
     Description = Column(Text)
-    Budget = Column(Integer, nullable=False, default=0)
-    Deadline = Column(DateTime)
-    StatusId = Column(String(36), ForeignKey("ProjectStatus.Id", ondelete="CASCADE"), nullable=False)
+
+  # Deadline = Column(DateTime)
+
+    Progress = Column(Integer, default=0)
+    TotalBudget = Column(Numeric(12, 2), default=0)
+    RemainingBudget = Column(Numeric(12, 2), default=0)
+    # ProjectStatus.py ni sildim
+    Status = Column(String(50), default="Not Started")
     CreatedAt = Column(DateTime, default=datetime.utcnow)
+    UpdatedAt = Column(DateTime, onupdate=datetime.utcnow)
+    CreatedBy = Column(String(36), ForeignKey("User.Id"), nullable=False)
     IsDeleted = Column(Boolean, default=False)
 
-    # Relationships (singular names)
-    Owner = relationship("User", back_populates="ProjectOwned")
-    Task = relationship("Task", back_populates="Project", cascade="all, delete-orphan")
-    Team = relationship("Team", back_populates="Project", cascade="all, delete-orphan")
-    Expense = relationship("Expense", back_populates="Project", cascade="all, delete-orphan")
-    Scope = relationship("Scope", uselist=False, back_populates="Project", cascade="all, delete-orphan")
-    Notification = relationship("Notification", back_populates="Project", cascade="all, delete-orphan")
-    Comment = relationship("Comment", back_populates="Project", cascade="all, delete-orphan")
-    ChatMessage = relationship("ChatMessage", back_populates="Project", cascade="all, delete-orphan")
-    ProjectMember = relationship("ProjectMember", back_populates="Project", cascade="all, delete-orphan")
-    Stakeholder = relationship("Stakeholder", back_populates="Project", cascade="all, delete-orphan")
-    Attachment = relationship("Attachment", back_populates="Project", cascade="all, delete-orphan")
-<<<<<<< HEAD
-    ProjectStatus = relationship("ProjectStatus", back_populates="Project")
-=======
-    ProjectStatus = relationship("ProjectStatus", back_populates="Project", cascade="all, delete-orphan")
->>>>>>> 0fb02ba86c837b9c7c7d5708ffb61fa58f329f95
+    # Relationships
+    Tasks = relationship("Task", back_populates="Project", cascade="all, delete-orphan")
+    TeamProjects = relationship("TeamProject", back_populates="Project", cascade="all, delete-orphan")
+    Teams = relationship("Team", secondary="TeamProject", viewonly=True)
+    Stakeholders = relationship("ProjectStakeholder", back_populates="Project", cascade="all, delete-orphan")
+    Creator = relationship("User", foreign_keys=[CreatedBy], back_populates="ProjectsCreated")
+    Scope = relationship("ProjectScope", back_populates="Project", uselist=False, cascade="all, delete-orphan")
+    ChatMessages = relationship("ChatMessage", back_populates="Project", cascade="all, delete-orphan")
+    Members = relationship("ProjectMember", back_populates="Project", cascade="all, delete-orphan")
+
+    # Predefined status values
+    STATUS_NOT_STARTED = "Not Started"
+    STATUS_IN_PROGRESS = "In Progress"
+    STATUS_COMPLETED = "Completed"
+    STATUS_ON_HOLD = "On Hold"
+    # @property
+    # def TeamCount(self):
+    #     """Get number of teams assigned to this project"""
+    #     return len(self.Teams)
+    #
+    # @property
+    # def TaskCount(self):
+    #     """Get number of tasks in this project"""
+    #     return len(self.Tasks)
+    #
+    # @property
+    # def CompletedTaskCount(self):
+    #     """Get number of completed tasks in this project"""
+    #     return sum(1 for task in self.Tasks if task.Completed)
