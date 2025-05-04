@@ -1,0 +1,687 @@
+{
+  "users": [
+    {
+      "id": "user-1",
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john.doe@example.com",
+      "role": "Project Manager",
+      "imageUrl": null,
+      "lastLogin": "2025-04-04T14:30:00Z",
+      "createdAt": "2024-12-15T09:00:00Z"
+    },
+    {
+      "id": "user-2",
+      "firstName": "Sarah",
+      "lastName": "Miller",
+      "email": "sarah.miller@example.com",
+      "role": "UI Designer",
+      "imageUrl": null,
+      "lastLogin": "2025-04-05T10:15:00Z",
+      "createdAt": "2025-01-05T14:30:00Z"
+    },
+    {
+      "id": "user-3",
+      "firstName": "Michael",
+      "lastName": "Chen",
+      "email": "michael.chen@example.com",
+      "role": "UX Researcher",
+      "imageUrl": null,
+      "lastLogin": "2025-04-03T09:45:00Z",
+      "createdAt": "2025-01-10T11:20:00Z"
+    },
+    {
+      "id": "user-4",
+      "firstName": "Emily",
+      "lastName": "Wong",
+      "email": "emily.wong@example.com",
+      "role": "Graphic Designer",
+      "imageUrl": null,
+      "lastLogin": "2025-04-06T16:20:00Z",
+      "createdAt": "2025-01-15T13:45:00Z"
+    },
+    {
+      "id": "user-5",
+      "firstName": "Alex",
+      "lastName": "Johnson",
+      "email": "alex.johnson@example.com",
+      "role": "Tech Lead",
+      "imageUrl": null,
+      "lastLogin": "2025-04-04T11:30:00Z",
+      "createdAt": "2024-12-20T08:30:00Z"
+    },
+    {
+      "id": "user-6",
+      "firstName": "Lisa",
+      "lastName": "Park",
+      "email": "lisa.park@example.com",
+      "role": "Frontend Developer",
+      "imageUrl": null,
+      "lastLogin": "2025-04-05T13:45:00Z",
+      "createdAt": "2025-01-12T10:15:00Z"
+    },
+    {
+      "id": "user-7",
+      "firstName": "David",
+      "lastName": "Garcia",
+      "email": "david.garcia@example.com",
+      "role": "Backend Developer",
+      "imageUrl": null,
+      "lastLogin": "2025-04-02T15:20:00Z",
+      "createdAt": "2024-12-18T16:40:00Z"
+    },
+    {
+      "id": "user-8",
+      "firstName": "Olivia",
+      "lastName": "Kim",
+      "email": "olivia.kim@example.com",
+      "role": "Mobile Developer",
+      "imageUrl": null,
+      "lastLogin": "2025-04-06T10:10:00Z",
+      "createdAt": "2025-01-08T09:30:00Z"
+    },
+    {
+      "id": "user-9",
+      "firstName": "Ryan",
+      "lastName": "Martinez",
+      "email": "ryan.martinez@example.com",
+      "role": "QA Engineer",
+      "imageUrl": null,
+      "lastLogin": "2025-04-01T14:50:00Z",
+      "createdAt": "2025-01-20T11:00:00Z"
+    },
+    {
+      "id": "user-10",
+      "firstName": "Jessica",
+      "lastName": "Lee",
+      "email": "jessica.lee@example.com",
+      "role": "Marketing Manager",
+      "imageUrl": null,
+      "lastLogin": "2025-04-05T09:30:00Z",
+      "createdAt": "2024-12-10T15:15:00Z"
+    }
+  ],
+  "projects": [
+    {
+      "id": "project-1",
+      "name": "Website Redesign",
+      "description": "Completely revamp the company website with modern design principles and improved UX.",
+      "progress": 65,
+      "status": "In Progress",
+      "createdAt": "2025-03-01",
+      "scope": {
+        "included": "- Full redesign of all customer-facing pages\n- Mobile responsiveness\n- Integration with existing backend APIs\n- SEO optimization\n- Performance optimization",
+        "excluded": "- Backend development\n- Content creation\n- Hosting migration",
+        "startDate": "2025-03-15",
+        "endDate": "2025-06-30"
+      },
+      "stakeholders": [
+        {
+          "id": "stake-1",
+          "userId": "user-1",
+          "userName": "John Doe",
+          "percentage": 40,
+          "role": "Project Manager"
+        },
+        {
+          "id": "stake-2",
+          "userId": "user-2",
+          "userName": "Sarah Miller",
+          "percentage": 30,
+          "role": "Lead Designer"
+        },
+        {
+          "id": "stake-3",
+          "userId": "user-3",
+          "userName": "Michael Chen",
+          "percentage": 30,
+          "role": "UX Lead"
+        }
+      ],
+      "attachments": [
+        {
+          "id": "attachment-1",
+          "name": "design_requirements.pdf",
+          "type": "application/pdf",
+          "size": "2.4 MB",
+          "uploadedBy": "John Doe",
+          "uploadedAt": "Apr 1, 2025"
+        },
+        {
+          "id": "attachment-2",
+          "name": "wireframes_v1.sketch",
+          "type": "application/sketch",
+          "size": "5.2 MB",
+          "uploadedBy": "Sarah Miller",
+          "uploadedAt": "Apr 3, 2025"
+        }
+      ]
+    },
+    {
+      "id": "project-2",
+      "name": "Mobile App Development",
+      "description": "Create native iOS and Android applications with core functionality from our web platform.",
+      "progress": 30,
+      "status": "In Progress",
+      "createdAt": "2025-02-15",
+      "scope": {
+        "included": "- User authentication\n- Core functionality\n- Push notifications\n- Offline mode\n- Analytics integration",
+        "excluded": "- Payment processing\n- AR features\n- Third-party integrations",
+        "startDate": "2025-02-20",
+        "endDate": "2025-07-15"
+      },
+      "stakeholders": [
+        {
+          "id": "stake-4",
+          "userId": "user-5",
+          "userName": "Alex Johnson",
+          "percentage": 35,
+          "role": "Tech Lead"
+        },
+        {
+          "id": "stake-5",
+          "userId": "user-6",
+          "userName": "Lisa Park",
+          "percentage": 25,
+          "role": "Frontend Developer"
+        },
+        {
+          "id": "stake-6",
+          "userId": "user-7",
+          "userName": "David Garcia",
+          "percentage": 25,
+          "role": "Backend Developer"
+        },
+        {
+          "id": "stake-7",
+          "userId": "user-8",
+          "userName": "Olivia Kim",
+          "percentage": 15,
+          "role": "Mobile Developer"
+        }
+      ],
+      "attachments": [
+        {
+          "id": "attachment-3",
+          "name": "app_architecture.pdf",
+          "type": "application/pdf",
+          "size": "1.8 MB",
+          "uploadedBy": "Alex Johnson",
+          "uploadedAt": "Feb 22, 2025"
+        }
+      ]
+    },
+    {
+      "id": "project-3",
+      "name": "Marketing Campaign",
+      "description": "Launch Q2 marketing campaign across digital and traditional channels to increase brand awareness.",
+      "progress": 85,
+      "status": "In Progress",
+      "createdAt": "2025-01-10",
+      "scope": {
+        "included": "- Social media campaign\n- Email marketing\n- Content creation\n- SEO optimization\n- Performance tracking",
+        "excluded": "- TV advertising\n- Physical merchandise\n- Outdoor advertising",
+        "startDate": "2025-01-20",
+        "endDate": "2025-04-20"
+      },
+      "stakeholders": [
+        {
+          "id": "stake-8",
+          "userId": "user-10",
+          "userName": "Jessica Lee",
+          "percentage": 60,
+          "role": "Marketing Manager"
+        },
+        {
+          "id": "stake-9",
+          "userId": "user-3",
+          "userName": "Michael Chen",
+          "percentage": 20,
+          "role": "Creative Consultant"
+        },
+        {
+          "id": "stake-10",
+          "userId": "user-1",
+          "userName": "John Doe",
+          "percentage": 20,
+          "role": "Project Sponsor"
+        }
+      ],
+      "attachments": [
+        {
+          "id": "attachment-4",
+          "name": "campaign_strategy.pptx",
+          "type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          "size": "3.7 MB",
+          "uploadedBy": "Jessica Lee",
+          "uploadedAt": "Jan 15, 2025"
+        },
+        {
+          "id": "attachment-5",
+          "name": "q2_budget.xlsx",
+          "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "size": "1.2 MB",
+          "uploadedBy": "John Doe",
+          "uploadedAt": "Jan 18, 2025"
+        }
+      ]
+    }
+  ],
+  "teams": [
+    {
+      "id": "team-1",
+      "name": "Design Team",
+      "projectId": "project-1",
+      "projectName": "Website Redesign",
+      "description": "Responsible for UI/UX design, visual elements, and overall user experience of the website.",
+      "color": "blue",
+      "createdDate": "Mar 3, 2025",
+      "members": [
+        {
+          "id": "user-2",
+          "name": "Sarah Miller",
+          "role": "UI Designer",
+          "joinedDate": "Mar 3, 2025",
+          "isLeader": true
+        },
+        {
+          "id": "user-3",
+          "name": "Michael Chen",
+          "role": "UX Researcher",
+          "joinedDate": "Mar 5, 2025",
+          "isLeader": false
+        },
+        {
+          "id": "user-4",
+          "name": "Emily Wong",
+          "role": "Graphic Designer",
+          "joinedDate": "Mar 7, 2025",
+          "isLeader": false
+        }
+      ],
+      "tasks": [
+        {
+          "id": "task-1",
+          "title": "Design homepage mockup",
+          "status": "In Progress"
+        },
+        {
+          "id": "task-2",
+          "title": "Create design system",
+          "status": "Not Started"
+        }
+      ]
+    },
+    {
+      "id": "team-2",
+      "name": "Development Team",
+      "projectId": "project-2",
+      "projectName": "Mobile App Development",
+      "description": "Frontend and backend developers working on the mobile application architecture, features, and performance.",
+      "color": "purple",
+      "createdDate": "Feb 20, 2025",
+      "members": [
+        {
+          "id": "user-5",
+          "name": "Alex Johnson",
+          "role": "Tech Lead",
+          "joinedDate": "Feb 20, 2025",
+          "isLeader": true
+        },
+        {
+          "id": "user-6",
+          "name": "Lisa Park",
+          "role": "Frontend Developer",
+          "joinedDate": "Feb 22, 2025",
+          "isLeader": false
+        },
+        {
+          "id": "user-7",
+          "name": "David Garcia",
+          "role": "Backend Developer",
+          "joinedDate": "Feb 22, 2025",
+          "isLeader": false
+        },
+        {
+          "id": "user-8",
+          "name": "Olivia Kim",
+          "role": "Mobile Developer",
+          "joinedDate": "Feb 25, 2025",
+          "isLeader": false
+        },
+        {
+          "id": "user-9",
+          "name": "Ryan Martinez",
+          "role": "QA Engineer",
+          "joinedDate": "Mar 1, 2025",
+          "isLeader": false
+        }
+      ],
+      "tasks": [
+        {
+          "id": "task-3",
+          "title": "Implement authentication",
+          "status": "In Progress"
+        },
+        {
+          "id": "task-4",
+          "title": "Optimize database queries",
+          "status": "In Progress"
+        }
+      ]
+    },
+    {
+      "id": "team-3",
+      "name": "Marketing Team",
+      "projectId": "project-3",
+      "projectName": "Marketing Campaign",
+      "description": "Responsible for planning and executing marketing strategies, content creation, and campaign analytics.",
+      "color": "green",
+      "createdDate": "Jan 15, 2025",
+      "members": [
+        {
+          "id": "user-10",
+          "name": "Jessica Lee",
+          "role": "Marketing Manager",
+          "joinedDate": "Jan 15, 2025",
+          "isLeader": true
+        },
+        {
+          "id": "user-3",
+          "name": "Michael Chen",
+          "role": "UX Researcher",
+          "joinedDate": "Jan 20, 2025",
+          "isLeader": false
+        },
+        {
+          "id": "user-1",
+          "name": "John Doe",
+          "role": "Project Manager",
+          "joinedDate": "Jan 25, 2025",
+          "isLeader": false
+        }
+      ],
+      "tasks": [
+        {
+          "id": "task-5",
+          "title": "Create content for social media",
+          "status": "Completed"
+        }
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-1",
+      "title": "Design homepage mockup",
+      "description": "Create a modern, responsive design for the new homepage following the brand guidelines.",
+      "project": "Website Redesign",
+      "projectId": "project-1",
+      "teamId": "team-1",
+      "deadline": "2025-04-10",
+      "completed": false,
+      "status": "In Progress",
+      "priority": "High",
+      "assignedType": "user",
+      "assignedTo": {
+        "type": "user",
+        "id": "user-2",
+        "name": "Sarah Miller"
+      },
+      "createdAt": "2025-03-15",
+      "updatedAt": "2025-04-02",
+      "comments": [
+        {
+          "id": "comment-1",
+          "user": "John Doe",
+          "text": "I've started working on this. Will have a draft ready by tomorrow.",
+          "time": "2 days ago"
+        },
+        {
+          "id": "comment-2",
+          "user": "Sarah Miller",
+          "text": "Looking forward to seeing the draft. Let me know if you need any clarification.",
+          "time": "1 day ago"
+        }
+      ],
+      "attachments": [
+        {
+          "id": "attachment-6",
+          "name": "design_requirements.pdf",
+          "type": "application/pdf",
+          "size": "2.4 MB",
+          "uploadedBy": "John Doe",
+          "uploadedAt": "Mar 30, 2025"
+        }
+      ],
+      "subtasks": [
+        {
+          "id": "subtask-1",
+          "title": "Research competitor designs",
+          "completed": true
+        },
+        {
+          "id": "subtask-2",
+          "title": "Create wireframes",
+          "completed": true
+        },
+        {
+          "id": "subtask-3",
+          "title": "Design UI components",
+          "completed": false
+        },
+        {
+          "id": "subtask-4",
+          "title": "Finalize mockup",
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "task-2",
+      "title": "Create design system",
+      "description": "Develop a comprehensive design system including components, color palettes, and typography for consistent design across the platform.",
+      "project": "Website Redesign",
+      "projectId": "project-1",
+      "teamId": "team-1",
+      "deadline": "2025-04-20",
+      "completed": false,
+      "status": "Not Started",
+      "priority": "Medium",
+      "assignedType": "user",
+      "assignedTo": {
+        "type": "user",
+        "id": "user-4",
+        "name": "Emily Wong"
+      },
+      "createdAt": "2025-03-20",
+      "updatedAt": "2025-03-20",
+      "comments": [],
+      "attachments": [],
+      "subtasks": [
+        {
+          "id": "subtask-5",
+          "title": "Define color palette",
+          "completed": false
+        },
+        {
+          "id": "subtask-6",
+          "title": "Create typography guide",
+          "completed": false
+        },
+        {
+          "id": "subtask-7",
+          "title": "Design UI components",
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "task-3",
+      "title": "Implement authentication",
+      "description": "Implement secure authentication with social login options and two-factor authentication.",
+      "project": "Mobile App Development",
+      "projectId": "project-2",
+      "teamId": "team-2",
+      "deadline": "2025-04-12",
+      "completed": false,
+      "status": "In Progress",
+      "priority": "High",
+      "assignedType": "user",
+      "assignedTo": {
+        "type": "user",
+        "id": "user-7",
+        "name": "David Garcia"
+      },
+      "createdAt": "2025-03-01",
+      "updatedAt": "2025-04-01",
+      "comments": [],
+      "attachments": [],
+      "subtasks": [
+        {
+          "id": "subtask-8",
+          "title": "Implement email/password auth",
+          "completed": true
+        },
+        {
+          "id": "subtask-9",
+          "title": "Add social login",
+          "completed": false
+        },
+        {
+          "id": "subtask-10",
+          "title": "Set up 2FA",
+          "completed": false
+        }
+      ]
+    },
+    {
+      "id": "task-4",
+      "title": "Optimize database queries",
+      "description": "Optimize the database queries to improve application performance and reduce load times.",
+      "project": "Mobile App Development",
+      "projectId": "project-2",
+      "teamId": "team-2",
+      "deadline": "2025-04-15",
+      "completed": false,
+      "status": "In Progress",
+      "priority": "Medium",
+      "assignedType": "user",
+      "assignedTo": {
+        "type": "user",
+        "id": "user-5",
+        "name": "Alex Johnson"
+      },
+      "createdAt": "2025-03-10",
+      "updatedAt": "2025-03-30",
+      "comments": [],
+      "attachments": [],
+      "subtasks": []
+    },
+    {
+      "id": "task-5",
+      "title": "Create content for social media",
+      "description": "Develop engaging content for our social media platforms to support the new campaign.",
+      "project": "Marketing Campaign",
+      "projectId": "project-3",
+      "teamId": "team-3",
+      "deadline": "2025-04-08",
+      "completed": true,
+      "status": "Completed",
+      "priority": "High",
+      "assignedType": "user",
+      "assignedTo": {
+        "type": "user",
+        "id": "user-10",
+        "name": "Jessica Lee"
+      },
+      "createdAt": "2025-02-15",
+      "updatedAt": "2025-04-05",
+      "comments": [],
+      "attachments": [],
+      "subtasks": [
+        {
+          "id": "subtask-11",
+          "title": "Create content calendar",
+          "completed": true
+        },
+        {
+          "id": "subtask-12",
+          "title": "Design social media graphics",
+          "completed": true
+        },
+        {
+          "id": "subtask-13",
+          "title": "Write post captions",
+          "completed": true
+        }
+      ]
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notification-1",
+      "type": "task_assigned",
+      "message": "John Doe assigned you a new task \"Design homepage mockup\"",
+      "project": "Website Redesign",
+      "time": "5 mins ago",
+      "read": false
+    },
+    {
+      "id": "notification-2",
+      "type": "comment",
+      "message": "New comment on \"Design homepage mockup\"",
+      "project": "Website Redesign",
+      "time": "1 hour ago",
+      "read": false
+    },
+    {
+      "id": "notification-3",
+      "type": "task_completed",
+      "message": "Your task \"Setup developer environment\" was approved",
+      "project": "Mobile App Development",
+      "time": "3 hours ago",
+      "read": true
+    },
+    {
+      "id": "notification-4",
+      "type": "project_update",
+      "message": "Project \"Website Redesign\" deadline has been extended to May 25",
+      "project": "Website Redesign",
+      "time": "5 hours ago",
+      "read": true
+    },
+    {
+      "id": "notification-5",
+      "type": "task_assigned",
+      "message": "Michael Chen assigned you a new task \"Update privacy policy\"",
+      "project": "Website Redesign",
+      "time": "1 day ago",
+      "read": true
+    },
+    {
+      "id": "notification-6",
+      "type": "comment",
+      "message": "Jennifer Lee commented on \"Fix navigation menu\"",
+      "project": "Website Redesign",
+      "time": "1 day ago",
+      "read": true
+    },
+    {
+      "id": "notification-7",
+      "type": "mention",
+      "message": "Lisa Park mentioned you in a comment on \"Create content for social media\"",
+      "project": "Marketing Campaign",
+      "time": "2 days ago",
+      "read": true
+    },
+    {
+      "id": "notification-8",
+      "type": "task_due",
+      "message": "Task \"Implement authentication\" is due tomorrow",
+      "project": "Mobile App Development",
+      "time": "2 days ago",
+      "read": true
+    }
+  ]
+}
