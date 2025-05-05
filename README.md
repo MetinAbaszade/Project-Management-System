@@ -1,10 +1,10 @@
-# TaskUp 🌐
+# TaskUp 
 
 **TaskUp** is a modern React.js-based web application for managing projects, tasks, teams, and collaboration with a clean UI and modular design.
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Clone the Repository
 
@@ -30,7 +30,7 @@ npm run dev
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 TaskUp/
@@ -53,7 +53,7 @@ TaskUp/
 
 ---
 
-## 📦 Scripts
+## Scripts
 
 ```bash
 npm run dev       # Start development server
@@ -63,7 +63,7 @@ npm run preview   # Preview production build
 
 ---
 
-## 💡 Features
+## Features
 
 - Responsive layout and animations
 - Modular project/team/task components
@@ -73,7 +73,7 @@ npm run preview   # Preview production build
 
 ---
 
-## 🛠 Customization
+## Customization
 
 - Modify theme: `src/theme/designTokens.js`
 - Edit context logic: `src/context/`
@@ -81,7 +81,7 @@ npm run preview   # Preview production build
 
 ---
 
-## 📄 License
+## License
 
 MIT License.  
 Feel free to fork, extend, or remix.
