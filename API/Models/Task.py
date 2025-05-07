@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, DateTime, Boolean, Integer, Text, ForeignKey, CheckConstraint, Numeric
 from sqlalchemy.orm import relationship, validates
+from Models.TaskAssignment import TaskAssignment
 from Db.session import Base
 
 
@@ -32,19 +33,36 @@ class Task(Base):
     Completed = Column(Boolean, default=False)
 
     # Assignment type constraint
-    __table_args__ = (
-        CheckConstraint(
-            "(TeamId IS NOT NULL AND EXISTS (SELECT 1 FROM AssignmentType WHERE Id = AssignmentTypeId AND Name = 'Team')) OR "
-            "(TeamId IS NULL AND EXISTS (SELECT 1 FROM AssignmentType WHERE Id = AssignmentTypeId AND Name = 'User'))",
-            name="check_task_assignment"
-        ),
-    )
+    # __table_args__ = (
+    #     CheckConstraint(
+    #         "(TeamId IS NOT NULL AND EXISTS (SELECT 1 FROM AssignmentType WHERE Id = AssignmentTypeId AND Name = 'Team')) OR "
+    #         "(TeamId IS NULL AND EXISTS (SELECT 1 FROM AssignmentType WHERE Id = AssignmentTypeId AND Name = 'User'))",
+    #         name="check_task_assignment"
+    #     ),
+    # )
 
     # Relationships
     Project = relationship("Project", back_populates="Tasks")
     Team = relationship("Team", back_populates="Tasks")
-    AssignedUsers = relationship("User", secondary="TaskAssignment", back_populates="TasksAssigned")
-    Subtasks = relationship("Task", backref="ParentTask", remote_side=[Id], cascade="all, delete-orphan")
+    AssignedUsers = relationship(
+        "User",
+        secondary="TaskAssignment",
+        back_populates="TasksAssigned",
+        primaryjoin="Task.Id == TaskAssignment.TaskId",
+        secondaryjoin="User.Id == TaskAssignment.UserId",
+        foreign_keys=[TaskAssignment.TaskId, TaskAssignment.UserId],
+    )
+    Subtasks = relationship(
+        "Task",
+        back_populates="ParentTask",
+        cascade="all, delete-orphan",
+        single_parent=True
+    )
+    ParentTask = relationship(
+        "Task",
+        remote_side=[Id],
+        back_populates="Subtasks"
+    )
     Comments = relationship("Comment", back_populates="Task", cascade="all, delete-orphan")
     Attachments = relationship("Attachment", back_populates="Task", cascade="all, delete-orphan")
     Priority = relationship("Priority")

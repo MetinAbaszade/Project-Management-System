@@ -12,12 +12,12 @@ class Project(Base):
     Name = Column(String(100), nullable=False)
     Description = Column(Text)
 
-  # Deadline = Column(DateTime)
+    Deadline = Column(DateTime)  # ✅ Add this line back
 
     Progress = Column(Integer, default=0)
     TotalBudget = Column(Numeric(12, 2), default=0)
     RemainingBudget = Column(Numeric(12, 2), default=0)
-    # ProjectStatus.py ni sildim
+    
     Status = Column(String(50), default="Not Started")
     CreatedAt = Column(DateTime, default=datetime.utcnow)
     UpdatedAt = Column(DateTime, onupdate=datetime.utcnow)
@@ -39,17 +39,3 @@ class Project(Base):
     STATUS_IN_PROGRESS = "In Progress"
     STATUS_COMPLETED = "Completed"
     STATUS_ON_HOLD = "On Hold"
-    # @property
-    # def TeamCount(self):
-    #     """Get number of teams assigned to this project"""
-    #     return len(self.Teams)
-    #
-    # @property
-    # def TaskCount(self):
-    #     """Get number of tasks in this project"""
-    #     return len(self.Tasks)
-    #
-    # @property
-    # def CompletedTaskCount(self):
-    #     """Get number of completed tasks in this project"""
-    #     return sum(1 for task in self.Tasks if task.Completed)

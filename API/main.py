@@ -9,6 +9,7 @@ from Router.LanguageRouter import router as language_router
 from Router.EmailRouter import router as email_router
 from Router.AuthRouter import router as auth_router
 from Router.ProjectRouter import router as project_router  # ✅ New import
+from Router.ProjectScopeRouter import router as project_scope_router  # ✅ New import
 
 # Database
 from Db.session import engine, Base
@@ -46,6 +47,7 @@ app.include_router(language_router)
 app.include_router(email_router)
 app.include_router(auth_router)
 app.include_router(project_router)  # ✅ Add this!
+app.include_router(project_scope_router)
 
 # ✅ Run app
 if __name__ == "__main__":
