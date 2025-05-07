@@ -2,6 +2,8 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, DateTime, Boolean
 from sqlalchemy.orm import relationship, validates
+from Models.TaskAssignment import TaskAssignment
+
 from Db.session import Base
 
 
@@ -13,7 +15,7 @@ class User(Base):
     FirstName = Column(String(50), nullable=False)
     LastName = Column(String(50), nullable=False)
     Email = Column(String(100), nullable=False, unique=True)
-    PasswordHash = Column(String(255), nullable=False)
+    Password = Column(String(255), nullable=False)
     #role.py sildim
     Role = Column(String(50), default="User")
 
@@ -27,8 +29,16 @@ class User(Base):
     IsDeleted = Column(Boolean, default=False)
 
     # Relationships
-    Teams = relationship("Team", secondary="TeamMember", back_populates="Members")
-    TasksAssigned = relationship("Task", secondary="TaskAssignment", back_populates="AssignedUsers")
+    Teams = relationship("Team", secondary="TeamMember", back_populates="Members", overlaps="TeamMemberships")
+    TasksAssigned = relationship(
+        "Task",
+        secondary="TaskAssignment",
+        back_populates="AssignedUsers",
+        primaryjoin="User.Id == TaskAssignment.UserId",
+        secondaryjoin="Task.Id == TaskAssignment.TaskId",
+        foreign_keys=[TaskAssignment.UserId, TaskAssignment.TaskId],
+        overlaps="User,Task"
+    )
     TasksCreated = relationship("Task", foreign_keys="Task.CreatedBy", back_populates="Creator")
     Comments = relationship("Comment", back_populates="User")
     Notifications = relationship("Notification", back_populates="User")
@@ -37,7 +47,7 @@ class User(Base):
     ProjectsCreated = relationship("Project", foreign_keys="Project.CreatedBy", back_populates="Creator")
     TeamsCreated = relationship("Team", foreign_keys="Team.CreatedBy", back_populates="Creator")
     Expenses = relationship("Expense", back_populates="User")
-    TeamMemberships = relationship("TeamMember", back_populates="User")
+    TeamMemberships = relationship("TeamMember", back_populates="User", overlaps="Teams")
     ProjectMemberships = relationship("ProjectMember", back_populates="User")
 
     # @validates('Email')

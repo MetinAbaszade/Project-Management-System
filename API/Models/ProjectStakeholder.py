@@ -6,7 +6,6 @@ from Db.session import Base
 
 
 class ProjectStakeholder(Base):
-
     __tablename__ = "ProjectStakeholder"
 
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -16,6 +15,10 @@ class ProjectStakeholder(Base):
     Percentage = Column(Float, nullable=False, default=0)
     CreatedAt = Column(DateTime, default=datetime.utcnow)
     UpdatedAt = Column(DateTime, onupdate=datetime.utcnow)
+
+
+    User = relationship("User", back_populates="ProjectStakes")
+    Project = relationship("Project", back_populates="Stakeholders")
 
     # faiz
     # __table_args__ = (

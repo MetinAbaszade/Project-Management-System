@@ -6,7 +6,6 @@ from Db.session import Base
 
 
 class TaskAssignment(Base):
-
     __tablename__ = "TaskAssignment"
 
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -16,11 +15,10 @@ class TaskAssignment(Base):
     AssignedBy = Column(String(36), ForeignKey("User.Id"), nullable=False)
 
     # Relationships
-    Task = relationship("Task")
-    User = relationship("User")
-    Assigner = relationship("User", foreign_keys=[AssignedBy])
+    Task = relationship("Task", foreign_keys=[TaskId])
+    User = relationship("User", foreign_keys=[UserId])         # Assigned user
+    Assigner = relationship("User", foreign_keys=[AssignedBy]) # Who assigned it
 
-    #  unique user per task
     __table_args__ = (
         {"sqlite_autoincrement": True},
     )
