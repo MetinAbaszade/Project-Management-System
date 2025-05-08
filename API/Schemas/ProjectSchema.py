@@ -19,10 +19,9 @@ class ProjectCreate(BaseModel):
 class ProjectOut(BaseModel):
     Id: UUID
     Name: str
-    Description: Optional[str]
-    Deadline: Optional[datetime]
-    StatusId: UUID
-    Budget: int
+    Description: str
+    Deadline: datetime
+    TotalBudget: int
     CreatedAt: datetime
     IsDeleted: bool
     OwnerId: UUID

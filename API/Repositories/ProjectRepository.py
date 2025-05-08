@@ -11,8 +11,7 @@ def CreateProject(db: Session, projectData: ProjectCreate, ownerId: UUID):
         Name=projectData.Name,
         Description=projectData.Description,
         Deadline=projectData.Deadline,
-        StatusId=projectData.StatusId,
-        Budget=projectData.Budget,
+        TotalBudget=projectData.Budget,
         OwnerId=ownerId
     )
     db.add(newProject)

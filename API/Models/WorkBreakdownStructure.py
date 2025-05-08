@@ -8,7 +8,7 @@ class WorkBreakdownStructure(Base):
     __tablename__ = "WorkBreakdownStructure"
 
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    ProjectScopeId = Column(String(36), ForeignKey("ProjectScope.Id"), nullable=False)
+    # ProjectScopeId = Column(String(36), ForeignKey("ProjectScope.Id"), nullable=False)
 
     WorkPackageName = Column(String(255))
     WorkDescription = Column(Text)
