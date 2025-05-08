@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from Schemas.ProjectSchema import ProjectCreate, ProjectMemberCreate
-from Models.Project import Project
+from Schemas.ProjectSchema import ProjectCreate
+from Models import Project, User, Team, TeamMember, ProjectStakeholder, ProjectScope
 from Models.ProjectMember import ProjectMember
 from uuid import UUID
 from Models.Task import Task
@@ -38,11 +38,10 @@ def GetProjectsByUser(db: Session, userId: UUID):
 
     return ownedProjects.union(memberProjects).all()
 
-
-def AddMemberToProject(db: Session, ProjectId: UUID, MemberData: ProjectMemberCreate):
+def AddMemberToProject(db: Session, projectId: UUID, memberId: UUID):
     member = ProjectMember(
-        ProjectId=ProjectId,
-        UserId=MemberData.UserId,
+        ProjectId=projectId,
+        UserId=memberId,
     )
 
     db.add(member)
@@ -51,42 +50,124 @@ def AddMemberToProject(db: Session, ProjectId: UUID, MemberData: ProjectMemberCr
     return member
 
 def SoftDeleteProject(db: Session, projectId: UUID, userId: UUID):
-    project: Project = db.query(Project).filter(Project.Id == str(projectId)).first()
-    print("Project from DB:", project)
+    # Step 1: Soft delete the project itself
+    db.query(Project).filter(Project.Id == str(projectId)).update(
+        {"IsDeleted": True}, synchronize_session=False
+    )
 
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+    # Step 2: Soft delete project members
+    db.query(ProjectMember).filter(
+        ProjectMember.ProjectId == str(projectId)
+    ).update({"IsDeleted": True}, synchronize_session=False)
 
-    if project.OwnerId != str(userId):
-        raise HTTPException(status_code=403, detail="Unauthorized")
+    # Step 3: Get all team IDs for this project
+    team_ids = db.query(Team.Id).filter(
+        Team.ProjectId == str(projectId)
+    ).all()
+    team_ids = [tid[0] for tid in team_ids]
 
-    if project.IsDeleted:
-        return {"message": "Project already deleted"}
+    # Step 4: Soft delete teams
+    db.query(Team).filter(
+        Team.ProjectId == str(projectId)
+    ).update({"IsDeleted": True}, synchronize_session=False)
 
-    project.IsDeleted = True
-    db.query(ProjectMember).filter(ProjectMember.ProjectId == str(projectId)).update({"IsDeleted": True})
-    # db.query(Task).filter(Task.ProjectId == str(projectId)).update({"IsDeleted": True})
+    # Step 5: Soft delete team members
+    if team_ids:
+        db.query(TeamMember).filter(
+            TeamMember.TeamId.in_(team_ids)
+        ).update({"IsActive": False}, synchronize_session=False)
+
+    # Step 6: Soft delete tasks under this project
+    db.query(Task).filter(
+        Task.ProjectId == str(projectId)
+    ).update({"IsDeleted": True}, synchronize_session=False)
+
+    # Step 7: Soft delete stakeholders
+    db.query(ProjectStakeholder).filter(
+        ProjectStakeholder.ProjectId == str(projectId)
+    ).update({"IsDeleted": True}, synchronize_session=False)
+
+    # Step 8: Soft delete scope
+    db.query(ProjectScope).filter(
+        ProjectScope.ProjectId == str(projectId)
+    ).update({"IsDeleted": True}, synchronize_session=False)
+
     db.commit()
-
-    return {"message": "Project deleted successfully"}
+    return {"message": "Project and all related data soft-deleted successfully"}
 
 def SoftDeleteProjectMember(db: Session, projectId: UUID, memberId: UUID):
-    member: ProjectMember = db.query(ProjectMember).filter(
+    # Step 1: Soft-delete from ProjectMember
+    project_member = db.query(ProjectMember).filter(
         ProjectMember.ProjectId == str(projectId),
         ProjectMember.UserId == str(memberId),
         ProjectMember.IsDeleted == False
     ).first()
 
-    if not member:
+    if not project_member:
         raise HTTPException(status_code=404, detail="Project member not found")
 
-    member.IsDeleted = True
+    project_member.IsDeleted = True
 
+    # Step 2: Get all non-deleted teams of this project
+    team_ids = db.query(Team.Id).filter(
+        Team.ProjectId == str(projectId),
+        Team.IsDeleted == False
+    ).all()
+    team_ids = [tid[0] for tid in team_ids]
+
+    # Step 3: Soft-delete matching TeamMember records
+    if team_ids:
+        db.query(TeamMember).filter(
+            TeamMember.TeamId.in_(team_ids),
+            TeamMember.UserId == str(memberId),
+            TeamMember.IsActive == True
+        ).update({"IsActive": False}, synchronize_session=False)
+
+    # Step 4: Soft-delete all tasks assigned to this user in the project
     db.query(Task).filter(
         Task.ProjectId == str(projectId),
         Task.AssignedTo == str(memberId),
         Task.IsDeleted == False
-    ).update({"IsDeleted": True})
+    ).update({"IsDeleted": True}, synchronize_session=False)
 
     db.commit()
-    return {"message": "Project member and related tasks deleted successfully"}
+
+    return {"message": "Project member, their tasks, and any team memberships soft-deleted successfully"}
+
+def GetProjectOwner(db: Session, projectId: UUID):
+    project = db.query(Project).filter(Project.Id == str(projectId), Project.IsDeleted == False).first()
+
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    owner = db.query(User).filter(User.Id == project.OwnerId).first()
+
+    if not owner:
+        raise HTTPException(status_code=404, detail="Project owner not found")
+
+    return owner
+
+def IsProjectOwner(db: Session, userId: UUID, projectId: UUID) -> bool:
+    project = db.query(Project).filter(Project.Id == str(projectId), Project.IsDeleted == False).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return str(project.OwnerId) == str(userId)
+
+def GetProjectMembers(db: Session, projectId: UUID):
+    project = db.query(Project).filter(
+        Project.Id == str(projectId),
+        Project.IsDeleted == False
+    ).first()
+
+    return [member for member in project.Members if not member.IsDeleted]
+
+def GetProjectTeams(db: Session, projectId: UUID):
+    project = db.query(Project).filter(
+        Project.Id == str(projectId),
+        Project.IsDeleted == False
+    ).first()
+
+    return [team for team in project.Teams if not team.IsDeleted]
+
+
+

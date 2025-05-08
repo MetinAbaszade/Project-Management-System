@@ -1,54 +1,59 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import List 
+from fastapi import APIRouter, Depends, status
 from uuid import UUID
 
-from Schemas.ProjectSchema import ProjectCreate, ProjectOut, ProjectMemberCreate
+from Models import User
+from Schemas.ProjectSchema import ProjectCreate, ProjectOut
 from Services.ProjectService import ProjectService
-from Dependencies.db import GetDb
 from Dependencies.auth import GetCurrentUser
-from Models.User import User
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
-@router.post("/create-project", response_model=ProjectOut)
-def create_project(
+@router.post("/create", response_model=ProjectOut)
+def CreateProject(
     projectData: ProjectCreate,
     currentUser: User = Depends(GetCurrentUser),
     projectService: ProjectService = Depends(ProjectService)
 ):
-    return projectService.CreateProject(projectData, currentUser.Id)
+    return projectService.CreateProject(currentUser.Id, projectData)
 
-@router.get("/my-projects", response_model=List[ProjectOut])
-def GetMyProjects(
-    db: Session = Depends(GetDb),
+@router.delete("/{projectId}/delete", status_code=status.HTTP_200_OK)
+def DeleteProject(
+    projectId: UUID,
     currentUser: User = Depends(GetCurrentUser),
     projectService: ProjectService = Depends(ProjectService)
 ):
-    return projectService.GetUserProjects(db, currentUser.Id)
-
+    return projectService.SoftDeleteProject(currentUser.Id, projectId)
 
 @router.post("/{project_id}/add-member", status_code=status.HTTP_201_CREATED)
 def AddMember(
     projectId: UUID,
-    memberData: ProjectMemberCreate,
+    memberId: UUID,
+    currentUser: User = Depends(GetCurrentUser),
+    projectService: ProjectService = Depends(ProjectService)):
+    return projectService.AddProjectMember(currentUser.Id, projectId, memberId)
+
+@router.delete("/{projectId}/remove-member/{memberId}", status_code=status.HTTP_200_OK)
+def RemoveMember(
+    projectId: UUID,
+    memberId: UUID,
+    currentUser: User = Depends(GetCurrentUser),
     projectService: ProjectService = Depends(ProjectService)
 ):
-    return projectService.AddProjectMember(projectId, memberData)
+    return projectService.SoftDeleteProjectMember(projectId, memberId)
 
-@router.delete("/{projectId}/delete", status_code=status.HTTP_200_OK)
-def deleteProject(
+@router.get("/{projectId}/members", summary="Get all active project members")
+def GetProjectMembers(
     projectId: UUID,
     currentUser: User = Depends(GetCurrentUser),
     projectService: ProjectService = Depends(ProjectService)
 ):
-    return projectService.SoftDeleteProject(projectId, currentUser.Id)
+    return projectService.GetProjectMembers(projectId)
 
-@router.delete("/{projectId}/remove-member/{memberId}", status_code=status.HTTP_200_OK)
-def removeMemberFromProject(
+
+@router.get("/{projectId}/teams", summary="Get all active project teams")
+def GetProjectTeams(
     projectId: UUID,
-    memberId: UUID,
-    # currentUser: User = Depends(GetCurrentUser),
+    currentUser: User = Depends(GetCurrentUser),
     projectService: ProjectService = Depends(ProjectService)
 ):
-    return projectService.SoftDeleteProjectMember(projectId, memberId)
+    return projectService.GetProjectTeams(projectId)

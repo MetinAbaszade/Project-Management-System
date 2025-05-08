@@ -6,9 +6,6 @@ router = APIRouter(
     prefix="/email",
     tags=["Email Verification"]
 )
-@router.post("/hello")
-def test():
-    return "Hello World"
 
 @router.post("/send-verification-code", response_model=ResponseDTO)
 def SendVerificationCode(recipientEmail: str, emailService: EmailService = Depends()):

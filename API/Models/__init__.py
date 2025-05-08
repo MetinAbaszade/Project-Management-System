@@ -9,13 +9,11 @@ from .Attachment import *
 from .Notification import *
 from .ProjectStakeholder import *
 from .ProjectScope import *
-from .ChatMessage import *
 from .AssignmentType import *
 from .Priority import *
 from .Status import *
 from .AdminSetting import *
 from .AuditLog import *
-from .TeamProject import *
 from .Expense import *
 from .ProjectMember import *
 
@@ -33,9 +31,7 @@ __all__ = [
     'ProjectScope',
     'TeamMember',
     'TaskAssignment',
-    'ChatMessage',
     'AssignmentType',
-    'TeamProject',
     'Expense',
     'ProjectMember'
 ]
