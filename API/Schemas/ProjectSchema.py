@@ -8,11 +8,10 @@ from Schemas.ProjectStatusSchema import ProjectStatusOut
 
 class ProjectCreate(BaseModel):
     Name: str
-    Description: Optional[str] = None
-    Deadline: Optional[datetime] = None
-    StatusId: UUID  
-    Budget: Optional[int] = 0
-    IsDeleted: Optional[bool] = False
+    Description: str = None
+    Deadline: datetime = None
+    Budget: int = 0
+    IsDeleted: bool = False
 
     class Config:
         from_attributes = True
@@ -21,10 +20,9 @@ class ProjectCreate(BaseModel):
 class ProjectOut(BaseModel):
     Id: UUID
     Name: str
-    Description: Optional[str]
-    Deadline: Optional[datetime]
-    StatusId: UUID
-    Budget: int
+    Description: str
+    Deadline: datetime
+    TotalBudget: int
     CreatedAt: datetime
     IsDeleted: bool
     OwnerId: UUID
