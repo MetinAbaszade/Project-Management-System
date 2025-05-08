@@ -8,7 +8,7 @@ class RequirementDocument(Base):
     __tablename__ = "RequirementDocument"
 
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    ProjectScopeId = Column(String(36), ForeignKey("ProjectScope.Id"), nullable=False)
+    #ProjectScopeId = Column(String(36), ForeignKey("ProjectScope.Id"), nullable=False)
 
     StakeholderNeeds = Column(Text)
     RequirementTraceability = Column(Text)

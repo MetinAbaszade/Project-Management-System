@@ -43,7 +43,7 @@ class User(Base):
     Notifications = relationship("Notification", back_populates="User")
     Attachments = relationship("Attachment", back_populates="UploadedBy")
     ProjectStakes = relationship("ProjectStakeholder", back_populates="User")
-    ProjectsCreated = relationship("Project", foreign_keys="Project.CreatedBy", back_populates="Creator")
+    ProjectsCreated = relationship("Project", foreign_keys="Project.OwnerId", back_populates="Creator")
     TeamsCreated = relationship("Team", foreign_keys="Team.CreatedBy", back_populates="Creator")
     Expenses = relationship("Expense", back_populates="User")
 
