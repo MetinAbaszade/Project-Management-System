@@ -17,6 +17,7 @@ def create_project(
     currentUser: User = Depends(GetCurrentUser),
     projectService: ProjectService = Depends(ProjectService)
 ):
+    print(projectData)
     return projectService.CreateProject(projectData, currentUser.Id)
 
 @router.get("/my-projects", response_model=List[ProjectOut])
