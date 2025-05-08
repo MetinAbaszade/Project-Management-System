@@ -25,12 +25,10 @@ class Project(Base):
 
     # Relationships
     Tasks = relationship("Task", back_populates="Project", cascade="all, delete-orphan")
-    TeamProjects = relationship("TeamProject", back_populates="Project", cascade="all, delete-orphan")
-    Teams = relationship("Team", secondary="TeamProject", viewonly=True)
+    Teams = relationship("Team", back_populates="Project", cascade="all, delete-orphan")
     Stakeholders = relationship("ProjectStakeholder", back_populates="Project", cascade="all, delete-orphan")
     Creator = relationship("User", back_populates="ProjectsCreated")
     Scope = relationship("ProjectScope", back_populates="Project", uselist=False, cascade="all, delete-orphan")
-    ChatMessages = relationship("ChatMessage", back_populates="Project", cascade="all, delete-orphan")
     Members = relationship("ProjectMember", back_populates="Project", cascade="all, delete-orphan")
 
     # Predefined status values

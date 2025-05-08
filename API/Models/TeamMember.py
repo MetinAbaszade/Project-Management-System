@@ -1,4 +1,3 @@
-
 import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, DateTime, Boolean, ForeignKey
@@ -20,11 +19,19 @@ class TeamMember(Base):
     JoinedDate = Column(DateTime, default=datetime.utcnow)
     IsActive = Column(Boolean, default=True)
 
-    # Relationships
-    Team = relationship("Team", back_populates="TeamMemberships")
-    User = relationship("User", back_populates="TeamMemberships")
+    # Relationships with overlaps to resolve SAWarnings
+    Team = relationship(
+        "Team",
+        back_populates="TeamMemberships",
+        overlaps="Members,Teams"
+    )
+    User = relationship(
+        "User",
+        back_populates="TeamMemberships",
+        overlaps="Teams,Members"
+    )
 
-      # unique user per team
+    # Optional: if using SQLite for auto-increment
     __table_args__ = (
         {"sqlite_autoincrement": True},
     )

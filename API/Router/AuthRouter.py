@@ -1,16 +1,14 @@
 from fastapi import APIRouter, Depends
 from Services.AuthService import AuthService
-from Schemas.AuthSchema import RegisterSchema, LoginSchema
+from Services.UserService import UserService
+from Schemas.UserSchema import AddUserSchema
+from Schemas.AuthSchema import LoginSchema
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-@router.get("/test")
-def TestAuth():
-    return {"message": "Authentication API is working!"}
-
 @router.post("/register")
-def RegisterUser(userData: RegisterSchema, authService: AuthService = Depends()):
-    return authService.RegisterUser(userData)
+def RegisterUser(userData: AddUserSchema, userService: UserService = Depends()):
+    return userService.CreateUser(userData)
 
 @router.post("/login")
 def LoginUser(userData: LoginSchema, authService: AuthService = Depends()):
