@@ -42,6 +42,3 @@ class ProjectScopeService:
             projectScopeStatement,
             workBreakdownStructure
         )
-
-    def DeleteScope(self, projectId: str):
-        return self.projectScopeRepository.DeleteScope(projectId)

@@ -33,7 +33,7 @@ class ProjectService:
             raise HTTPException(status_code=404, detail="Project not found")
 
         # Step 2: Check if the user is the owner
-        if str(project.CreatedBy) != str(userId):
+        if str(project.OwnerId) != str(userId):
             raise HTTPException(status_code=403, detail="Only the project owner can delete the project.")
 
         # Step 3: Proceed with soft deletion

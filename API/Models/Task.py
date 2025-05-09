@@ -48,6 +48,7 @@ class Task(Base):
     )
 
     Creator = relationship("User", foreign_keys=[CreatedBy], back_populates="TasksCreated", overlaps="TasksAssigned")
+    AssignedResources = relationship("ActivityResource", back_populates="Task", cascade="all, delete-orphan")
 
     # Predefined statuses
     NOT_STARTED = "Not Started"
