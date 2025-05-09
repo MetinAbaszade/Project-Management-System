@@ -11,7 +11,7 @@ class ProjectMember(Base):
     ProjectId = Column(String(36), ForeignKey("Project.Id", ondelete="CASCADE"), nullable=False)
     UserId = Column(String(36), ForeignKey("User.Id", ondelete="CASCADE"), nullable=False)
     Role = Column(String(50))  # Simple string role like "Project Manager", "Developer", etc.
-    JoinedAt = Column(DateTime, default=datetime.utcnow)
+    JoinedAt = Column(DateTime, default=datetime.now())
     IsDeleted = Column(Boolean, default=False)
 
     # Relationships

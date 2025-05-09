@@ -1,8 +1,7 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, Boolean, Integer, Text, ForeignKey, Numeric
+from sqlalchemy import Column, String, DateTime, Boolean, Text, ForeignKey, Float
 from sqlalchemy.orm import relationship
-from Models.TaskAssignment import TaskAssignment
 from Db.session import Base
 
 
@@ -13,35 +12,27 @@ class Task(Base):
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     ProjectId = Column(String(36), ForeignKey("Project.Id", ondelete="CASCADE"), nullable=False)
     TeamId = Column(String(36), ForeignKey("Team.Id", ondelete="CASCADE"), nullable=True)
+    UserId = Column(String(36), ForeignKey("User.Id", ondelete="CASCADE"), nullable=True)
+    CreatedBy = Column(String(36), ForeignKey("User.Id"), nullable=False)
 
-    AssignmentTypeId = Column(String(36), ForeignKey("AssignmentType.Id"), nullable=False)
     Title = Column(String(100), nullable=False)
     Description = Column(Text)
-    IsSubtask = Column(Boolean, default=False)
+    Cost = Column(Float, default=0.0)
+    Status = Column(String(50), nullable=False)  # 'Not Started', 'In Progress', 'Completed'
+    StatusColorHex = Column(String(7))
+    Priority = Column(String(50), nullable=False)  # 'Low', 'Medium', 'High'
+    PriorityColorHex = Column(String(7))
     ParentTaskId = Column(String(36), ForeignKey("Task.Id", ondelete="CASCADE"), nullable=True)
     Deadline = Column(DateTime)
-    BudgetAllocated = Column(Numeric(12, 2), default=0)
-    PriorityId = Column(String(36), ForeignKey("Priority.Id"), nullable=False)
-    StatusId = Column(String(36), ForeignKey("Status.Id"), nullable=False)
-    CreatedAt = Column(DateTime, default=datetime.utcnow)
-    UpdatedAt = Column(DateTime, onupdate=datetime.utcnow)
-    CreatedBy = Column(String(36), ForeignKey("User.Id"), nullable=False)
+    CreatedAt = Column(DateTime, default=datetime.now())
+    UpdatedAt = Column(DateTime, onupdate=datetime.now())
     IsDeleted = Column(Boolean, default=False)
     Completed = Column(Boolean, default=False)
 
     # Relationships
     Project = relationship("Project", back_populates="Tasks")
     Team = relationship("Team", back_populates="Tasks")
-
-    AssignedUsers = relationship(
-        "User",
-        secondary="TaskAssignment",
-        back_populates="TasksAssigned",
-        primaryjoin="Task.Id == TaskAssignment.TaskId",
-        secondaryjoin="User.Id == TaskAssignment.UserId",
-        foreign_keys=[TaskAssignment.TaskId, TaskAssignment.UserId],
-        overlaps="TasksAssigned,TaskAssignment,User"
-    )
+    User = relationship("User", foreign_keys=[UserId])
 
     Subtasks = relationship(
         "Task",
@@ -56,10 +47,15 @@ class Task(Base):
         back_populates="Subtasks"
     )
 
-    Comments = relationship("Comment", back_populates="Task", cascade="all, delete-orphan")
-    Attachments = relationship("Attachment", back_populates="Task", cascade="all, delete-orphan")
-    Priority = relationship("Priority")
-    Status = relationship("Status")
-    AssignmentType = relationship("AssignmentType")
     Creator = relationship("User", foreign_keys=[CreatedBy], back_populates="TasksCreated", overlaps="TasksAssigned")
-    Expenses = relationship("Expense", back_populates="Task", cascade="all, delete-orphan")
+
+    # Predefined statuses
+    NOT_STARTED = "Not Started"
+    IN_PROGRESS = "In Progress"
+    COMPLETED = "Completed"
+
+    # Predefined priorities
+    LOW = "Low"
+    MEDIUM = "Medium"
+    HIGH = "High"
+

@@ -1,8 +1,11 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, status
 from uuid import UUID
 
 from Models import User
 from Schemas.ProjectSchema import ProjectCreate, ProjectOut
+from Schemas.TaskSchema import TaskResponse
 from Services.ProjectService import ProjectService
 from Dependencies.auth import GetCurrentUser
 
@@ -23,6 +26,14 @@ def DeleteProject(
     projectService: ProjectService = Depends(ProjectService)
 ):
     return projectService.SoftDeleteProject(currentUser.Id, projectId)
+
+@router.get("/{projectId}", response_model=ProjectOut, summary="Get a project by ID")
+def GetProjectById(
+    projectId: UUID,
+    currentUser: User = Depends(GetCurrentUser),
+    projectService: ProjectService = Depends(ProjectService)
+):
+    return projectService.GetProjectById(projectId)
 
 @router.post("/{project_id}/add-member", status_code=status.HTTP_201_CREATED)
 def AddMember(
@@ -57,3 +68,12 @@ def GetProjectTeams(
     projectService: ProjectService = Depends(ProjectService)
 ):
     return projectService.GetProjectTeams(projectId)
+
+@router.get("/{projectId}/tasks", response_model=List[TaskResponse], summary="Get all tasks of a project")
+def GetProjectTasks(
+    projectId: UUID,
+    currentUser: User = Depends(GetCurrentUser),
+    service: ProjectService = Depends()
+):
+    return service.GetProjectTasks(projectId)
+

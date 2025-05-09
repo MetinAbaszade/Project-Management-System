@@ -1,4 +1,5 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
+
 
 class RegisterSchema(BaseModel):
     FirstName: str
@@ -7,5 +8,5 @@ class RegisterSchema(BaseModel):
     Password: str
 
 class LoginSchema(BaseModel):
-    Email: EmailStr
-    Password: str
+    Email: EmailStr = Field(..., example="johndoe@example.com")
+    Password: str = Field(..., min_length=6, example="securepassword123")

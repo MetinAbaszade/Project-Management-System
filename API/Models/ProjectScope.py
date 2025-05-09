@@ -15,8 +15,8 @@ class ProjectScope(Base):
     ScopeStatementId = Column(String(36), ForeignKey("ProjectScopeStatement.Id"), nullable=True, unique = True)
     WBSId = Column(String(36), ForeignKey("WorkBreakdownStructure.Id"), nullable=True, unique = True)
 
-    CreatedAt = Column(DateTime, default=datetime.utcnow)
-    UpdatedAt = Column(DateTime, onupdate=datetime.utcnow)
+    CreatedAt = Column(DateTime, default=datetime.now())
+    UpdatedAt = Column(DateTime, onupdate=datetime.now())
 
     # Relationships
     Project = relationship("Project", back_populates="Scope")

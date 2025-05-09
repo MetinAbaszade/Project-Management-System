@@ -33,15 +33,12 @@ def GetTeam(teamId: UUID,
         raise HTTPException(status_code=404, detail="Team not found")
     return team
 
-@router.put("/{team_id}", response_model=TeamResponse, summary="Update a team")
+@router.put("/{teamId}", response_model=TeamResponse, summary="Update a team")
 def UpdateTeam(teamId: UUID,
                 teamData: TeamUpdate,
                 currentUser: User = Depends(GetCurrentUser),
                 service: TeamService = Depends()):
-    updated = service.UpdateTeam(currentUser.Id, teamId, teamData)
-    if not updated:
-        raise HTTPException(status_code=404, detail="Team not found")
-    return updated
+    return service.UpdateTeam(currentUser.Id, teamId, teamData)
 
 @router.delete("/{team_id}", status_code=204, summary="Soft delete a team")
 def DeleteTeam(teamId: UUID,
@@ -68,3 +65,11 @@ def RemoveTeamMember(
     return service.RemoveMember(currentUser.Id,
                                 removeTeamMemberSchema.TeamId,
                                 removeTeamMemberSchema.UserIdToBeRemoved)
+
+@router.get("/{team_id}/tasks", summary="Get all tasks for a team")
+def GetTeamTasks(
+    teamId: UUID,
+    currentUser: User = Depends(GetCurrentUser),
+    service: TeamService = Depends()
+):
+    return service.GetTeamTasks(teamId)

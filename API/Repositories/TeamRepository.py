@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy.orm import Session
 
 from Models import TeamMember, Task
@@ -18,7 +20,8 @@ class TeamRepository:
             Description=teamData.Description,
             ColorIndex=teamData.ColorIndex,
             CreatedBy=str(userId),
-            CreatedAt=datetime.utcnow()
+            CreatedAt= datetime.now(),
+            ProjectId = str(teamData.ProjectId),
         )
         self.db.add(team)
         self.db.commit()
@@ -28,14 +31,16 @@ class TeamRepository:
     def GetAll(self):
         return self.db.query(Team).filter(Team.IsDeleted == False).all()
 
-    def GetById(self, teamId: UUID):
-        return self.db.query(Team).filter(Team.Id == teamId, Team.IsDeleted == False).first()
+    def GetById(self, teamId: UUID) -> Optional[Team]:
+        return self.db.query(Team).filter(Team.Id == str(teamId), Team.IsDeleted == False).first()
 
     def Update(self, teamId: UUID, teamUpdateSchema: TeamUpdate):
         team = self.GetById(teamId)
+        print("Myauuuuuuu")
+        print(team)
         for key, value in teamUpdateSchema.dict(exclude_unset=True).items():
             setattr(team, key, value)
-        team.UpdatedAt = datetime.utcnow()
+        team.UpdatedAt = datetime.now()
         self.db.commit()
         self.db.refresh(team)
         return team
@@ -47,7 +52,7 @@ class TeamRepository:
 
         # Soft delete the team
         team.IsDeleted = True
-        team.UpdatedAt = datetime.utcnow()
+        team.UpdatedAt = datetime.now()
 
         # Soft delete all team members
         self.db.query(TeamMember).filter(
@@ -93,6 +98,10 @@ class TeamRepository:
 
         self.db.commit()
         return True
+
+    def GetTasks(self, teamId: UUID):
+        team = self.GetById(teamId)
+        return [task for task in team.Tasks if not task.IsDeleted]
 
     def __del__(self):
         self.db.close()

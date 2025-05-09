@@ -1,6 +1,8 @@
+from typing import Optional
+
 from fastapi import Depends, HTTPException
 
-from Models import TeamMember
+from Models import TeamMember, Team
 from Repositories.TeamRepository import TeamRepository
 import Repositories.ProjectRepository as ProjectRepository
 from Schemas.TeamSchema import TeamCreate, TeamUpdate, AddTeamMember
@@ -43,13 +45,13 @@ class TeamService:
     def GetAllTeams(self):
         return self.repo.GetAll()
 
-    def GetTeamById(self, teamId: UUID):
+    def GetTeamById(self, teamId: UUID) -> Optional[Team]:
         return self.repo.GetById(teamId)
 
     def UpdateTeam(self, userId: UUID, teamId: UUID, teamData: TeamUpdate):
         team = self.GetTeamById(teamId)
         if not team:
-            return None
+            raise HTTPException(status_code=403, detail="Team Not Found. Please check the team id and try again.")
         if not team.CreatedBy == userId:
             raise HTTPException(status_code=403, detail="Only the creator of team can update the team.")
         return self.repo.Update(teamId, teamData)
@@ -75,7 +77,7 @@ class TeamService:
 
         exists = self.db.query(TeamMember).filter(
             TeamMember.TeamId == str(addMemberSchema.TeamId),
-            TeamMember.UserId == str(addMemberSchema.UserId),
+            TeamMember.UserId == str(addMemberSchema.UserIdToBeAdded),
             TeamMember.IsActive == True
         ).first()
 
@@ -118,3 +120,10 @@ class TeamService:
         ).all()
 
         return members
+
+    def GetTeamTasks(self, teamId: UUID):
+        team = self.GetTeamById(teamId)
+        if not team:
+            raise HTTPException(status_code=404, detail="Team not found")
+
+        return self.repo.GetTasks(teamId)

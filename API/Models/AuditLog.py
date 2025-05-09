@@ -19,7 +19,7 @@ class AuditLog(Base):
     ActionType = Column(String(50), nullable=False)
     EntityType = Column(String(50), nullable=False)
     EntityId = Column(String(36))
-    ActionTime = Column(DateTime, default=datetime.utcnow)
+    ActionTime = Column(DateTime, default=datetime.now())
     IpAddress = Column(String(45))
     UserAgent = Column(Text)
     RequestMethod = Column(String(10))
