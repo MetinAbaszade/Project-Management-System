@@ -2,7 +2,6 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, DateTime, Boolean
 from sqlalchemy.orm import relationship
-from Models.TaskAssignment import TaskAssignment
 from Db.session import Base
 
 class User(Base):
@@ -17,40 +16,53 @@ class User(Base):
     JobTitle = Column(String(100))
     ProfileUrl = Column(String(255), nullable=True)
     LastLogin = Column(DateTime, nullable=True)
-    CreatedAt = Column(DateTime, default=datetime.utcnow)
-    UpdatedAt = Column(DateTime, onupdate=datetime.utcnow)
+    CreatedAt = Column(DateTime, default=datetime.now)
+    UpdatedAt = Column(DateTime, onupdate=datetime.now)
     IsDeleted = Column(Boolean, default=False)
 
+    # 🔁 Relationships
+    # Teams where user is a member
     Teams = relationship(
         "Team",
         secondary="TeamMember",
         back_populates="Members",
-        overlaps="TeamMemberships,User"
+        overlaps="TeamMemberships"
     )
 
+    # Tasks assigned directly to this user (NOT TaskAssignment)
     TasksAssigned = relationship(
         "Task",
-        secondary="TaskAssignment",
-        back_populates="AssignedUsers",
-        primaryjoin="User.Id == TaskAssignment.UserId",
-        secondaryjoin="Task.Id == TaskAssignment.TaskId",
-        foreign_keys=[TaskAssignment.UserId, TaskAssignment.TaskId],
-        overlaps="User,Task,TaskAssignment,AssignedUsers"
+        back_populates="User",
+        foreign_keys="Task.UserId"
     )
 
-    TasksCreated = relationship("Task", foreign_keys="Task.CreatedBy", back_populates="Creator")
-    Comments = relationship("Comment", back_populates="User")
+    # Tasks created by this user
+    TasksCreated = relationship(
+        "Task",
+        back_populates="Creator",
+        foreign_keys="Task.CreatedBy"
+    )
+
     Notifications = relationship("Notification", back_populates="User")
-    Attachments = relationship("Attachment", back_populates="UploadedBy")
+    Attachments = relationship("Attachment", back_populates="Owner")
     ProjectStakes = relationship("ProjectStakeholder", back_populates="User")
-    ProjectsCreated = relationship("Project", foreign_keys="Project.OwnerId", back_populates="Creator")
-    TeamsCreated = relationship("Team", foreign_keys="Team.CreatedBy", back_populates="Creator")
-    Expenses = relationship("Expense", back_populates="User")
+
+    ProjectsCreated = relationship(
+        "Project",
+        back_populates="Creator",
+        foreign_keys="Project.OwnerId"
+    )
+
+    TeamsCreated = relationship(
+        "Team",
+        back_populates="Creator",
+        foreign_keys="Team.CreatedBy"
+    )
 
     TeamMemberships = relationship(
         "TeamMember",
         back_populates="User",
-        overlaps="Teams,Members"
+        overlaps="Teams"
     )
 
     ProjectMemberships = relationship("ProjectMember", back_populates="User")

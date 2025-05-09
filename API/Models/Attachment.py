@@ -17,6 +17,7 @@ class Attachment(Base):
     __tablename__ = "Attachment"
 
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    ProjectId = Column(String(36), ForeignKey("Project.Id"), nullable=False)
     EntityType = Column(SqlEnum(AttachmentEntityType), nullable=False)
     EntityId = Column(String(36), nullable=False)
     FileName = Column(String(255), nullable=False)
@@ -27,4 +28,6 @@ class Attachment(Base):
     IsDeleted = Column(Boolean, default=False)
     UploadedAt = Column(DateTime, default=datetime.utcnow)
 
+
+    Project = relationship("Project", back_populates="Attachments")
     Owner = relationship("User", back_populates="Attachments")

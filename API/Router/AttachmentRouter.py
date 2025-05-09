@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
-import os
 from typing import List
 
 from Dependencies.db import GetDb
@@ -17,31 +16,18 @@ def UploadAttachment(
     file: UploadFile = File(...),
     entityType: AttachmentEntityType = Form(...),
     entityId: str = Form(...),
+    projectId: str = Form(...),
     db: Session = Depends(GetDb),
     currentUser: str = Depends(GetCurrentUser)
 ):
-    if not os.path.exists(UPLOAD_DIR):
-        os.makedirs(UPLOAD_DIR)
-
-    fileLocation = os.path.join(UPLOAD_DIR, file.filename)
-
-    # Save file to server
-    with open(fileLocation, "wb") as buffer:
-        buffer.write(file.file.read())
-
-    # Now merge uploaded file info into AttachmentCreateSchema
-    attachment = AttachmentCreateSchema(
-        FileName=file.filename,
-        FileType=file.content_type,
-        FileSize=None,  # add size later with os.path.getsize(fileLocation)
-        FilePath=f"/public_html/{file.filename}",
-        EntityType=entityType,
-        EntityId=entityId,
-        OwnerId=currentUser
+    return AttachmentService.FileUpload(
+        db=db,
+        file=file,
+        entityType=entityType,
+        entityId=entityId,
+        projectId=projectId,
+        currentUser=currentUser.Id
     )
-
-    return AttachmentService.AddAttachmentService(db, attachment, currentUser)
-
 
 @router.post("/", response_model=AttachmentResponseSchema, status_code=status.HTTP_201_CREATED)
 def AddAttachment(
@@ -49,7 +35,7 @@ def AddAttachment(
     db: Session = Depends(GetDb),
     currentUser: str = Depends(GetCurrentUser)
 ):
-    return AttachmentService.AddAttachmentService(db, attachment, currentUser)
+    return AttachmentService.AddAttachment(db, attachment, currentUser)
 
 
 @router.delete("/{attachmentId}", status_code=status.HTTP_204_NO_CONTENT)
@@ -58,7 +44,7 @@ def DeleteAttachment(
     db: Session = Depends(GetDb),
     currentUser: str = Depends(GetCurrentUser)
 ):
-    success = AttachmentService.DeleteAttachmentService(db, attachmentId, currentUser)
+    success = AttachmentService.DeleteAttachment(db, attachmentId, currentUser.Id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found.")
 
@@ -69,24 +55,33 @@ def GetAttachmentById(
     db: Session = Depends(GetDb),
     currentUser: str = Depends(GetCurrentUser)
 ):
-    return AttachmentService.GetAttachmentByIdService(db, attachmentId)
+    return AttachmentService.GetAttachmentById(db, attachmentId)
 
 
-@router.get("/entity/{entityType}/{entityId}", response_model=List[AttachmentResponseSchema])
+@router.get("/entity/{projectId}/{entityType}/{entityId}", response_model=List[AttachmentResponseSchema])
 def GetAttachmentsByEntity(
+    projectId: str,
     entityType: AttachmentEntityType,
     entityId: str,
     db: Session = Depends(GetDb),
     currentUser: str = Depends(GetCurrentUser)
 ):
-    return AttachmentService.GetAttachmentsByEntityService(db, entityType, entityId)
+    return AttachmentService.GetAttachmentsByEntity(db, projectId, entityType, entityId)
 
 
-@router.get("/type/{entityType}", response_model=List[AttachmentResponseSchema])
+@router.get("/type/{projectId}/{entityType}", response_model=List[AttachmentResponseSchema])
 def GetAttachmentsByEntityType(
+    projectId: str,
     entityType: AttachmentEntityType,
     db: Session = Depends(GetDb),
     currentUser: str = Depends(GetCurrentUser)
 ):
-    return AttachmentService.GetAttachmentsByEntityTypeService(db, entityType)
+    return AttachmentService.GetAttachmentsByEntityType(db, projectId, entityType)
 
+@router.get("/download/{attachmentId}")
+def DownloadAttachment(
+    attachmentId: str,
+    db: Session = Depends(GetDb),
+    currentUser: str = Depends(GetCurrentUser)
+):
+    return AttachmentService.DownloadAttachment(db, attachmentId)

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from Schemas.ProjectSchema import ProjectCreate
@@ -18,6 +20,10 @@ def CreateProject(db: Session, projectData: ProjectCreate, ownerId: UUID):
     db.commit()
     db.refresh(newProject)
     return newProject
+
+def GetProjectById(db: Session, projectId: UUID) -> Optional[Project]:
+    project = db.query(Project).filter(Project.Id == str(projectId), Project.IsDeleted == False).first()
+    return project
 
 def GetProjectsByUser(db: Session, userId: UUID):
     ownedProjects= db.query(Project).filter(
@@ -146,24 +152,33 @@ def GetProjectOwner(db: Session, projectId: UUID):
 
     return owner
 
-def IsProjectOwner(db: Session, userId: UUID, projectId: UUID) -> bool:
+def IsProjectOwner(db: Session, userId: str, projectId: str) -> bool:
+    # print("TYPE projectId:", type(projectId))
+    # print("VALUE projectId:", projectId)
     project = db.query(Project).filter(Project.Id == str(projectId), Project.IsDeleted == False).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     return str(project.OwnerId) == str(userId)
 
-def IsProjectMember(db: Session, projectId: str, userId: str) -> bool:
-    return db.query(ProjectMember).filter(
-        ProjectMember.ProjectId == projectId,
-        ProjectMember.UserId == userId,
+def IsProjectMember(db: Session, userId: str, projectId: str) -> bool:
+    # print("TYPE projectId:", type(projectId))
+    # print("VALUE projectId:", projectId)
+    project = db.query(Project).filter(Project.Id == str(projectId), Project.IsDeleted == False).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    member = db.query(ProjectMember).filter(
+        ProjectMember.ProjectId == str(projectId),
+        ProjectMember.UserId == str(userId),
         ProjectMember.IsDeleted == False
-    ).first() is not None
+    ).first()
+    return member is not None
 
 def HasProjectAccess(db: Session, projectId: str, userId: str) -> bool:
     return (
-        IsProjectMember(db, projectId, userId) or
+        IsProjectMember(db, userId, projectId) or
         IsProjectOwner(db, userId, projectId)
     )
+
 
 def GetProjectMembers(db: Session, projectId: UUID):
     project = db.query(Project).filter(
@@ -180,6 +195,11 @@ def GetProjectTeams(db: Session, projectId: UUID):
     ).first()
 
     return [team for team in project.Teams if not team.IsDeleted]
+
+def GetTasks(db: Session, projectId: UUID):
+    project = GetProjectById(db, projectId)
+    return [task for task in project.Tasks if not task.IsDeleted]
+
 
 
 

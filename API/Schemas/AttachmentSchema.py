@@ -12,6 +12,7 @@ class AttachmentCreateSchema(BaseModel):
     EntityType: AttachmentEntityType
     EntityId: str
     OwnerId: str
+    ProjectId: str 
 
 
 class AttachmentResponseSchema(BaseModel):

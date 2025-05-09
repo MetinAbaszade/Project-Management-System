@@ -60,7 +60,15 @@ class UserRepository:
         members = self.db.query(TeamMember).join(TeamMember.Team).filter(
             TeamMember.UserId == str(userId),
             TeamMember.IsActive == True,
-            TeamMember.Team.Has(Team.IsDeleted == False)
+            TeamMember.Team.has(Team.IsDeleted == False)
         ).all()
 
         return [member.Team for member in members]
+
+    def GetUserAssignedTasks(self, userId: UUID):
+        user = self.GetById(userId)
+        return [task for task in user.TasksAssigned if not task.IsDeleted]
+
+    def GetUserCreatedTasks(self, userId: UUID):
+        user = self.GetById(userId)
+        return [task for task in user.TasksCreated if not task.IsDeleted]

@@ -27,7 +27,7 @@ class AdminSetting(Base):
     DataType = Column(Enum(DataTypeEnum), default=DataTypeEnum.string)
     ValidationRegex = Column(String(255))
     DefaultValue = Column(Text)
-    LastUpdated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    LastUpdated = Column(DateTime, default=datetime.now(), onupdate=datetime.now())
     UpdatedBy = Column(String(36), ForeignKey("User.Id"), nullable=True)
 
     IsDeleted = Column(Boolean, default=False)

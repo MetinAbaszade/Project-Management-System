@@ -68,7 +68,7 @@ def CreateRiskAnalysis(db: Session, analysisData: RiskAnalysisBase):
         AnalysisType=analysisData.AnalysisType,
         MatrixScore=analysisData.MatrixScore,
         ExpectedValue=analysisData.ExpectedValue,
-        OwnerId=analysisData.AnalyzedBy,
+        OwnerId=analysisData.OwnerId,
         AnalysisDate=datetime.utcnow()
     )
     db.add(newAnalysis)

@@ -9,8 +9,8 @@ class RiskAnalysis(Base):
 
     Id = Column(String(36), primary_key=True, default = lambda: str(uuid.uuid4()))
     RiskId = Column(String(36), ForeignKey("Risks.Id"), nullable=False)
-    AnalysisType = Column(String, nullable=False)  
-    MatrixScore = Column(String, nullable=False)
+    AnalysisType = Column(String(50), nullable=False)  
+    MatrixScore = Column(String(50), nullable=False)
     ExpectedValue = Column(Float, nullable=False)
     AnalysisDate = Column(DateTime, default=datetime.utcnow)
     OwnerId = Column(String(36), ForeignKey("User.Id"), nullable=False)

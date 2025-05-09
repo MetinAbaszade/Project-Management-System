@@ -40,3 +40,9 @@ class UserService:
     def GetUserTeams(self, userId: UUID):
         return self.repo.GetUserTeams(userId)
 
+    def GetUserAssignedTasks(self, userId: UUID):
+        return self.repo.GetUserAssignedTasks(userId)
+
+    def GetUserCreatedTasks(self, userId: UUID):
+        return self.repo.GetUserCreatedTasks(userId)
+

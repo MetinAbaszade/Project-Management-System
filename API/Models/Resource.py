@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, Boolean, ForeignKey, Float
+from sqlalchemy import Column, String, DateTime, Boolean, ForeignKey, Float, Text
 from sqlalchemy.orm import relationship
 from Db.session import Base
 
@@ -9,12 +9,12 @@ class Resource(Base):
 
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     ProjectId = Column(String(36), ForeignKey("Project.Id"), nullable=False)  # ✅ NEW
-    Name = Column(String, nullable=False)
-    Type = Column(String, nullable=False)  # e.g. Human, Equipment, Material
+    Name = Column(String(50), nullable=False)
+    Type = Column(String(50), nullable=False)  # e.g. Human, Equipment, Material
     Total = Column(Float, nullable=True)     # Total quantity in stock
     Available = Column(Float, nullable=True) # Available quantity ready for use
-    Description = Column(String)
-    Unit = Column(String)
+    Description = Column(Text)
+    Unit = Column(String(36))
     IsDeleted = Column(Boolean, default=False)
     CreatedAt = Column(DateTime, default=datetime.utcnow)
 

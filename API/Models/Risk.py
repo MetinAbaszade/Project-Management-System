@@ -9,9 +9,9 @@ class Risk(Base):
 
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     ProjectId = Column(String(36), ForeignKey("Project.Id"), nullable=False)
-    Name = Column(String, nullable=False)
+    Name = Column(String(256), nullable=False)
     Description = Column(Text)
-    Category = Column(String, nullable=False)
+    Category = Column(String(50), nullable=False)
 
     Probability = Column(Float, nullable=False)
     Impact = Column(Integer)
@@ -19,7 +19,7 @@ class Risk(Base):
 
     OwnerId = Column(String(36), ForeignKey("User.Id"), nullable=False)
     IdentifiedDate = Column(DateTime, default=datetime.utcnow)
-    Status = Column(String, default="Open")
+    Status = Column(String(50), default="Open")
     IsDeleted = Column(Boolean, default=False)
 
     Analyses = relationship("RiskAnalysis", back_populates="Risk", cascade="all, delete-orphan")
