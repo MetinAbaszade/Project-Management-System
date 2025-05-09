@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from Schemas.ProjectSchema import ProjectCreate
@@ -18,6 +20,10 @@ def CreateProject(db: Session, projectData: ProjectCreate, ownerId: UUID):
     db.commit()
     db.refresh(newProject)
     return newProject
+
+def GetProjectById(db: Session, projectId: UUID) -> Optional[Project]:
+    project = db.query(Project).filter(Project.Id == str(projectId), Project.IsDeleted == False).first()
+    return project
 
 def GetProjectsByUser(db: Session, userId: UUID):
     ownedProjects= db.query(Project).filter(
@@ -152,6 +158,14 @@ def IsProjectOwner(db: Session, userId: UUID, projectId: UUID) -> bool:
         raise HTTPException(status_code=404, detail="Project not found")
     return str(project.OwnerId) == str(userId)
 
+def IsProjectMember(db: Session, userId: UUID, projectId: UUID) -> bool:
+    member = db.query(ProjectMember).filter(
+        ProjectMember.ProjectId == str(projectId),
+        ProjectMember.UserId == str(userId),
+        ProjectMember.IsDeleted == False
+    ).first()
+    return member is not None
+
 def GetProjectMembers(db: Session, projectId: UUID):
     project = db.query(Project).filter(
         Project.Id == str(projectId),
@@ -167,6 +181,11 @@ def GetProjectTeams(db: Session, projectId: UUID):
     ).first()
 
     return [team for team in project.Teams if not team.IsDeleted]
+
+def GetTasks(db: Session, projectId: UUID):
+    project = GetProjectById(db, projectId)
+    return [task for task in project.Tasks if not task.IsDeleted]
+
 
 
 

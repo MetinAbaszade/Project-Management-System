@@ -16,7 +16,7 @@ class TeamMember(Base):
     # "Team Lead", "Developer", etc.
     Role = Column(String(50))
     IsLeader = Column(Boolean, default=False)
-    JoinedDate = Column(DateTime, default=datetime.utcnow)
+    JoinedDate = Column(DateTime, default=datetime.now())
     IsActive = Column(Boolean, default=True)
 
     # Relationships with overlaps to resolve SAWarnings

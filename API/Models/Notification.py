@@ -16,7 +16,7 @@ class Notification(Base):
     RelatedEntityId = Column(String(36))  # ID of task, project, etc.
     RelatedEntityType = Column(String(50))  # Type of related object
     IsRead = Column(Boolean, default=False)
-    CreatedAt = Column(DateTime, default=datetime.utcnow)
+    CreatedAt = Column(DateTime, default=datetime.now())
 
     # Relationships
     User = relationship("User", back_populates="Notifications")

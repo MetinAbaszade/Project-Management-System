@@ -12,8 +12,8 @@ class Team(Base):
     Name = Column(String(100), nullable=False)
     Description = Column(Text)
     ColorIndex = Column(Integer, default=0)  # For frontend usage
-    CreatedAt = Column(DateTime, default=datetime.utcnow)
-    UpdatedAt = Column(DateTime, onupdate=datetime.utcnow)
+    CreatedAt = Column(DateTime, default=datetime.now())
+    UpdatedAt = Column(DateTime, onupdate=datetime.now())
     CreatedBy = Column(String(36), ForeignKey("User.Id"), nullable=False)
     ProjectId = Column(String(36), ForeignKey("Project.Id"), nullable=False)
     IsDeleted = Column(Boolean, default=False)

@@ -9,8 +9,9 @@ from Router.LanguageRouter import router as language_router
 from Router.EmailRouter import router as email_router
 from Router.AuthRouter import router as auth_router
 from Router.TeamRouter import router as team_router
-from Router.ProjectRouter import router as project_router  # ✅ New import
-from Router.ProjectScopeRouter import router as project_scope_router  # ✅ New import
+from Router.ProjectRouter import router as project_router
+from Router.TaskRouter import router as task_router
+from Router.ProjectScopeRouter import router as project_scope_router
 from Router.UserRouter import router as user_router
 
 # Database
@@ -48,9 +49,10 @@ def root():
 app.include_router(language_router)
 app.include_router(email_router)
 app.include_router(auth_router)
-app.include_router(project_router)  # ✅ Add this!
+app.include_router(project_router)
 app.include_router(project_scope_router)
 app.include_router(team_router)
+app.include_router(task_router)
 app.include_router(user_router)
 
 # ✅ Run app

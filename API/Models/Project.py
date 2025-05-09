@@ -18,8 +18,8 @@ class Project(Base):
     TotalBudget = Column(Numeric(12, 2), default=0)
     RemainingBudget = Column(Numeric(12, 2), default=TotalBudget)
 
-    CreatedAt = Column(DateTime, default=datetime.utcnow)
-    UpdatedAt = Column(DateTime, onupdate=datetime.utcnow)
+    CreatedAt = Column(DateTime, default=datetime.now())
+    UpdatedAt = Column(DateTime, onupdate=datetime.now())
     IsDeleted = Column(Boolean, default=False)
     OwnerId = Column(String(36), ForeignKey("User.Id"), nullable=False)
 
@@ -30,6 +30,7 @@ class Project(Base):
     Creator = relationship("User", back_populates="ProjectsCreated")
     Scope = relationship("ProjectScope", back_populates="Project", uselist=False, cascade="all, delete-orphan")
     Members = relationship("ProjectMember", back_populates="Project", cascade="all, delete-orphan")
+    Attachments = relationship("Attachment", back_populates="Project", cascade="all, delete-orphan")
 
     # Predefined status values
     STATUS_NOT_STARTED = "Not Started"

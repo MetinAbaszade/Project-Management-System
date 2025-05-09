@@ -11,16 +11,16 @@ class Attachment(Base):
     __tablename__ = "Attachment"
 
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    TaskId = Column(String(36), ForeignKey("Task.Id", ondelete="CASCADE"), nullable=False)
+    ProjectId = Column(String(36), ForeignKey("Project.Id", ondelete="CASCADE"), nullable=False)
     FileName = Column(String(255), nullable=False)
     FileType = Column(String(50))
     FileSize = Column(Integer)
     FilePath = Column(String(500), nullable=False)
     UploadedById = Column(String(36), ForeignKey("User.Id"), nullable=False)
-    UploadedAt = Column(DateTime, default=datetime.utcnow)
+    UploadedAt = Column(DateTime, default=datetime.now())
 
     # Relationships
-    Task = relationship("Task", back_populates="Attachments")
+    Project = relationship("Project", back_populates="Attachments")
     UploadedBy = relationship("User", back_populates="Attachments")
 
 

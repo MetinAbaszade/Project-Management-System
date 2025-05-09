@@ -13,8 +13,8 @@ class ProjectStakeholder(Base):
     UserId = Column(String(36), ForeignKey("User.Id", ondelete="CASCADE"), nullable=False)
     Role = Column(String(100))
     Percentage = Column(Float, nullable=False, default=0)
-    CreatedAt = Column(DateTime, default=datetime.utcnow)
-    UpdatedAt = Column(DateTime, onupdate=datetime.utcnow)
+    CreatedAt = Column(DateTime, default=datetime.now())
+    UpdatedAt = Column(DateTime, onupdate=datetime.now())
 
 
     User = relationship("User", back_populates="ProjectStakes")
