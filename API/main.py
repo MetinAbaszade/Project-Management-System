@@ -16,6 +16,7 @@ from Router.UserRouter import router as user_router
 from Router.RiskRouter import router as risk_router
 from Router.ResourcesRouter import router as resource_router
 from Router.AttachmentRouter import router as attachment_router
+from Router.StakeholderRouter import router as stakeholder_router
 
 # Database
 from Db.session import engine, Base
@@ -60,6 +61,7 @@ app.include_router(user_router)
 app.include_router(risk_router)
 app.include_router(resource_router)
 app.include_router(attachment_router)
+app.include_router(stakeholder_router)
 
 # ✅ Run app
 if __name__ == "__main__":
