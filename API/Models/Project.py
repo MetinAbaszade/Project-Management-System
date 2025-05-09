@@ -30,7 +30,9 @@ class Project(Base):
     Creator = relationship("User", back_populates="ProjectsCreated")
     Scope = relationship("ProjectScope", back_populates="Project", uselist=False, cascade="all, delete-orphan")
     Members = relationship("ProjectMember", back_populates="Project", cascade="all, delete-orphan")
-    Attachments = relationship("Attachment", back_populates="Project", cascade="all, delete-orphan")
+    Attachments = relationship("Attachment", back_populates="Project")
+    Resources = relationship("Resource", back_populates="Project", cascade="all, delete-orphan")
+    ResourcePlans = relationship("ResourcePlan", back_populates="Project", cascade="all, delete-orphan")
 
     # Predefined status values
     STATUS_NOT_STARTED = "Not Started"

@@ -44,7 +44,7 @@ class User(Base):
     )
 
     Notifications = relationship("Notification", back_populates="User")
-    Attachments = relationship("Attachment", back_populates="UploadedBy")
+    Attachments = relationship("Attachment", back_populates="Owner")
     ProjectStakes = relationship("ProjectStakeholder", back_populates="User")
 
     ProjectsCreated = relationship(
