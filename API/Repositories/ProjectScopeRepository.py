@@ -144,36 +144,3 @@ class ProjectScopeRepository:
         self.db.commit()
         self.db.refresh(scope)
         return scope
-
-    def DeleteScope(self, projectId: str):
-        scope: ProjectScope = self.db.query(ProjectScope).filter_by(ProjectId=projectId).first()
-        if not scope:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Scope not found for the given project."
-            )
-
-        # Manually delete related sub-documents if they exist
-        if scope.ScopeManagementPlanId:
-            plan = self.db.query(ScopeManagementPlan).filter_by(Id=scope.ScopeManagementPlanId).first()
-            if plan:
-                self.db.delete(plan)
-
-        if scope.RequirementDocumentId:
-            doc = self.db.query(RequirementDocument).filter_by(Id=scope.RequirementDocumentId).first()
-            if doc:
-                self.db.delete(doc)
-
-        if scope.ScopeStatementId:
-            statement = self.db.query(ProjectScopeStatement).filter_by(Id=scope.ScopeStatementId).first()
-            if statement:
-                self.db.delete(statement)
-
-        if scope.WBSId:
-            wbs = self.db.query(WorkBreakdownStructure).filter_by(Id=scope.WBSId).first()
-            if wbs:
-                self.db.delete(wbs)
-
-        # Finally, delete the scope itself
-        self.db.delete(scope)
-        self.db.commit()

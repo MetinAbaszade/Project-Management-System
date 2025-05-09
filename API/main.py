@@ -12,6 +12,9 @@ from Router.TeamRouter import router as team_router
 from Router.ProjectRouter import router as project_router  # ✅ New import
 from Router.ProjectScopeRouter import router as project_scope_router  # ✅ New import
 from Router.UserRouter import router as user_router
+from Router.RiskRouter import router as risk_router
+from Router.RiskRouter import router as resource_router
+from Router.RiskRouter import router as attachment_router
 
 # Database
 from Db.session import engine, Base
@@ -52,6 +55,9 @@ app.include_router(project_router)  # ✅ Add this!
 app.include_router(project_scope_router)
 app.include_router(team_router)
 app.include_router(user_router)
+app.include_router(risk_router)
+app.include_router(resource_router)
+app.include_router(attachment_router)
 
 # ✅ Run app
 if __name__ == "__main__":

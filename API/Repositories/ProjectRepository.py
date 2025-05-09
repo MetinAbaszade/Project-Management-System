@@ -152,6 +152,19 @@ def IsProjectOwner(db: Session, userId: UUID, projectId: UUID) -> bool:
         raise HTTPException(status_code=404, detail="Project not found")
     return str(project.OwnerId) == str(userId)
 
+def IsProjectMember(db: Session, projectId: str, userId: str) -> bool:
+    return db.query(ProjectMember).filter(
+        ProjectMember.ProjectId == projectId,
+        ProjectMember.UserId == userId,
+        ProjectMember.IsDeleted == False
+    ).first() is not None
+
+def HasProjectAccess(db: Session, projectId: str, userId: str) -> bool:
+    return (
+        IsProjectMember(db, projectId, userId) or
+        IsProjectOwner(db, userId, projectId)
+    )
+
 def GetProjectMembers(db: Session, projectId: UUID):
     project = db.query(Project).filter(
         Project.Id == str(projectId),

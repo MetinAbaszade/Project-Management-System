@@ -60,9 +60,3 @@ def EditProjectScope(
         workBreakdownStructure
     )
 
-
-@router.delete("/delete/{projectId}")
-def DeleteProjectScope(projectId: str, db: Session = Depends(GetDb)):
-    repository = ProjectScopeRepository(db)
-    service = ProjectScopeService(repository)
-    return service.DeleteScope(projectId)
