@@ -49,9 +49,13 @@ def GetRiskById(
 ):
     return riskService.GetRiskById(riskId)
 
-@router.get("/", summary="Get all risks")
-def GetAllRisks(riskService: RiskService = Depends(RiskService)):
-    return riskService.GetAllRisks()
+@router.get("/project/{projectId}", summary="Get all risks by projectId")
+def GetAllRisksByProject(
+    projectId: str,
+    riskService: RiskService = Depends(RiskService)
+):
+    return riskService.GetAllRisksByProject(projectId)
+
 
 
 # -----------------------------
