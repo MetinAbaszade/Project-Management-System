@@ -54,8 +54,8 @@ def SoftDeleteRisk(db: Session, riskId: str):
 def GetRiskById(db: Session, riskId: str):
     return db.query(Risk).filter(Risk.Id == riskId, Risk.IsDeleted == False).first()
 
-def GetAllRisks(db: Session):
-    return db.query(Risk).filter(Risk.IsDeleted == False).all()
+def GetAllRisks(db: Session, projectId: str):
+    return db.query(Risk).filter(Risk.ProjectId == projectId, Risk.IsDeleted == False).all()
 
 
 # -----------------------------

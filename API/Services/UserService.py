@@ -2,6 +2,7 @@ from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 from uuid import UUID
 from pydantic import EmailStr
+from Services.EmailService import EmailService
 
 from Repositories.UserRepository import UserRepository
 from Schemas.UserSchema import AddUserSchema
@@ -21,6 +22,9 @@ class UserService:
         except HTTPException as e:
             if e.status_code != 404:
                 raise e  # Reraise other unexpected errors
+            
+        if not EmailService().IsEmailVerified(userData.Email):
+            raise HTTPException(status_code=400, detail="Email is not verified")
 
         hashedPassword = HashPassword(userData.Password)
         return self.repo.Create(userData, hashedPassword)

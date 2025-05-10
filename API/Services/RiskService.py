@@ -63,8 +63,8 @@ class RiskService:
             raise HTTPException(status_code=404, detail="Risk not found")
         return risk
 
-    def GetAllRisks(self):
-        return RiskRepository.GetAllRisks(self.db)
+    def GetAllRisks(self, projectId: str):
+        return RiskRepository.GetAllRisks(self.db, projectId)
 
     #----------------------
     # RiskAnalysis

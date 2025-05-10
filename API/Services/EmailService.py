@@ -56,16 +56,16 @@ class EmailService:
         print("Inside send_verification_code")
         print(self.cache)
 
-        if not self.can_request_verification_code(recipient_email):
-            return ResponseDTO(success=False, message="Please wait before requesting a new code")
+        if not self.CanRequestVerificationCode(recipientEmail):
+            return ResponseDTO(Success=False, Message="Please wait before requesting a new code")
 
-        verification_code = self.generate_verification_code()
-        self.store_verification_code_in_cache(recipient_email, verification_code)
+        verification_code = self.GenerateVerificationCode()
+        self.StoreVerificationCodeInCache(recipientEmail, verification_code)
 
-        email_body = self.generate_verification_email(verification_code)
-        self.send_email(recipient_email, "Your Verification Code", email_body)
+        email_body = self.GenerateVerificationEmail(verification_code)
+        self.SendEmail(recipientEmail, "Your Verification Code", email_body)
 
-        return ResponseDTO(success=True, message="Verification code sent successfully")
+        return ResponseDTO(Success=True, Message="Verification code sent successfully")
 
     def CanRequestVerificationCode(self, email: str) -> bool:
         """ Checks if a verification code can be requested. Returns False if a code exists in cache. """
@@ -79,14 +79,18 @@ class EmailService:
         self.cache[email] = verification_code
         print(f"Stored verification code for {email}: {verification_code} (expires in 2 minutes)")
 
-    def CheckVerificationCode(self, verificationCodeDto: CheckVerificationCodeDTO) -> ResponseDTO:
-        """ Validates the user's verification code. """
-        email = verification_code_dto.email
-        provided_code = verification_code_dto.verification_code
+    def IsEmailVerified(self, email: str) -> bool:
+        return self.cache.get(email) == "VERIFIED"
 
+    def CheckVerificationCode(self, dto: CheckVerificationCodeDTO) -> ResponseDTO:
+        email = dto.Email
+        providedCode = dto.VerificationCode
         stored_code = self.cache.get(email)
-        if stored_code and stored_code == provided_code:
-            del self.cache[email]  # Remove the used code
-            return ResponseDTO(success=True, message="Verification successful")
+        print(providedCode)
+        print(stored_code)
 
-        return ResponseDTO(success=False, message="Invalid or expired verification code")
+        if stored_code and stored_code == providedCode:
+            self.cache[email] = "VERIFIED"
+            return ResponseDTO(Success=True, Message="Verification successful")
+
+        return ResponseDTO(Success=False, Message="Invalid or expired verification code")

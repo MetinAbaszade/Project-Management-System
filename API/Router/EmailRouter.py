@@ -13,4 +13,4 @@ def SendVerificationCode(recipientEmail: str, emailService: EmailService = Depen
 
 @router.post("/check-verification-code", response_model=ResponseDTO)
 def check_verification_code(verificationCodeDto: CheckVerificationCodeDTO, emailService: EmailService = Depends()):
-    return emailService.checkVerificationCode(verificationCodeDto)
+    return emailService.CheckVerificationCode(verificationCodeDto)
