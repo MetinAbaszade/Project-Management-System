@@ -4,6 +4,7 @@ from uuid import UUID
 from Dependencies.auth import GetCurrentUser
 from Models import User
 from Services.UserService import UserService
+from Schemas.UserSchema import UpdatePasswordSchema
 
 router = APIRouter(
     prefix="/users",
@@ -50,3 +51,6 @@ def GetAssignedTasksCurrent(currentUser: User = Depends(GetCurrentUser), userSer
 def GetCreatedTasksCurrent(currentUser: User = Depends(GetCurrentUser), userService: UserService = Depends()):
     return userService.GetUserCreatedTasks(currentUser.Id)
 
+@router.post("/reset-password", summary="Change the forgetten password")
+def ResetPassword(request: UpdatePasswordSchema, userService: UserService = Depends()):
+    return userService.UpdatePassword(request.Email, request.NewPassword)

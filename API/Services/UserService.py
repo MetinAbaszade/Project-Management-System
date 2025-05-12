@@ -1,11 +1,11 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from uuid import UUID
 from pydantic import EmailStr
 from Services.EmailService import EmailService
 
 from Repositories.UserRepository import UserRepository
-from Schemas.UserSchema import AddUserSchema
+from Schemas.UserSchema import AddUserSchema, UpdatePasswordSchema
 from Dependencies.db import GetDb
 from Dependencies.auth import HashPassword
 
@@ -50,3 +50,16 @@ class UserService:
     def GetUserCreatedTasks(self, userId: UUID):
         return self.repo.GetUserCreatedTasks(userId)
 
+    def UpdatePassword(self, email: str, newPassword: str):
+        hashedPassword = HashPassword(newPassword)
+        user = self.repo.GetByEmail(email)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User with this email does not exist."
+            )
+
+        if not EmailService().IsEmailVerified(email):
+            raise HTTPException(status_code=400, detail="Email is not verified")
+        
+        return self.repo.UpdatePassword(user, hashedPassword)

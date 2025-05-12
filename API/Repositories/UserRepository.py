@@ -72,3 +72,11 @@ class UserRepository:
     def GetUserCreatedTasks(self, userId: UUID):
         user = self.GetById(userId)
         return [task for task in user.TasksCreated if not task.IsDeleted]
+
+    def UpdatePassword(self, user: User, newPassword: str):
+
+        user.Password = newPassword
+
+        self.db.commit()
+        self.db.refresh(user)
+        return user
