@@ -40,3 +40,13 @@ def Remove(
     taskService: TaskService = Depends(TaskService)
 ):
     return taskService.Remove(currentUser.Id, taskId)
+
+@router.get("/{taskId}/subtasks", response_model=List[TaskResponse], summary="Get all subtasks of a task")
+def GetSubtasks(
+    taskId: UUID,
+    currentUser: User = Depends(GetCurrentUser),
+    taskService: TaskService = Depends(TaskService)
+):
+    return taskService.GetSubtasks(taskId)
+
+

@@ -64,6 +64,7 @@ class UserService:
             raise HTTPException(status_code=400, detail="Email is not verified")
         
         return self.repo.UpdatePassword(user, hashedPassword)
+
     def GetCurrentUserData (db: Session, currentUser: User):
         user = UserService.GetUserById(currentUser.Id)
         if not user:
