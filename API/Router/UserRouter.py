@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, status
+from sqlalchemy.orm import Session
 from uuid import UUID
-
+from Dependencies.db import GetDb
 from Dependencies.auth import GetCurrentUser
 from Models import User
 from Services.UserService import UserService
+from Schemas.UserSchema import UpdatePasswordSchema, UserResponseSchema
 
 router = APIRouter(
     prefix="/users",
@@ -50,3 +52,25 @@ def GetAssignedTasksCurrent(currentUser: User = Depends(GetCurrentUser), userSer
 def GetCreatedTasksCurrent(currentUser: User = Depends(GetCurrentUser), userService: UserService = Depends()):
     return userService.GetUserCreatedTasks(currentUser.Id)
 
+@router.post("/reset-password", summary="Change the forgetten password")
+def ResetPassword(request: UpdatePasswordSchema, userService: UserService = Depends()):
+    return userService.UpdatePassword(request.Email, request.NewPassword)
+
+@router.get("/get-user", response_model=UserResponseSchema)
+def GetCurrentUserData(
+    db: Session = Depends(GetDb),
+    currentUser: str = Depends(GetCurrentUser)
+):
+    return UserService.GetCurrentUserData(db, currentUser)
+
+@router.post("/upload/profile-picture", status_code=status.HTTP_201_CREATED)
+def UploadProfilePicture(
+    file: UploadFile = File(...),
+    db: Session = Depends(GetDb),
+    currentUser: str = Depends(GetCurrentUser)
+):
+    return UserService.UploadProfilePicture(
+        db=db,
+        file=file,
+        currentUserId=currentUser.Id
+    )

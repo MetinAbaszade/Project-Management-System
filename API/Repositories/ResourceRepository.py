@@ -9,6 +9,8 @@ from Schemas.ResourceSchema import (
 )
 import uuid
 from datetime import datetime
+from Models.Project import Project
+from Models.Task import Task
 
 # -----------------------------
 # Resource CRUD
@@ -70,7 +72,7 @@ def GetAllResourcesByProjectId(db: Session, projectId: str):
 # -----------------------------
 # ActivityResource CRUD
 
-def CreateActivityResource(db: Session, assignmentData: ActivityResourceBase):
+def CreateActivityResource(db: Session, assignmentData: ActivityResourceBase, task: Task):
     newAssignment = ActivityResource(
         Id=str(uuid.uuid4()),
         TaskId=assignmentData.TaskId,
@@ -82,27 +84,38 @@ def CreateActivityResource(db: Session, assignmentData: ActivityResourceBase):
     db.add(newAssignment)
     db.commit()
     db.refresh(newAssignment)
+
+    AdjustRemainingBudget(db, task.ProjectId, -assignmentData.EstimatedCost)
+
     return newAssignment
 
-def UpdateActivityResource(db: Session, assignmentId: str, updateData: ActivityResourceUpdate):
+def UpdateActivityResource(db: Session, assignmentId: str, updateData: ActivityResourceUpdate, task: Task):
     assignment = db.query(ActivityResource).filter(ActivityResource.Id == assignmentId, ActivityResource.IsDeleted == False).first()
     if not assignment:
         return None
 
+    oldCost = assignment.EstimatedCost
     for field, value in updateData.dict(exclude_unset=True).items():
         setattr(assignment, field, value)
 
     db.commit()
     db.refresh(assignment)
+
+    delta = oldCost - assignment.EstimatedCost
+    AdjustRemainingBudget(db, task.ProjectId, delta)
+
     return assignment
 
-def SoftDeleteActivityResource(db: Session, assignmentId: str):
-    assignment = db.query(ActivityResource).filter(ActivityResource.Id == assignmentId, ActivityResource.IsDeleted == False).first()
+def SoftDeleteActivityResource(db: Session, assignmentId: str, task: Task):
+    assignment: ActivityResource = db.query(ActivityResource).filter(ActivityResource.Id == assignmentId, ActivityResource.IsDeleted == False).first()
     if not assignment:
         return None
 
     assignment.IsDeleted = True
     db.commit()
+
+    AdjustRemainingBudget(db, task.ProjectId, assignment.EstimatedCost)
+
     return assignment
 
 def GetActivityResourceById(db: Session, assignmentId: str):
@@ -110,6 +123,15 @@ def GetActivityResourceById(db: Session, assignmentId: str):
 
 def GetAllActivityResourcesByTaskId(db: Session, activityId: str):
     return db.query(ActivityResource).filter(ActivityResource.TaskId == activityId, ActivityResource.IsDeleted == False).all()
+
+def AdjustRemainingBudget(db: Session, projectId: str, amountDelta: float):
+    project = db.query(Project).filter(Project.Id == projectId, Project.IsDeleted == False).first()
+    if not project:
+        return
+
+    project.RemainingBudget += amountDelta  
+    db.commit()
+
 
 # -----------------------------
 # ResourcePlan CRUD

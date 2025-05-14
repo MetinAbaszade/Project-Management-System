@@ -6,7 +6,13 @@ from Schemas.ProjectScopeSchema import (
     RequirementManagementPlanSchema,
     RequirementDocumentSchema,
     ProjectScopeStatementSchema,
-    WorkBreakdownStructureSchema
+    WorkBreakdownStructureSchema,
+
+    ScopeManagementPlanUpdateSchema,
+    RequirementManagementPlanUpdateSchema,
+    RequirementDocumentUpdateSchema,
+    ProjectScopeStatementUpdateSchema,
+    WorkBreakdownStructureUpdateSchema
 )
 from Repositories.ProjectScopeRepository import ProjectScopeRepository
 from Services.ProjectScopeService import ProjectScopeService
@@ -27,8 +33,8 @@ def AddProjectScope(
     workBreakdownStructure: WorkBreakdownStructureSchema,
     db: Session = Depends(GetDb)
 ):
-    repository = ProjectScopeRepository(db)  # ✅ FIX: Instantiate repository with DB session
-    service = ProjectScopeService(repository)  # ✅ FIX: Inject repository into service
+    repository = ProjectScopeRepository(db)
+    service = ProjectScopeService(repository)
     return service.AddScope(
         projectId,
         scopeManagementPlan,
@@ -42,11 +48,11 @@ def AddProjectScope(
 @router.put("/edit/{projectId}")
 def EditProjectScope(
     projectId: str,
-    scopeManagementPlan: ScopeManagementPlanSchema,
-    requirementManagementPlan: RequirementManagementPlanSchema,
-    requirementDocumentation: RequirementDocumentSchema,
-    projectScopeStatement: ProjectScopeStatementSchema,
-    workBreakdownStructure: WorkBreakdownStructureSchema,
+    scopeManagementPlan: ScopeManagementPlanUpdateSchema,
+    requirementManagementPlan: RequirementManagementPlanUpdateSchema,
+    requirementDocumentation: RequirementDocumentUpdateSchema,
+    projectScopeStatement: ProjectScopeStatementUpdateSchema,
+    workBreakdownStructure: WorkBreakdownStructureUpdateSchema,
     db: Session = Depends(GetDb)
 ):
     repository = ProjectScopeRepository(db)

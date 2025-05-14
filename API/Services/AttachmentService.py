@@ -55,8 +55,9 @@ def FileUpload(
     projectId: str,
     currentUser: str
 ):
-    if not HasProjectAccess(db, projectId, currentUser):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this project.")
+    if entityType != AttachmentEntityType.USER:
+        if not HasProjectAccess(db, projectId, currentUser):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this project.")
 
     return AttachmentRepository.FileUpload(
         db=db,

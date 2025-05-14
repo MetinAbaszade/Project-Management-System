@@ -6,43 +6,90 @@ from datetime import datetime
 
 # 1. Scope Management Plan
 class ScopeManagementPlanSchema(BaseModel):
-    ScopeDefinitionMethod: str
-    WBSDevelopmentMethod: str
-    ScopeBaselineApproval: str
-    DeliverablesImpactHandling: str
+    ScopeDefinitionMethod: Optional[str] = None
+    WBSDevelopmentMethod: Optional[str] = None
+    ScopeBaselineApproval: Optional[str] = None
+    DeliverablesImpactHandling: Optional[str] = None
 
 
 class RequirementManagementPlanSchema(BaseModel):
-    ReqPlanningApproach: str
-    ReqChangeControl: str
-    ReqPrioritization: str
-    ReqMetrics: str
+    ReqPlanningApproach: Optional[str] = None
+    ReqChangeControl: Optional[str] = None
+    ReqPrioritization: Optional[str] = None
+    ReqMetrics: Optional[str] = None
 
 
 # 2. Requirement Documentation
 class RequirementDocumentSchema(BaseModel):
-    StakeholderNeeds: List[str]
-    QuantifiedExpectations: List[str]
-    Traceability: str
+    StakeholderNeeds: Optional[List[str]] = None
+    QuantifiedExpectations: Optional[List[str]] = None
+    Traceability: Optional[str] = None
 
 
 # 3. Scope Statement
 class ProjectScopeStatementSchema(BaseModel):
-    EndProductScope: str
-    Deliverables: List[str]
-    AcceptanceCriteria: str
-    Exclusions: str
+    EndProductScope: Optional[str] = None
+    Deliverables: Optional[List[str]] = None
+    AcceptanceCriteria: Optional[str] = None
+    Exclusions: Optional[str] = None
     OptionalSOW: Optional[str] = None
 
 
 # 4. Work Breakdown Structure
 class WorkPackageSchema(BaseModel):
-    Name: str
-    Description: str
-    EstimatedDuration: Optional[float]
-    EstimatedCost: Optional[float]
+    Name: str 
+    Description: Optional[float] = None
+    EstimatedDuration: Optional[float] = None
+    EstimatedCost: Optional[float] = None
 
 
 class WorkBreakdownStructureSchema(BaseModel):
-    WorkPackages: List[WorkPackageSchema]
-    ScopeBaselineReference: Optional[str]
+    WorkPackages: Optional[List[WorkPackageSchema]] = None
+    ScopeBaselineReference: Optional[str] = None
+
+
+# -------------
+# Update
+
+# 1. Scope Management Plan (Update)
+class ScopeManagementPlanUpdateSchema(BaseModel):
+    ScopeDefinitionMethod: Optional[str] = None
+    WBSDevelopmentMethod: Optional[str] = None
+    ScopeBaselineApproval: Optional[str] = None
+    DeliverablesImpactHandling: Optional[str] = None
+
+
+class RequirementManagementPlanUpdateSchema(BaseModel):
+    ReqPlanningApproach: Optional[str] = None
+    ReqChangeControl: Optional[str] = None
+    ReqPrioritization: Optional[str] = None
+    ReqMetrics: Optional[str] = None
+
+
+# 2. Requirement Document (Update)
+class RequirementDocumentUpdateSchema(BaseModel):
+    StakeholderNeeds: Optional[List[str]] = None
+    QuantifiedExpectations: Optional[List[str]] = None
+    Traceability: Optional[str] = None
+
+
+# 3. Project Scope Statement (Update)
+class ProjectScopeStatementUpdateSchema(BaseModel):
+    EndProductScope: Optional[str] = None
+    Deliverables: Optional[List[str]] = None
+    AcceptanceCriteria: Optional[str] = None
+    Exclusions: Optional[str] = None
+    OptionalSOW: Optional[str] = None
+
+
+# 4. Work Breakdown Structure (Update)
+class WorkPackageUpdateSchema(BaseModel):
+    Name: Optional[str] = None
+    Description: Optional[float] = None
+    EstimatedDuration: Optional[float] = None
+    EstimatedCost: Optional[float] = None
+
+
+class WorkBreakdownStructureUpdateSchema(BaseModel):
+    WorkPackages: Optional[List[WorkPackageUpdateSchema]] = None
+    ScopeBaselineReference: Optional[str] = None
