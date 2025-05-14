@@ -44,7 +44,11 @@ class User(Base):
     )
 
     Notifications = relationship("Notification", back_populates="User")
-    Attachments = relationship("Attachment", back_populates="Owner")
+    Attachments = relationship(
+        "Attachment",
+        back_populates="Owner",
+        foreign_keys="[Attachment.OwnerId]"  # ✅ Disambiguates join condition
+    )
     ProjectStakes = relationship("ProjectStakeholder", back_populates="User")
 
     ProjectsCreated = relationship(

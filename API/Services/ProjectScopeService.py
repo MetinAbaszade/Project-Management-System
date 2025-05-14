@@ -27,12 +27,12 @@ class ProjectScopeService:
                  projectScopeStatement: ProjectScopeStatementSchema,
                  workBreakdownStructure: WorkBreakdownStructureSchema,
                  ):
-        existingScope = self.db.query(ProjectScope).filter_by(ProjectId=projectId).first()
-        if existingScope:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Scope already exists for this project."
-            )
+        # existingScope = self.db.query(ProjectScope).filter_by(ProjectId=projectId).first()
+        # if existingScope:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_400_BAD_REQUEST,
+        #         detail="Scope already exists for this project."
+        #     )
         return self.projectScopeRepository.CreateScope(
             projectId,
             scopeManagementPlan,
