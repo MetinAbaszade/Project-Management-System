@@ -12,14 +12,15 @@ class AttachmentEntityType(str, enum.Enum):
     RESOURCE = "Resource"
     SCHEDULE = "Schedule"
     COST = "Cost"
+    USER = "User"
 
 class Attachment(Base):
     __tablename__ = "Attachment"
 
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    ProjectId = Column(String(36), ForeignKey("Project.Id"), nullable=False)
+    ProjectId = Column(String(36), ForeignKey("Project.Id"), nullable=True) 
     EntityType = Column(SqlEnum(AttachmentEntityType), nullable=False)
-    EntityId = Column(String(36), nullable=False)
+    EntityId = Column(String(36), nullable=True)  
     FileName = Column(String(255), nullable=False)
     FileType = Column(String(50))
     FileSize = Column(Integer)
@@ -27,7 +28,6 @@ class Attachment(Base):
     OwnerId = Column(String(36), ForeignKey("User.Id"), nullable=False)
     IsDeleted = Column(Boolean, default=False)
     UploadedAt = Column(DateTime, default=datetime.utcnow)
-
 
     Project = relationship("Project", back_populates="Attachments")
     Owner = relationship("User", back_populates="Attachments")

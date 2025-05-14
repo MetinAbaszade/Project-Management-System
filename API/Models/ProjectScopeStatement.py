@@ -8,7 +8,6 @@ class ProjectScopeStatement(Base):
     __tablename__ = "ProjectScopeStatement"
 
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    # ProjectScopeId = Column(String(36), ForeignKey("ProjectScope.Id"), nullable=False)
 
     ScopeDescription = Column(Text)
     Deliverables = Column(Text)
