@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, Boolean
+from sqlalchemy import Column, String, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from Db.session import Base
 
@@ -14,7 +14,7 @@ class User(Base):
     Password = Column(String(255), nullable=False)
     Role = Column(String(50), default="User")
     JobTitle = Column(String(100))
-    ProfileUrl = Column(String(255), nullable=True)
+    ProfilePictureId = Column(String(36), ForeignKey("Attachment.Id"), nullable=True)
     LastLogin = Column(DateTime, nullable=True)
     CreatedAt = Column(DateTime, default=datetime.now)
     UpdatedAt = Column(DateTime, onupdate=datetime.now)
@@ -66,3 +66,4 @@ class User(Base):
     )
 
     ProjectMemberships = relationship("ProjectMember", back_populates="User")
+    ProfilePicture = relationship("Attachment", foreign_keys=[ProfilePictureId], uselist=False)

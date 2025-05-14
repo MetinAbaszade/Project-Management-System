@@ -8,7 +8,6 @@ class ScopeManagementPlan(Base):
     __tablename__ = "ScopeManagementPlan"
 
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    # ProjectScopeId = Column(String(36), ForeignKey("ProjectScope.Id"), nullable=False)
 
     ScopePreparation = Column(Text)
     WBSDevelopmentApproach = Column(Text)

@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, UploadFile
 from sqlalchemy.orm import Session
 from uuid import UUID
 from pydantic import EmailStr
@@ -8,6 +8,7 @@ from Repositories.UserRepository import UserRepository
 from Schemas.UserSchema import AddUserSchema, UpdatePasswordSchema
 from Dependencies.db import GetDb
 from Dependencies.auth import HashPassword
+from Models.User import User
 
 
 class UserService:
@@ -63,3 +64,21 @@ class UserService:
             raise HTTPException(status_code=400, detail="Email is not verified")
         
         return self.repo.UpdatePassword(user, hashedPassword)
+    def GetCurrentUserData (db: Session, currentUser: User):
+        user = UserService.GetUserById(currentUser.Id)
+        if not user:
+                raise HTTPException(status_code=400, detail="User not found")
+        
+        return UserRepository.GetCurrentUserData(db, currentUser)
+    
+    def UploadProfilePicture(
+        db: Session,
+        file: UploadFile,
+        currentUserId: str
+    ):
+        # No project access check needed for profile picture upload
+        return UserRepository.UploadProfilePicture(
+            db=db,
+            file=file,
+            currentUserId=currentUserId
+        )

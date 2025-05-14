@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from uuid import UUID
 
@@ -13,6 +13,7 @@ from Models.Resource import Resource
 from Models.ResourcePlan import ResourcePlan
 from Models.ActivityResource import ActivityResource
 
+from Models.Task import Task
 
 class ResourceService:
     def __init__(self, db: Session = Depends(GetDb)):
@@ -59,13 +60,32 @@ class ResourceService:
     # ActivityResource
 
     def CreateActivityResource(self, assignmentData: ActivityResourceBase):
-        return ResourceRepository.CreateActivityResource(self.db, assignmentData)
+        task = self.db.query(Task).filter(Task.Id == assignmentData.TaskId, Task.IsDeleted == False).first()
+        if not task:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found.")
+
+        return ResourceRepository.CreateActivityResource(self.db, assignmentData, task)
 
     def UpdateActivityResource(self, assignmentId: str, updateData: ActivityResourceUpdate):
-        return ResourceRepository.UpdateActivityResource(self.db, assignmentId, updateData)
+        task = self.db.query(Task).filter(Task.Id == updateData.TaskId, Task.IsDeleted == False).first()
+        if not task:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found.")
+
+        return ResourceRepository.UpdateActivityResource(self.db, assignmentId, updateData, task)
+
 
     def SoftDeleteActivityResource(self, assignmentId: str):
-        return ResourceRepository.SoftDeleteActivityResource(self.db, assignmentId)
+
+        assignment = self.db.query(ActivityResource).filter(ActivityResource.Id == assignmentId, ActivityResource.IsDeleted == False).first()
+        if not assignment:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activity resource not found.")
+
+        task = self.db.query(Task).filter(Task.Id == assignment.TaskId, Task.IsDeleted == False).first()
+        if not task:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found.")
+
+        return ResourceRepository.SoftDeleteActivityResource(self.db, assignmentId, task)
+
 
     def GetActivityResourceById(self, assignmentId: str):
         return ResourceRepository.GetActivityResourceById(self.db, assignmentId)

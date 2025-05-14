@@ -9,7 +9,13 @@ from Schemas.ProjectScopeSchema import (
     RequirementManagementPlanSchema,
     RequirementDocumentSchema,
     ProjectScopeStatementSchema,
-    WorkBreakdownStructureSchema
+    WorkBreakdownStructureSchema,
+
+    ScopeManagementPlanUpdateSchema,
+    RequirementManagementPlanUpdateSchema,
+    RequirementDocumentUpdateSchema,
+    ProjectScopeStatementUpdateSchema,
+    WorkBreakdownStructureUpdateSchema,
 )
 from fastapi import HTTPException, status
 
@@ -25,13 +31,6 @@ class ProjectScopeRepository:
                 requirementDocumentation: RequirementDocumentSchema,
                 projectScopeStatement: ProjectScopeStatementSchema,
                 workBreakdownStructure: WorkBreakdownStructureSchema):
-
-        existingScope = self.db.query(ProjectScope).filter_by(ProjectId=projectId).first()
-        if existingScope:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Scope already exists for this project."
-            )
 
         # Step 1: Create ProjectScope
         newScope = ProjectScope(ProjectId=projectId)
@@ -90,18 +89,13 @@ class ProjectScopeRepository:
         return newScope
 
     def UpdateScope(self, projectId: str,
-                    scopeManagementPlan: ScopeManagementPlanSchema,
-                    requirementManagementPlan: RequirementManagementPlanSchema,
-                    requirementDocumentation: RequirementDocumentSchema,
-                    projectScopeStatement: ProjectScopeStatementSchema,
-                    workBreakdownStructure: WorkBreakdownStructureSchema):
+                    scopeManagementPlan: ScopeManagementPlanUpdateSchema,
+                    requirementManagementPlan: RequirementManagementPlanUpdateSchema,
+                    requirementDocumentation: RequirementDocumentUpdateSchema,
+                    projectScopeStatement: ProjectScopeStatementUpdateSchema,
+                    workBreakdownStructure: WorkBreakdownStructureUpdateSchema):
 
         scope = self.db.query(ProjectScope).filter_by(ProjectId=projectId).first()
-        if not scope:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Scope not found for the given project."
-            )
 
         # Update ScopeManagementPlan
         scopePlan: ScopeManagementPlan = self.db.query(ScopeManagementPlan).filter_by(Id=scope.ScopeManagementPlanId).first()
