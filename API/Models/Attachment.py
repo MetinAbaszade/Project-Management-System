@@ -30,4 +30,8 @@ class Attachment(Base):
     UploadedAt = Column(DateTime, default=datetime.utcnow)
 
     Project = relationship("Project", back_populates="Attachments")
-    Owner = relationship("User", back_populates="Attachments")
+    Owner = relationship(
+        "User",
+        back_populates="Attachments",
+        foreign_keys=[OwnerId]  
+    )
