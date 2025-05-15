@@ -1,57 +1,79 @@
+const plugin = require("tailwindcss/plugin");
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./src/**/*.{js,jsx,ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}", 
+    "./components/**/*.{ts,tsx}" 
   ],
-  darkMode: 'class',
   theme: {
     extend: {
-      fontFamily: {
-        sans: [
-          'SF Pro Display',
-          'SF Pro Text',
-          'Inter',
-          '-apple-system',
-          'BlinkMacSystemFont',
-          'Segoe UI',
-          'Roboto',
-          'Helvetica Neue',
-          'Arial',
-          'sans-serif',
-        ],
-      },
       colors: {
-        gray: {
-          750: '#2a2a2a',
+        primary: "var(--primary)",
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        muted: "var(--muted)",
+      },
+      backdropBlur: {
+        xs: "2px",
+      },
+      boxShadow: {
+        glow: "0 0 0 2px var(--primary), 0 0 10px var(--primary)",
+      },
+      keyframes: {
+        shake: {
+          "0%, 100%": { transform: "translateX(0)" },
+          "20%, 60%": { transform: "translateX(-4px)" },
+          "40%, 80%": { transform: "translateX(4px)" },
         },
       },
       animation: {
-        'fade-in': 'fadeIn 0.3s ease-out',
-        'slide-up': 'slideUp 0.4s ease-out',
-        'scale-in': 'scaleIn 0.2s ease-out',
-        'grow-width': 'growWidth 0.7s ease-out forwards',
-      },
-      boxShadow: {
-        'card': '0 2px 4px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1)',
-        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-      },
-      transitionProperty: {
-        'width': 'width',
-        'spacing': 'margin, padding',
-      },
-      zIndex: {
-        '60': '60',
-        '70': '70',
-        '80': '80',
-        '90': '90',
-        '100': '100',
-      },
-      borderRadius: {
-        'xl': '0.75rem',
-        '2xl': '1rem',
-        '3xl': '1.5rem',
+        shake: "shake 0.4s ease-in-out",
       },
     },
   },
-  plugins: [],
-}
+  darkMode: false, // 👈 keeps things neutral, does NOT force anything
+
+  plugins: [
+    plugin(function ({ addBase }) {
+      addBase({
+        ":root": {
+          "--primary": "#3B82F6",
+          "--background": "#F9FAFB",
+          "--foreground": "#111827",
+          "--muted": "#E5E7EB",
+        },
+
+        // You can layer in themes like this (e.g., via body class)
+        ".theme-dark": {
+          "--primary": "#3B82F6",
+          "--background": "#0f0f0f",
+          "--foreground": "#f9f9f9",
+          "--muted": "#2a2a2a",
+        },
+
+        ".theme-ocean": {
+          "--primary": "#0ea5e9",
+          "--background": "#e0f7fa",
+          "--foreground": "#0f172a",
+          "--muted": "#bae6fd",
+        },
+
+        ".theme-sunset": {
+          "--primary": "#f97316",
+          "--background": "#fff7ed",
+          "--foreground": "#3b0d0c",
+          "--muted": "#fed7aa",
+        },
+
+        ".theme-forest": {
+          "--primary": "#16a34a",
+          "--background": "#ecfdf5",
+          "--foreground": "#052e16",
+          "--muted": "#bbf7d0",
+        },
+      });
+    }),
+  ],
+};

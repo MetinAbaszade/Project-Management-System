@@ -37,8 +37,16 @@ class TaskRepository:
 
     def SoftDelete(self, taskId: UUID):
         task = self.GetById(taskId)
-        if not task:
-            return None
-        task.IsDeleted = True
-        self.db.commit()
-        return task
+        if task:
+            task.IsDeleted = True
+            for subtask in task.Subtasks:
+                subtask.IsDeleted = True
+            self.db.commit()
+
+    def GetSubtasks(self, parentTaskId: UUID):
+        return self.db.query(Task).filter(
+            Task.ParentTaskId == str(parentTaskId),
+            Task.IsDeleted == False
+        ).all()
+
+

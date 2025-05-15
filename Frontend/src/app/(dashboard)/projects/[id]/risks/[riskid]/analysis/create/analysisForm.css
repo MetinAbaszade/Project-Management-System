@@ -1,0 +1,222 @@
+/* Risk Analysis Form Styling */
+.risk-analysis-container {
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* Form styling with theme support */
+.risk-analysis-form {
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.risk-analysis-form-section {
+  padding: 1.5rem;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.risk-analysis-form-section:last-child {
+  border-bottom: none;
+}
+
+.risk-analysis-form-section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+/* Form groups and inputs */
+.risk-analysis-form-group {
+  margin-bottom: 1.5rem;
+}
+
+.risk-analysis-form-group:last-child {
+  margin-bottom: 0;
+}
+
+.risk-analysis-form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.risk-analysis-form-input,
+.risk-analysis-form-select,
+.risk-analysis-form-textarea {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.risk-analysis-form-input:focus,
+.risk-analysis-form-select:focus,
+.risk-analysis-form-textarea:focus {
+  outline: none;
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 2px hsl(var(--primary) / 0.2);
+}
+
+.risk-analysis-form-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.risk-analysis-form-input.border-destructive,
+.risk-analysis-form-select.border-destructive {
+  border-color: hsl(var(--destructive));
+}
+
+.risk-analysis-form-error {
+  color: hsl(var(--destructive));
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+/* Risk summary card */
+.risk-summary-card {
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.risk-summary-header {
+  padding: 1rem;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.risk-summary-title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.risk-summary-body {
+  padding: 1rem;
+}
+
+.risk-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.risk-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.risk-summary-label {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.risk-summary-value {
+  font-weight: 500;
+}
+
+/* Tooltip styling */
+.risk-tooltip {
+  position: relative;
+}
+
+.risk-tooltip-icon {
+  width: 1rem;
+  height: 1rem;
+  cursor: help;
+  color: hsl(var(--muted-foreground));
+}
+
+.risk-tooltip-content {
+  position: absolute;
+  width: 16rem;
+  padding: 0.75rem;
+  background-color: hsl(var(--popover));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+  font-size: 0.75rem;
+  color: hsl(var(--popover-foreground));
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.risk-tooltip:hover .risk-tooltip-content {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Animation keyframes */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.risk-analysis-form-appear {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .risk-analysis-container {
+    padding: 1rem;
+  }
+  
+  .risk-analysis-form-section {
+    padding: 1rem;
+  }
+  
+  .risk-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Custom colors for severity levels */
+.risk-severity-low {
+  color: hsl(var(--success));
+}
+
+.risk-severity-medium {
+  color: hsl(var(--warning));
+}
+
+.risk-severity-high {
+  color: hsl(var(--destructive));
+}
+
+/* Input with prepended symbol */
+.risk-symbol-input {
+  position: relative;
+}
+
+.risk-symbol-prefix {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+}
+
+.risk-symbol-input input {
+  padding-left: 1.75rem;
+}

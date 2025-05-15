@@ -65,7 +65,6 @@ class TaskService:
 
     def Update(self, taskId: UUID, updateData: TaskUpdate, currentUserId: UUID):
         task = self.repo.GetById(taskId)
-        print("Mayu")
         print(taskId)
         if not task:
             raise HTTPException(status_code=404, detail="Task not found")
@@ -75,7 +74,7 @@ class TaskService:
 
         return self.repo.Update(taskId, updateData)
 
-    def Remove(self, userId: UUID, taskId: UUID):
+    def SoftDeleteTask(self, userId: UUID, taskId: UUID):
         task = self.repo.GetById(taskId)
         if not task:
             raise HTTPException(status_code=404, detail="Task not found")
@@ -85,3 +84,12 @@ class TaskService:
 
         self.repo.SoftDelete(taskId)
         return {"message": "Task deleted successfully"}
+
+    def GetSubtasks(self, parentTaskId: UUID):
+        parent = self.repo.GetById(parentTaskId)
+        if not parent:
+            raise HTTPException(status_code=404, detail="Parent task not found")
+
+        return self.repo.GetSubtasks(parentTaskId)
+
+

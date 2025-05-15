@@ -39,3 +39,26 @@ class ProjectOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+# Add this to Schemas/ProjectSchema.py
+class ProjectUpdate(BaseModel):
+    Name: Optional[str] = None
+    Description: Optional[str] = None
+    Deadline: Optional[datetime] = None
+    Budget: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+
+class ProjectOut(BaseModel):
+    Id: UUID
+    Name: str
+    Description: str
+    Deadline: datetime
+    TotalBudget: int
+    CreatedAt: datetime
+    IsDeleted: bool
+    OwnerId: UUID
+
+    class Config:
+        from_attributes = True

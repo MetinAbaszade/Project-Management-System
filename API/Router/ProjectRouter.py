@@ -85,3 +85,13 @@ def GetProjectTasks(
 ):
     return service.GetProjectTasks(projectId)
 
+# Add to Router/ProjectRouter.py
+@router.put("/{projectId}/update", response_model=ProjectOut)
+def UpdateProject(
+    projectId: UUID,
+    projectData: ProjectUpdate,
+    currentUser: User = Depends(GetCurrentUser),
+    projectService: ProjectService = Depends(ProjectService)
+):
+    """Update an existing project. Only the project owner can perform this action."""
+    return projectService.UpdateProject(currentUser.Id, projectId, projectData)
