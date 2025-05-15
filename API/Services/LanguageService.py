@@ -1,7 +1,7 @@
 from fastapi import Depends
 from Repositories.LanguageRepository import LanguageRepository
 from Schemas.LanguageSchema import LanguageCreate
-
+from uuid import UUID
 class LanguageService:
     def __init__(self, languageRepository: LanguageRepository = Depends()):
         self.languageRepository = languageRepository  # Store instance

@@ -36,7 +36,8 @@
     "next-auth": "^4.24.5",
     "canvas-confetti": "^1.9.2",
     "jwt-decode": "^4.0.0",
-    "recharts": "^2.9.0"
+    "recharts": "^2.9.0",
+    "react-beautiful-dnd": "^13.1.0"  
   },
   "devDependencies": {
     "typescript": "^5.4.5",
