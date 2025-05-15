@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional
 
 
@@ -8,19 +8,21 @@ class AddUserSchema(BaseModel):
     Email: EmailStr = Field(..., example="johndoe@example.com")
     Password: str = Field(..., min_length=6, example="securepassword123")
 
+
 class UpdatePasswordSchema(BaseModel):
     Email: EmailStr
-    NewPassword: str = Field(..., min_length=6)  
+    NewPassword: str = Field(..., min_length=6)
+
 
 class ProfilePictureSchema(BaseModel):
     FileName: str
     FileType: Optional[str]
     FileSize: Optional[int]
     FilePath: str
-    OwnerId: str  
+    OwnerId: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class UserResponseSchema(BaseModel):
     Id: str
@@ -30,6 +32,6 @@ class UserResponseSchema(BaseModel):
     Role: str
     JobTitle: Optional[str]
     ProfilePicture: Optional[ProfilePictureSchema]
+    ProfilePictureUrl: Optional[str] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

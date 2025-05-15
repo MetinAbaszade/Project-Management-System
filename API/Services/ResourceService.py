@@ -60,31 +60,49 @@ class ResourceService:
     # ActivityResource
 
     def CreateActivityResource(self, assignmentData: ActivityResourceBase):
+        resource = self.db.query(Resource).filter(Resource.Id == assignmentData.ResourceId, Resource.IsDeleted == False).first()
+        if not resource:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resource not found.")
+        
         task = self.db.query(Task).filter(Task.Id == assignmentData.TaskId, Task.IsDeleted == False).first()
         if not task:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found.")
+        
+        if assignmentData.Quantity > resource.Available:
+            raise HTTPException(status_code=400, detail="Not enough available resource quantity.")
 
-        return ResourceRepository.CreateActivityResource(self.db, assignmentData, task)
+        return ResourceRepository.CreateActivityResource(self.db, assignmentData, task, resource)
 
-    def UpdateActivityResource(self, assignmentId: str, updateData: ActivityResourceUpdate):
-        task = self.db.query(Task).filter(Task.Id == updateData.TaskId, Task.IsDeleted == False).first()
+    def UpdateActivityResource(self, assignmentId: str, updateData: ActivityResourceUpdate):        
+        assignment = self.db.query(ActivityResource).filter(ActivityResource.Id == assignmentId, ActivityResource.IsDeleted == False).first()
+        if not assignment:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activity Resource not found.")
+        
+        task = self.db.query(Task).filter(Task.Id == ActivityResource.TaskId, Task.IsDeleted == False).first()
         if not task:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found.")
+        
+        resource = self.db.query(Resource).filter(Resource.Id == ActivityResource.ResourceId, Resource.IsDeleted == False).first()
+        if not resource:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resource not found.")
 
-        return ResourceRepository.UpdateActivityResource(self.db, assignmentId, updateData, task)
+        return ResourceRepository.UpdateActivityResource(self.db, assignment, updateData, task, resource)
 
 
     def SoftDeleteActivityResource(self, assignmentId: str):
-
         assignment = self.db.query(ActivityResource).filter(ActivityResource.Id == assignmentId, ActivityResource.IsDeleted == False).first()
         if not assignment:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activity resource not found.")
+        
+        resource = self.db.query(Resource).filter(Resource.Id == assignment.ResourceId, Resource.IsDeleted == False).first()
+        if not resource:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resource not found.")
 
         task = self.db.query(Task).filter(Task.Id == assignment.TaskId, Task.IsDeleted == False).first()
         if not task:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found.")
 
-        return ResourceRepository.SoftDeleteActivityResource(self.db, assignmentId, task)
+        return ResourceRepository.SoftDeleteActivityResource(self.db, assignment, task, resource)
 
 
     def GetActivityResourceById(self, assignmentId: str):

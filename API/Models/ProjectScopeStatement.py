@@ -16,6 +16,9 @@ class ProjectScopeStatement(Base):
     Assumptions = Column(Text)
     Constraints = Column(Text)
 
+    IsDeleted = Column(Boolean, default=False)
+
+
     IncludesSOW = Column(Boolean, default=False)
     StatementOfWork = Column(Text)
 

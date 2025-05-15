@@ -13,5 +13,5 @@ class RequirementDocument(Base):
     StakeholderNeeds = Column(Text)
     RequirementTraceability = Column(Text)
     RequirementAcceptanceCriteria = Column(Text)
-
+    IsDeleted = Column(Boolean, default=False)
     ProjectScope = relationship("ProjectScope", back_populates="RequirementDocument")

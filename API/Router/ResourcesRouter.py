@@ -7,7 +7,7 @@ from Dependencies.auth import GetCurrentUser
 from Schemas.ResourceSchema import (
     ResourceBase, ResourceUpdate,
     ActivityResourceBase, ActivityResourceUpdate,
-    ResourcePlanBase, ResourcePlanUpdate
+    ResourcePlanBase, ResourcePlanUpdate, ActivityResourceResponse
 )
 
 router = APIRouter(prefix="/resources", tags=["Resources"])
@@ -73,7 +73,7 @@ def AssignResourceToTask(
     return service.CreateActivityResource(assignmentData)
 
 
-@router.put("/assignments/{assignmentId}/update")
+@router.put("/assignments/{assignmentId}/update", response_model=ActivityResourceResponse)
 def UpdateActivityResource(
     assignmentId: str,
     updateData: ActivityResourceUpdate,

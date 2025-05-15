@@ -1,25 +1,58 @@
 from typing import Optional
-
+from decimal import Decimal
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from Schemas.ProjectSchema import ProjectCreate
-from Models import Project, User, Team, TeamMember, ProjectStakeholder, ProjectScope
+from Schemas.ProjectSchema import ProjectCreate, ProjectUpdate
+from Models import Project, User, Team, TeamMember, Attachment, ProjectStakeholder
 from Models.ProjectMember import ProjectMember
 from uuid import UUID
+from Models.Resource import Resource
 from Models.Task import Task
+from Models.Risk import Risk
+from Repositories import RiskRepository
+from Repositories import ResourceRepository
+from Repositories.ProjectScopeRepository import ProjectScopeRepository
+from Repositories.TeamRepository import TeamRepository
+from Repositories.TaskRepository import TaskRepository
+from Repositories.StakeholderRepository import StakeholderRepository
+
 
 def CreateProject(db: Session, projectData: ProjectCreate, ownerId: UUID):
     newProject = Project(
         Name=projectData.Name,
         Description=projectData.Description,
         Deadline=projectData.Deadline,
-        TotalBudget=projectData.Budget,
+        TotalBudget=projectData.TotalBudget,
         OwnerId=ownerId
     )
     db.add(newProject)
     db.commit()
     db.refresh(newProject)
     return newProject
+
+def UpdateProject(db: Session, project: Project, updateData: ProjectUpdate):
+    # Step 1: Calculate how much has been used before updating any field
+    oldTotal = Decimal(str(project.TotalBudget or 0))
+    oldRemaining = Decimal(str(project.RemainingBudget or 0))
+    usedAmount = abs(oldTotal- abs(oldRemaining))
+
+    # Step 2: Apply all updates
+    for field, value in updateData.dict(exclude_unset=True).items():
+        setattr(project, field, value)
+
+    # Step 3: If TotalBudget is updated, recalculate RemainingBudget
+    if "TotalBudget" in updateData.dict(exclude_unset=True):
+        newTotal = Decimal(str(project.TotalBudget))
+        newRemaining = newTotal - usedAmount
+
+        if newRemaining < 0:
+            raise HTTPException(status_code=400, detail="New budget is lower than amount already used.")
+        
+        project.RemainingBudget = newRemaining
+
+    db.commit()
+    db.refresh(project)
+    return project
 
 def GetProjectById(db: Session, projectId: UUID) -> Optional[Project]:
     project = db.query(Project).filter(Project.Id == str(projectId), Project.IsDeleted == False).first()
@@ -54,50 +87,85 @@ def AddMemberToProject(db: Session, projectId: UUID, memberId: UUID):
     db.refresh(member)
     return member
 
-def SoftDeleteProject(db: Session, projectId: UUID, userId: UUID):
+def SoftDeleteProject(db: Session, userId: UUID, project: Project):
+    
     # Step 1: Soft delete the project itself
-    db.query(Project).filter(Project.Id == str(projectId)).update(
-        {"IsDeleted": True}, synchronize_session=False
-    )
+    project.IsDeleted = True
 
-    # Step 2: Soft delete project members
-    db.query(ProjectMember).filter(
-        ProjectMember.ProjectId == str(projectId)
-    ).update({"IsDeleted": True}, synchronize_session=False)
-
-    # Step 3: Get all team IDs for this project
-    team_ids = db.query(Team.Id).filter(
-        Team.ProjectId == str(projectId)
+    # Step 2: Soft-delete each project member using helper
+    members = db.query(ProjectMember).filter(
+        ProjectMember.ProjectId == str(project.Id),
+        ProjectMember.IsDeleted == False
     ).all()
-    team_ids = [tid[0] for tid in team_ids]
+    for member in members:
+        SoftDeleteProjectMember(db, project.Id, member.UserId)
+    
+    # teamRepo = TeamRepository(db)
+    # taskRepo = TaskRepository(db)
+    # stakeholderRepo = StakeholderRepository(db)
+    # resourceRepo = ResourceRepository(db)
+    # riskRepo = RiskRepository(db)
 
-    # Step 4: Soft delete teams
-    db.query(Team).filter(
-        Team.ProjectId == str(projectId)
-    ).update({"IsDeleted": True}, synchronize_session=False)
+    try:
+        scopeRepo = ProjectScopeRepository(db)
+        scopeRepo.SoftDeleteScope(project.Id)
+    except HTTPException:
+        pass
 
-    # Step 5: Soft delete team members
-    if team_ids:
-        db.query(TeamMember).filter(
-            TeamMember.TeamId.in_(team_ids)
-        ).update({"IsActive": False}, synchronize_session=False)
+    resource_ids = db.query(Resource.Id).filter(
+        Resource.ProjectId == str(project.Id),
+        Resource.IsDeleted == False
+    ).all()
 
-    # Step 6: Soft delete tasks under this project
-    db.query(Task).filter(
-        Task.ProjectId == str(projectId)
-    ).update({"IsDeleted": True}, synchronize_session=False)
+    for rid in resource_ids:
+        try:
+            ResourceRepository.SoftDeleteResource(db, rid[0])
+        except HTTPException:
+            pass
 
-    # Step 7: Soft delete stakeholders
-    db.query(ProjectStakeholder).filter(
-        ProjectStakeholder.ProjectId == str(projectId)
-    ).update({"IsDeleted": True}, synchronize_session=False)
+    risk_ids = db.query(Risk.Id).filter(
+        Risk.ProjectId == str(project.Id),
+        Risk.IsDeleted == False
+    ).all()
 
-    # Step 8: Soft delete scope
-    db.query(ProjectScope).filter(
-        ProjectScope.ProjectId == str(projectId)
+    for rid in risk_ids:
+        try:
+            RiskRepository.SoftDeleteRisk(db, rid[0])
+        except HTTPException:
+            pass
+
+    # tasks = db.query(Task).filter(
+    #     Task.ProjectId == str(project.Id),
+    #     Task.IsDeleted == False
+    # ).all()
+
+    # taskRepo = TaskRepository()
+    # for task in tasks:
+    #     try:
+    #         taskRepo.SoftDelete(task.Id)
+    #     except HTTPException:
+    #         pass
+
+    # try:
+    #     TeamRepository.SoftDelete(db, project.Id)
+    # except HTTPException:
+    #     pass
+
+
+    stakeholderRepo = StakeholderRepository(db)
+    stakeholders = db.query(ProjectStakeholder).filter(
+        ProjectStakeholder.ProjectId == str(project.Id)
+    ).all()
+    for stakeholder in stakeholders:
+        stakeholderRepo.Delete(stakeholder.Id)
+
+    db.query(Attachment).filter(
+        Attachment.ProjectId == str(project.Id),
+        Attachment.EntityType != "User"
     ).update({"IsDeleted": True}, synchronize_session=False)
 
     db.commit()
+
     return {"message": "Project and all related data soft-deleted successfully"}
 
 def SoftDeleteProjectMember(db: Session, projectId: UUID, memberId: UUID):
