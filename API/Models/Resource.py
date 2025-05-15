@@ -22,5 +22,3 @@ class Resource(Base):
     ActivityAssignments = relationship("ActivityResource", back_populates="Resource", cascade="all, delete-orphan")
     Project = relationship("Project", back_populates="Resources")
 
-    # project.py
-    # Resources = relationship("Resource", back_populates="Project", cascade="all, delete-orphan")

@@ -18,5 +18,6 @@ class ScopeManagementPlan(Base):
     ReqChangeControl = Column(Text)
     ReqPrioritization = Column(Text)
     ReqMetrics = Column(Text)
-
+    IsDeleted = Column(Boolean, default=False)
+    
     ProjectScope = relationship("ProjectScope", back_populates="ScopeManagementPlan")

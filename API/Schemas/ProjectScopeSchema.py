@@ -37,15 +37,20 @@ class ProjectScopeStatementSchema(BaseModel):
 
 # 4. Work Breakdown Structure
 class WorkPackageSchema(BaseModel):
-    Name: str 
-    Description: Optional[float] = None
-    EstimatedDuration: Optional[float] = None
-    EstimatedCost: Optional[float] = None
+    Name: str
+    Description: Optional[str] = None
+    EstimatedDuration: Optional[int] = None
+
+    class Config:
+        orm_mode = True
 
 
 class WorkBreakdownStructureSchema(BaseModel):
     WorkPackages: Optional[List[WorkPackageSchema]] = None
     ScopeBaselineReference: Optional[str] = None
+
+    class Config:
+        orm_mode = True
 
 
 # -------------
@@ -85,9 +90,8 @@ class ProjectScopeStatementUpdateSchema(BaseModel):
 # 4. Work Breakdown Structure (Update)
 class WorkPackageUpdateSchema(BaseModel):
     Name: Optional[str] = None
-    Description: Optional[float] = None
+    Description: Optional[str] = None
     EstimatedDuration: Optional[float] = None
-    EstimatedCost: Optional[float] = None
 
 
 class WorkBreakdownStructureUpdateSchema(BaseModel):

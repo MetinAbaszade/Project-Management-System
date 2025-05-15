@@ -1,16 +1,22 @@
 import smtplib
 import random
 import string
+from fastapi import HTTPException, Depends
+from sqlalchemy.orm import Session
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from cachetools import TTLCache
 from Schemas.EmailSchema import ResponseDTO, CheckVerificationCodeDTO
+from Repositories.UserRepository import UserRepository
+from Dependencies.db import GetDb
 
 # Use a Global Cache to persist verification codes across multiple API calls
 verification_cache = TTLCache(maxsize=1000, ttl=120)
 
 class EmailService:
-    def __init__(self):
+    def __init__(self, db: Session = Depends(GetDb)):
+        self.db = db
+        self.userRepository = UserRepository(db)
         self.cache = verification_cache
         self.smtp_server = "smtp.gmail.com"
         self.smtp_port = 587
@@ -52,6 +58,10 @@ class EmailService:
         """
 
     def SendVerificationCode(self, recipientEmail: str) -> ResponseDTO:
+
+        user = self.userRepository.CheckEmail(recipientEmail)
+        if user:
+            raise HTTPException(status_code=400, detail="Email is already registered")
         """ Sends a verification email and stores the code in memory for 2 minutes. """
         print("Inside send_verification_code")
         print(self.cache)

@@ -7,6 +7,8 @@ from uuid import UUID
 from fastapi import HTTPException, UploadFile
 
 from Schemas.UserSchema import AddUserSchema
+from Schemas.UserSchema import UserResponseSchema
+
 from Models.Attachment import Attachment, AttachmentEntityType
 from Repositories.AttachmentRepository import UploadToUniServer
 
@@ -43,6 +45,10 @@ class UserRepository:
         user = self.db.query(User).filter(User.Email == email).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+        return user
+    
+    def CheckEmail(self, email: EmailStr) -> User:
+        user = self.db.query(User).filter(User.Email == email).first()
         return user
 
     def ExistsById(self, userId: UUID) -> bool:
@@ -87,14 +93,32 @@ class UserRepository:
         self.db.refresh(user)
         return user
     
-    def GetCurrentUserData(db: Session, currentUser: User):
-        user = db.query(User).filter(User.Id == currentUser.Id).first()
-        return user
+    def GetCurrentUserData(db: Session, currentUser: User) -> UserResponseSchema:
+        user: User = db.query(User).filter(User.Id == currentUser.Id, User.IsDeleted == False).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        userSchema: UserResponseSchema = UserResponseSchema.from_orm(user)
+
+        # Manually inject ProfilePictureUrl if picture exists
+        if user.ProfilePictureId:
+            profilePic = db.query(Attachment).filter(
+                Attachment.Id == user.ProfilePictureId,
+                Attachment.IsDeleted == False
+            ).first()
+
+        if profilePic:
+            baseUrl = "http://clabsql.clamv.constructor.university/~mabaszada/"
+            fileName = os.path.basename(profilePic.FilePath)
+            userSchema.ProfilePicture = profilePic  # fills nested object
+            userSchema.ProfilePictureUrl = f"{baseUrl}{fileName}"
+
+        return userSchema
     
     def UploadProfilePicture(
         db: Session,
         file: UploadFile,
-        currentUserId: str
+        currentUser: User
     ):
         # Save file temporarily
         tempLocalPath = os.path.join("temp_uploads", file.filename)
@@ -115,12 +139,17 @@ class UserRepository:
             FileSize=fileSize,
             FilePath=remotePath.replace("/home/mabaszada/", "/"),
             EntityType=AttachmentEntityType.USER,
-            EntityId=currentUserId,
-            OwnerId=currentUserId,
+            EntityId=currentUser.Id,
+            OwnerId=currentUser.Id,
             ProjectId=None 
         )
 
         db.add(attachment)
         db.commit()
         db.refresh(attachment)
+
+        currentUser.ProfilePictureId = attachment.Id
+
+        db.commit()
+        db.refresh(currentUser)
         return attachment

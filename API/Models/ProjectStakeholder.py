@@ -15,6 +15,6 @@ class ProjectStakeholder(Base):
     CreatedAt = Column(DateTime, default=datetime.now())
     UpdatedAt = Column(DateTime, onupdate=datetime.now())
 
-
+    
     User = relationship("User", back_populates="ProjectStakes")
     Project = relationship("Project", back_populates="Stakeholders")
