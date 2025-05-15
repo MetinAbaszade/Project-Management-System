@@ -1,10 +1,18 @@
+<<<<<<< HEAD
 # TaskUp 
+=======
+# TaskUp 🌐
+>>>>>>> ca12e1a2b3146542d112bcae50e3abe8a466895e
 
 **TaskUp** is a modern React.js-based web application for managing projects, tasks, teams, and collaboration with a clean UI and modular design.
 
 ---
 
+<<<<<<< HEAD
 ## Getting Started
+=======
+## 🚀 Getting Started
+>>>>>>> ca12e1a2b3146542d112bcae50e3abe8a466895e
 
 ### 1. Clone the Repository
 
@@ -30,7 +38,11 @@ npm run dev
 
 ---
 
+<<<<<<< HEAD
 ## Project Structure
+=======
+## 📁 Project Structure
+>>>>>>> ca12e1a2b3146542d112bcae50e3abe8a466895e
 
 ```
 TaskUp/
@@ -53,7 +65,11 @@ TaskUp/
 
 ---
 
+<<<<<<< HEAD
 ## Scripts
+=======
+## 📦 Scripts
+>>>>>>> ca12e1a2b3146542d112bcae50e3abe8a466895e
 
 ```bash
 npm run dev       # Start development server
@@ -63,7 +79,11 @@ npm run preview   # Preview production build
 
 ---
 
+<<<<<<< HEAD
 ## Features
+=======
+## 💡 Features
+>>>>>>> ca12e1a2b3146542d112bcae50e3abe8a466895e
 
 - Responsive layout and animations
 - Modular project/team/task components
@@ -73,7 +93,11 @@ npm run preview   # Preview production build
 
 ---
 
+<<<<<<< HEAD
 ## Customization
+=======
+## 🛠 Customization
+>>>>>>> ca12e1a2b3146542d112bcae50e3abe8a466895e
 
 - Modify theme: `src/theme/designTokens.js`
 - Edit context logic: `src/context/`
@@ -81,7 +105,11 @@ npm run preview   # Preview production build
 
 ---
 
+<<<<<<< HEAD
 ## License
+=======
+## 📄 License
+>>>>>>> ca12e1a2b3146542d112bcae50e3abe8a466895e
 
 MIT License.  
 Feel free to fork, extend, or remix.
