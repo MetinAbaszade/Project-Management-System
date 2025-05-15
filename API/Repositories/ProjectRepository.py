@@ -201,5 +201,24 @@ def GetTasks(db: Session, projectId: UUID):
     return [task for task in project.Tasks if not task.IsDeleted]
 
 
-
+# Add to Repositories/ProjectRepository.py
+def UpdateProject(db: Session, projectId: UUID, projectData: dict):
+    project = db.query(Project).filter(Project.Id == str(projectId), Project.IsDeleted == False).first()
+    
+    if not project:
+        return None
+    
+    # Handle budget field mapping if present
+    if "Budget" in projectData:
+        project.TotalBudget = projectData.pop("Budget")
+    
+    # Update remaining fields
+    for key, value in projectData.items():
+        if hasattr(project, key):
+            setattr(project, key, value)
+    
+    project.UpdatedAt = datetime.now()
+    db.commit()
+    db.refresh(project)
+    return project
 
