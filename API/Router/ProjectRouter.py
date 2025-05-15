@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, status
 from uuid import UUID
 
 from Models import User
-from Schemas.ProjectSchema import ProjectCreate, ProjectOut
+from Schemas.ProjectSchema import ProjectCreate, ProjectOut, ProjectUpdate
 from Schemas.TaskSchema import TaskResponse
 from Services.ProjectService import ProjectService
 from Dependencies.auth import GetCurrentUser
@@ -19,9 +19,17 @@ def CreateProject(
 ):
     return projectService.CreateProject(currentUser.Id, projectData)
 
+@router.put("/update")
+def UpdateProject(
+    projectData: ProjectUpdate,
+    currentUser: User = Depends(GetCurrentUser),
+    projectService: ProjectService = Depends(ProjectService)
+):
+    return projectService.UpdateProject(projectData)
+
 @router.delete("/{projectId}/delete", status_code=status.HTTP_200_OK)
 def DeleteProject(
-    projectId: UUID,
+    projectId: str,
     currentUser: User = Depends(GetCurrentUser),
     projectService: ProjectService = Depends(ProjectService)
 ):
@@ -77,3 +85,13 @@ def GetProjectTasks(
 ):
     return service.GetProjectTasks(projectId)
 
+# Add to Router/ProjectRouter.py
+@router.put("/{projectId}/update", response_model=ProjectOut)
+def UpdateProject(
+    projectId: UUID,
+    projectData: ProjectUpdate,
+    currentUser: User = Depends(GetCurrentUser),
+    projectService: ProjectService = Depends(ProjectService)
+):
+    """Update an existing project. Only the project owner can perform this action."""
+    return projectService.UpdateProject(currentUser.Id, projectId, projectData)

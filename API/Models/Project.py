@@ -15,7 +15,7 @@ class Project(Base):
     Deadline = Column(DateTime)  # ✅ Add this line back
 
     Progress = Column(Integer, default=0)
-    TotalBudget = Column(Numeric(12, 2), default=0)
+    TotalBudget = Column(Numeric(12, 2), default=0, nullable = False)
     RemainingBudget = Column(Numeric(12, 2), default=TotalBudget)
 
     CreatedAt = Column(DateTime, default=datetime.now())

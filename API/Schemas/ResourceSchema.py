@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+from decimal import Decimal
 
 
 # -------------------------------
@@ -10,10 +11,11 @@ from datetime import datetime
 class ResourceBase(BaseModel):
     Name: str
     Type: str  
+    ProjectId: str
     Description: Optional[str]
     Unit: str
-    Total: Optional[float] = None         
-    Available: Optional[float] = None  
+    Total: float        
+    Available: Optional[float]  
 
 class ResourceUpdate(BaseModel):
     Name: Optional[str]
@@ -38,8 +40,8 @@ class ResourceRead(ResourceBase):
 class ActivityResourceBase(BaseModel):
     TaskId: str
     ResourceId: str
-    Quantity: float
-    EstimatedCost: float
+    Quantity: int
+    EstimatedCost: int
 
 class ActivityResourceUpdate(BaseModel):
     Quantity: Optional[float]
@@ -48,6 +50,18 @@ class ActivityResourceUpdate(BaseModel):
 class ActivityResourceRead(ActivityResourceBase):
     Id: str
     AssignedAt: datetime
+
+    class Config:
+        orm_mode = True
+
+class ActivityResourceResponse(BaseModel):
+    Id: str
+    TaskId: str
+    ResourceId: str
+    Quantity: Decimal
+    EstimatedCost: Decimal
+    AssignedAt: datetime
+    IsDeleted: bool
 
     class Config:
         orm_mode = True

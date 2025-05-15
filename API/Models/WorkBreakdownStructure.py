@@ -13,5 +13,7 @@ class WorkBreakdownStructure(Base):
     WorkDescription = Column(Text)
     EstimatedDuration = Column(Integer)  # in days/hours
     EstimatedCost = Column(Numeric(10, 2))
+    IsDeleted = Column(Boolean, default=False)
 
     ProjectScope = relationship("ProjectScope", back_populates="WBS")
+    WorkPackages = relationship("WorkPackage", back_populates="WBS", cascade="all, delete-orphan")
