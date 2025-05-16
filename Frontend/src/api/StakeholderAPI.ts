@@ -1,23 +1,6 @@
-/**
- * Get current user detailed data
- */
-export async function getCurrentUserDetails(): Promise<any> {
-  try {
-    const response = await api.get('/users/get-user');
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching user data:', error);
-    // Return minimal user data in case of error
-    return {
-      Id: localStorage.getItem('userId') || 'user-123',
-      FirstName: 'Current',
-      LastName: 'User',
-      Email: 'user@example.com',
-      Role: 'Member',
-      JobTitle: 'Team Member'
-    };
-  }
-}import { api } from '@/lib/axios';
+// Path: Frontend/src/api/StakeholderAPI.ts
+
+import { api } from '@/lib/axios';
 
 export interface Stakeholder {
   Id: string;
@@ -26,6 +9,13 @@ export interface Stakeholder {
   Percentage: number;
   CreatedAt: string;
   UpdatedAt: string;
+  User?: {
+    Id: string;
+    FirstName: string;
+    LastName: string;
+    Email: string;
+    ProfilePicture?: string;
+  };
 }
 
 export interface StakeholderCreateData {
@@ -41,21 +31,9 @@ export interface StakeholderUpdateData {
 /**
  * Get all stakeholders for a project
  */
-export async function getProjectStakeholders(projectId: string) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/stakeholders/project/${projectId}`, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-    },
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    console.error('getProjectStakeholders error:', err);
-    throw new Error(`Failed to fetch stakeholders: ${res.status}`);
-  }
-
-  return res.json();
+export async function getProjectStakeholders(projectId: string): Promise<Stakeholder[]> {
+  const response = await api.get(`/stakeholders/project/${projectId}`);
+  return response.data;
 }
 
 /**
@@ -70,43 +48,8 @@ export async function getStakeholderById(stakeholderId: string): Promise<Stakeho
  * Create a new stakeholder
  */
 export async function createStakeholder(data: StakeholderCreateData): Promise<Stakeholder> {
-  try {
-    // Attempt to create stakeholder using the real API
-    const response = await api.post('/stakeholders/', data);
-    return response.data;
-  } catch (error: any) {
-    console.error('Error creating stakeholder:', error);
-    
-    // For development/demo - create a mock stakeholder if API fails
-    if (error.response?.status === 403) {
-      console.log('Using fallback stakeholder creation due to permission issues');
-      
-      // Generate a mock stakeholder for demo purposes
-      const mockStakeholder: Stakeholder = {
-        Id: `mock-${Date.now()}`,
-        ProjectId: data.ProjectId,
-        UserId: data.UserId,
-        Percentage: data.Percentage,
-        CreatedAt: new Date().toISOString(),
-        UpdatedAt: new Date().toISOString()
-      };
-      
-      // Save the mock stakeholder to localStorage for persistence
-      const key = `stakeholder_${data.ProjectId}_${data.UserId}`;
-      localStorage.setItem(key, JSON.stringify(mockStakeholder));
-      
-      // Also save to a list of stakeholders for this project
-      const projectKey = `stakeholders_${data.ProjectId}`;
-      const existingStakeholders = JSON.parse(localStorage.getItem(projectKey) || '[]');
-      existingStakeholders.push(mockStakeholder);
-      localStorage.setItem(projectKey, JSON.stringify(existingStakeholders));
-      
-      return mockStakeholder;
-    }
-    
-    // If it's not a 403 error, rethrow
-    throw error;
-  }
+  const response = await api.post('/stakeholders/', data);
+  return response.data;
 }
 
 /**
@@ -123,4 +66,32 @@ export async function updateStakeholder(stakeholderId: string, data: Stakeholder
 export async function deleteStakeholder(stakeholderId: string): Promise<string> {
   const response = await api.delete(`/stakeholders/${stakeholderId}`);
   return response.data;
+}
+
+/**
+ * Get current user detailed data
+ */
+export async function getCurrentUserDetails(): Promise<any> {
+  try {
+    const response = await api.get('/users/get-user');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    return null;
+  }
+}
+
+/**
+ * Search for users
+ */
+export async function searchUsers(query: string): Promise<any[]> {
+  if (!query.trim()) return [];
+  
+  try {
+    const response = await api.get(`/users/search?query=${encodeURIComponent(query)}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error searching users:', error);
+    return [];
+  }
 }

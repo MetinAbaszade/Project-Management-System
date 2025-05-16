@@ -16,18 +16,22 @@ import {
   LayoutGrid,
   LayoutList,
   X,
-  ChevronsUpDown
+  ChevronsUpDown,
+  SlidersHorizontal
 } from 'lucide-react';
 
 // API and utils
 import { getProjectById } from '@/api/ProjectAPI';
-import { getProjectTasks, markTaskComplete } from '@/api/TaskAPI';
+import { getProjectTasks } from '@/api/TaskAPI';
 import { cn } from '@/lib/utils';
 import { toast } from '@/lib/toast';
 
 // Components
 import { TaskList } from '@/components/task/TaskList';
 import { TaskDialog } from '@/components/task/TaskDialog';
+
+// Import animations
+import '@/styles/animations.css';
 
 export default function ProjectTasksPage() {
   const { id } = useParams();
@@ -181,6 +185,7 @@ export default function ProjectTasksPage() {
     setIsCreateDialogOpen(false);
   };
 
+  // Render loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -192,6 +197,7 @@ export default function ProjectTasksPage() {
     );
   }
 
+  // Render error state
   if (error) {
     return (
       <div className="max-w-7xl mx-auto p-6">
@@ -213,7 +219,7 @@ export default function ProjectTasksPage() {
               </button>
               <button 
                 onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors shadow-sm"
               >
                 Try Again
               </button>
@@ -227,7 +233,12 @@ export default function ProjectTasksPage() {
   return (
     <div className="max-w-7xl mx-auto p-6">
       {/* Header with back button, title and create button */}
-      <div className="flex justify-between items-start mb-8">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="flex justify-between items-start mb-8"
+      >
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.push(`/projects/${id}`)}
@@ -238,7 +249,7 @@ export default function ProjectTasksPage() {
           </button>
           
           <div>
-            <h1 className="text-2xl font-bold">{project?.Name || 'Project'} Tasks</h1>
+            <h1 className="text-2xl font-bold text-foreground">{project?.Name || 'Project'} Tasks</h1>
             <p className="text-muted-foreground mt-1">
               {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}
               {filteredTasks.length !== tasks.length && ` (filtered from ${tasks.length})`}
@@ -247,9 +258,11 @@ export default function ProjectTasksPage() {
         </div>
         
         <div className="flex items-center gap-3">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setViewMode(viewMode === 'list' ? 'kanban' : 'list')}
-            className="inline-flex items-center px-3 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-all"
+            className="inline-flex items-center px-3 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-all shadow-sm"
           >
             {viewMode === 'list' ? (
               <>
@@ -262,22 +275,29 @@ export default function ProjectTasksPage() {
                 <span className="hidden sm:inline">List View</span>
               </>
             )}
-          </button>
+          </motion.button>
           
           {isProjectOwner && (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setIsCreateDialogOpen(true)}
               className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-sm"
             >
               <Plus className="h-4 w-4 mr-2" />
               Create Task
-            </button>
+            </motion.button>
           )}
         </div>
-      </div>
+      </motion.div>
       
       {/* Search and filters */}
-      <div className="mb-6 space-y-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+        className="mb-6 space-y-4"
+      >
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -286,7 +306,7 @@ export default function ProjectTasksPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search tasks..."
-              className="w-full pl-10 pr-4 py-2 bg-background border rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary focus:outline-none transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-background border rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary focus:outline-none transition-all shadow-sm"
             />
             {searchQuery && (
               <button 
@@ -299,18 +319,22 @@ export default function ProjectTasksPage() {
           </div>
           
           <div className="flex gap-2">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setShowFilters(!showFilters)}
-              className={`inline-flex items-center px-3 py-2 rounded-lg border ${showFilters ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border hover:bg-muted'} transition-colors`}
+              className={`inline-flex items-center px-3 py-2 rounded-lg border ${showFilters ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border hover:bg-muted'} transition-colors shadow-sm`}
             >
-              <Filter className="h-4 w-4 mr-2" />
+              <SlidersHorizontal className="h-4 w-4 mr-2" />
               Filters
-            </button>
+            </motion.button>
             
             <div className="relative inline-block">
-              <button 
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
-                className="inline-flex items-center px-3 py-2 rounded-lg border bg-background border-border hover:bg-muted transition-colors"
+                className="inline-flex items-center px-3 py-2 rounded-lg border bg-background border-border hover:bg-muted transition-colors shadow-sm"
               >
                 <span className="mr-2 hidden sm:inline">Sort by</span>
                 <span className="mr-1">{
@@ -319,7 +343,7 @@ export default function ProjectTasksPage() {
                   sortBy === 'title' ? 'Title' : 'Status'
                 }</span>
                 <ChevronsUpDown className="h-4 w-4" />
-              </button>
+              </motion.button>
               <div className="absolute right-0 mt-1 bg-card border rounded-md shadow-md z-10 hidden group-hover:block">
                 <button 
                   onClick={() => setSortBy('deadline')}
@@ -351,69 +375,79 @@ export default function ProjectTasksPage() {
         </div>
         
         {/* Filter panel */}
-        {showFilters && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden bg-card border rounded-lg shadow-sm"
-          >
-            <div className="p-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Priority</label>
-                  <select
-                    value={priorityFilter}
-                    onChange={(e) => setPriorityFilter(e.target.value)}
-                    className="w-full px-3 py-2 bg-background border rounded-md focus:ring-2 focus:ring-primary/30 focus:border-primary focus:outline-none transition-all"
-                  >
-                    <option value="all">All Priorities</option>
-                    <option value="LOW">Low</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="HIGH">High</option>
-                  </select>
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ 
+            height: showFilters ? 'auto' : 0, 
+            opacity: showFilters ? 1 : 0 
+          }}
+          transition={{ duration: 0.3 }}
+          className="overflow-hidden"
+        >
+          {showFilters && (
+            <div className="bg-card border rounded-lg shadow-sm">
+              <div className="p-4 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Priority</label>
+                    <select
+                      value={priorityFilter}
+                      onChange={(e) => setPriorityFilter(e.target.value)}
+                      className="w-full px-3 py-2 bg-background border rounded-md focus:ring-2 focus:ring-primary/30 focus:border-primary focus:outline-none transition-all"
+                    >
+                      <option value="all">All Priorities</option>
+                      <option value="LOW">Low</option>
+                      <option value="MEDIUM">Medium</option>
+                      <option value="HIGH">High</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Status</label>
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="w-full px-3 py-2 bg-background border rounded-md focus:ring-2 focus:ring-primary/30 focus:border-primary focus:outline-none transition-all"
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="Not Started">Not Started</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  </div>
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Status</label>
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full px-3 py-2 bg-background border rounded-md focus:ring-2 focus:ring-primary/30 focus:border-primary focus:outline-none transition-all"
+                <div className="flex justify-end">
+                  <button
+                    onClick={resetFilters}
+                    className="text-sm text-primary hover:text-primary/80 hover:underline"
                   >
-                    <option value="all">All Statuses</option>
-                    <option value="Not Started">Not Started</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
-                  </select>
+                    Reset Filters
+                  </button>
                 </div>
               </div>
-              
-              <div className="flex justify-end">
-                <button
-                  onClick={resetFilters}
-                  className="text-sm text-primary hover:text-primary/80 hover:underline"
-                >
-                  Reset Filters
-                </button>
-              </div>
             </div>
-          </motion.div>
-        )}
-      </div>
+          )}
+        </motion.div>
+      </motion.div>
       
       {/* Task List or Kanban */}
-      <TaskList
-        tasks={filteredTasks}
-        userRole={isProjectOwner ? 'project_owner' : 'member'}
-        currentUserId={userId || ''}
-        projectId={id as string}
-        loading={false}
-        error={null}
-        onTasksChange={refreshTasks}
-        viewMode={viewMode}
-      />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      >
+        <TaskList
+          tasks={filteredTasks}
+          userRole={isProjectOwner ? 'project_owner' : 'member'}
+          currentUserId={userId || ''}
+          projectId={id as string}
+          loading={false}
+          error={null}
+          onTasksChange={refreshTasks}
+          viewMode={viewMode}
+        />
+      </motion.div>
       
       {/* Create Task Dialog */}
       <TaskDialog

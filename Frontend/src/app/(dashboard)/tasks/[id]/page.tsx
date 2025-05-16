@@ -19,6 +19,7 @@ import {
   Users,
   Loader2,
   ExternalLink,
+  AlertTriangle,
 } from 'lucide-react';
 
 // API imports
@@ -35,7 +36,11 @@ import { toast } from '@/lib/toast';
 import { TaskAttachments } from '@/components/task/TaskAttachments';
 import { TaskSubtasks } from '@/components/task/TaskSubtasks';
 import { ResourceAllocation } from '@/components/task/ResourceAllocation';
+import { ResourceSection } from '@/components/task/ResourceSection';
 import { TaskDialog } from '@/components/task/TaskDialog';
+
+// Styles
+import '@/styles/animations.css';
 
 export default function TaskDetailPage() {
   const { id } = useParams();
@@ -190,21 +195,60 @@ export default function TaskDetailPage() {
       const deadline = parseISO(task.Deadline);
       
       if (task.Completed) {
-        return { label: 'Task completed', color: 'text-green-600' };
+        return { label: 'Task completed', color: 'text-green-600 dark:text-green-400' };
       }
       
       if (isPast(deadline) && !isToday(deadline)) {
-        return { label: 'Overdue', color: 'text-red-600' };
+        return { label: 'Overdue', color: 'text-red-600 dark:text-red-400' };
       }
       
       if (isToday(deadline)) {
-        return { label: 'Due today', color: 'text-amber-600' };
+        return { label: 'Due today', color: 'text-amber-600 dark:text-amber-400' };
       }
       
       return null;
     } catch (e) {
       console.error('Invalid date format:', e);
       return null;
+    }
+  };
+  
+  // Priority color
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'HIGH': return 'text-red-600 dark:text-red-400';
+      case 'MEDIUM': return 'text-amber-600 dark:text-amber-400';
+      case 'LOW': return 'text-blue-600 dark:text-blue-400';
+      default: return 'text-muted-foreground';
+    }
+  };
+  
+  // Get priority badge styles
+  const getPriorityBadgeStyles = (priority: string) => {
+    switch (priority) {
+      case 'HIGH':
+        return 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400';
+      case 'MEDIUM':
+        return 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400';
+      case 'LOW':
+        return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
+      default:
+        return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
+    }
+  };
+  
+  // Get status badge styles
+  const getStatusBadgeStyles = (status: string, completed: boolean) => {
+    if (completed) {
+      return 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400';
+    }
+    
+    switch (status) {
+      case 'In Progress':
+        return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'Not Started':
+      default:
+        return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
     }
   };
   
@@ -225,8 +269,8 @@ export default function TaskDetailPage() {
     return (
       <div className="max-w-7xl mx-auto p-6 flex items-center justify-center min-h-[60vh]">
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
           className="bg-card rounded-xl p-8 max-w-md w-full text-center space-y-4 border shadow-sm"
         >
           <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
@@ -241,7 +285,7 @@ export default function TaskDetailPage() {
             </button>
             <button 
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors shadow-sm"
             >
               Try Again
             </button>
@@ -253,21 +297,16 @@ export default function TaskDetailPage() {
   
   // Deadline status
   const deadlineStatus = getDeadlineStatus();
-  
-  // Priority color
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'HIGH': return 'var(--destructive)';
-      case 'MEDIUM': return 'text-amber-600';
-      case 'LOW': return 'text-blue-600';
-      default: return 'text-muted-foreground';
-    }
-  };
 
   return (
     <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+      >
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.back()}
@@ -287,10 +326,12 @@ export default function TaskDetailPage() {
         
         <div className="flex items-center gap-2">
           {canCompleteTask && (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleCompleteTask}
               disabled={completing}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-70"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-70 shadow-sm"
             >
               {completing ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -298,33 +339,42 @@ export default function TaskDetailPage() {
                 <CheckCircle className="h-4 w-4" />
               )}
               Mark Complete
-            </button>
+            </motion.button>
           )}
           
           {isProjectOwner && (
             <>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setIsEditDialogOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors shadow-sm"
               >
                 <Edit className="h-4 w-4" />
                 Edit
-              </button>
+              </motion.button>
               
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setConfirmDelete(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors shadow-sm"
               >
                 <Trash2 className="h-4 w-4" />
                 Delete
-              </button>
+              </motion.button>
             </>
           )}
         </div>
-      </div>
+      </motion.div>
       
       {/* Tabs */}
-      <div className="mb-6 border-b">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+        className="mb-6 border-b"
+      >
         <div className="flex space-x-8">
           <button
             onClick={() => setActiveTab('details')}
@@ -332,7 +382,7 @@ export default function TaskDetailPage() {
               activeTab === 'details' 
                 ? 'border-b-2 border-primary text-primary' 
                 : 'text-muted-foreground hover:text-foreground'
-            }`}
+            } transition-colors`}
           >
             Details
           </button>
@@ -343,7 +393,7 @@ export default function TaskDetailPage() {
               activeTab === 'subtasks' 
                 ? 'border-b-2 border-primary text-primary' 
                 : 'text-muted-foreground hover:text-foreground'
-            }`}
+            } transition-colors`}
           >
             Subtasks
           </button>
@@ -354,7 +404,7 @@ export default function TaskDetailPage() {
               activeTab === 'resources' 
                 ? 'border-b-2 border-primary text-primary' 
                 : 'text-muted-foreground hover:text-foreground'
-            }`}
+            } transition-colors`}
           >
             Resources
           </button>
@@ -365,173 +415,172 @@ export default function TaskDetailPage() {
               activeTab === 'attachments' 
                 ? 'border-b-2 border-primary text-primary' 
                 : 'text-muted-foreground hover:text-foreground'
-            }`}
+            } transition-colors`}
           >
             Attachments
           </button>
         </div>
-      </div>
+      </motion.div>
       
       {/* Tab Content */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Main Content (2/3 width on desktop) */}
         <div className="md:col-span-2 space-y-6">
-          {activeTab === 'details' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="bg-card rounded-xl border shadow-sm overflow-hidden"
-            >
-              <div className="p-6">
-                <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-                  <h2 className="text-2xl font-semibold">{task.Title}</h2>
-                  
-                  <div className="flex gap-2">
-                    <span
-                      className={`px-3 py-1 text-xs font-medium rounded-full ${
-                        task.Priority === 'HIGH' 
-                          ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' 
-                          : task.Priority === 'MEDIUM'
-                          ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
-                          : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                      }`}
-                    >
-                      {task.Priority} Priority
-                    </span>
+          <AnimatePresence mode="wait">
+            {activeTab === 'details' && (
+              <motion.div
+                key="details"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3 }}
+                className="bg-card rounded-xl border shadow-sm overflow-hidden"
+              >
+                <div className="p-6">
+                  <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+                    <h2 className="text-2xl font-semibold">{task.Title}</h2>
                     
-                    <span
-                      className={`px-3 py-1 text-xs font-medium rounded-full ${
-                        task.Status === 'Completed' || task.Completed
-                          ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                          : task.Status === 'In Progress'
-                          ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                      }`}
-                    >
-                      {task.Status || (task.Completed ? 'Completed' : 'Not Started')}
-                    </span>
+                    <div className="flex gap-2">
+                      <span
+                        className={`px-3 py-1 text-xs font-medium rounded-full ${getPriorityBadgeStyles(task.Priority)}`}
+                      >
+                        {task.Priority} Priority
+                      </span>
+                      
+                      <span
+                        className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeStyles(task.Status, task.Completed)}`}
+                      >
+                        {task.Status || (task.Completed ? 'Completed' : 'Not Started')}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                
-                {task.Description ? (
-                  <div className="mb-6">
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Description</h3>
-                    <p className="text-foreground whitespace-pre-wrap">{task.Description}</p>
-                  </div>
-                ) : (
-                  <div className="mb-6">
-                    <p className="text-muted-foreground text-sm italic">No description provided</p>
-                  </div>
-                )}
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Deadline */}
-                  {task.Deadline && (
+                  
+                  {task.Description ? (
+                    <div className="mb-6">
+                      <h3 className="text-sm font-medium text-muted-foreground mb-2">Description</h3>
+                      <p className="text-foreground whitespace-pre-wrap">{task.Description}</p>
+                    </div>
+                  ) : (
+                    <div className="mb-6">
+                      <p className="text-muted-foreground text-sm italic">No description provided</p>
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Deadline */}
+                    {task.Deadline && (
+                      <div className="space-y-1">
+                        <h3 className="text-sm font-medium text-muted-foreground flex items-center">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Deadline
+                        </h3>
+                        <p className="text-foreground">
+                          {format(parseISO(task.Deadline), 'MMM d, yyyy')}
+                        </p>
+                        {deadlineStatus && (
+                          <p className={deadlineStatus.color}>
+                            {deadlineStatus.label}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Assignment */}
                     <div className="space-y-1">
                       <h3 className="text-sm font-medium text-muted-foreground flex items-center">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Deadline
+                        {task.TeamId ? (
+                          <Users className="h-4 w-4 mr-2" />
+                        ) : (
+                          <User className="h-4 w-4 mr-2" />
+                        )}
+                        Assigned To
                       </h3>
                       <p className="text-foreground">
-                        {format(parseISO(task.Deadline), 'MMM d, yyyy')}
+                        {task.TeamId 
+                          ? 'Team'
+                          : task.UserId
+                          ? (task.UserId === userId ? 'You' : 'User')
+                          : 'Not assigned'}
                       </p>
-                      {deadlineStatus && (
-                        <p className={deadlineStatus.color}>
-                          {deadlineStatus.label}
-                        </p>
-                      )}
                     </div>
-                  )}
-                  
-                  {/* Assignment */}
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-medium text-muted-foreground flex items-center">
-                      {task.TeamId ? (
-                        <Users className="h-4 w-4 mr-2" />
-                      ) : (
-                        <User className="h-4 w-4 mr-2" />
-                      )}
-                      Assigned To
-                    </h3>
-                    <p className="text-foreground">
-                      {task.TeamId 
-                        ? 'Team'
-                        : task.UserId
-                        ? (task.UserId === userId ? 'You' : 'User')
-                        : 'Not assigned'}
-                    </p>
-                  </div>
-                  
-                  {/* Creation Info */}
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-medium text-muted-foreground flex items-center">
-                      <Clock className="h-4 w-4 mr-2" />
-                      Created
-                    </h3>
-                    <p className="text-foreground">
-                      {format(parseISO(task.CreatedAt), 'MMM d, yyyy')}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      By {task.CreatedBy === userId ? 'you' : 'another user'}
-                    </p>
-                  </div>
-                  
-                  {/* Cost if available */}
-                  {task.Cost > 0 && (
+                    
+                    {/* Creation Info */}
                     <div className="space-y-1">
-                      <h3 className="text-sm font-medium text-muted-foreground">Cost</h3>
-                      <p className="text-foreground">${task.Cost.toFixed(2)}</p>
+                      <h3 className="text-sm font-medium text-muted-foreground flex items-center">
+                        <Clock className="h-4 w-4 mr-2" />
+                        Created
+                      </h3>
+                      <p className="text-foreground">
+                        {format(parseISO(task.CreatedAt), 'MMM d, yyyy')}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        By {task.CreatedBy === userId ? 'you' : 'another user'}
+                      </p>
                     </div>
-                  )}
+                    
+                    {/* Cost if available */}
+                    {task.Cost > 0 && (
+                      <div className="space-y-1">
+                        <h3 className="text-sm font-medium text-muted-foreground">Cost</h3>
+                        <p className="text-foreground">${task.Cost.toFixed(2)}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          )}
-          
-          {activeTab === 'subtasks' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="bg-card rounded-xl border shadow-sm overflow-hidden p-6"
-            >
-              <TaskSubtasks 
-                taskId={task.Id} 
-                projectId={task.ProjectId} 
-                isOwner={isProjectOwner} 
-              />
-            </motion.div>
-          )}
-          
-          {activeTab === 'resources' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="bg-card rounded-xl border shadow-sm overflow-hidden p-6"
-            >
-              <ResourceAllocation 
-                taskId={task.Id} 
-                isOwner={isProjectOwner} 
-                projectMembers={projectMembers}
-              />
-            </motion.div>
-          )}
-          
-          {activeTab === 'attachments' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="bg-card rounded-xl border shadow-sm overflow-hidden p-6"
-            >
-              <TaskAttachments 
-                taskId={task.Id} 
-                isOwner={isProjectOwner} 
-              />
-            </motion.div>
-          )}
+              </motion.div>
+            )}
+            
+            {activeTab === 'subtasks' && (
+              <motion.div
+                key="subtasks"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3 }}
+                className="bg-card rounded-xl border shadow-sm overflow-hidden p-6"
+              >
+                <TaskSubtasks 
+                  taskId={task.Id} 
+                  projectId={task.ProjectId} 
+                  isOwner={isProjectOwner} 
+                />
+              </motion.div>
+            )}
+            
+            {activeTab === 'resources' && (
+              <motion.div
+                key="resources"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3 }}
+                className="bg-card rounded-xl border shadow-sm overflow-hidden p-6"
+              >
+                <ResourceSection 
+                  taskId={task.Id}
+                  projectId={task.ProjectId}
+                  isOwner={isProjectOwner}
+                />
+              </motion.div>
+            )}
+            
+            {activeTab === 'attachments' && (
+              <motion.div
+                key="attachments"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3 }}
+                className="bg-card rounded-xl border shadow-sm overflow-hidden p-6"
+              >
+                <TaskAttachments 
+                  taskId={task.Id}
+                  projectId={task.ProjectId} 
+                  isOwner={isProjectOwner} 
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
         
         {/* Sidebar (1/3 width on desktop) */}
@@ -540,10 +589,10 @@ export default function TaskDetailPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
             className="bg-card rounded-xl border shadow-sm overflow-hidden"
           >
-            <div className="p-4 border-b">
+            <div className="p-4 border-b bg-muted/50">
               <h2 className="text-lg font-semibold">Project Info</h2>
             </div>
             
@@ -573,10 +622,10 @@ export default function TaskDetailPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
+            transition={{ duration: 0.3, delay: 0.3 }}
             className="bg-card rounded-xl border shadow-sm overflow-hidden"
           >
-            <div className="p-4 border-b">
+            <div className="p-4 border-b bg-muted/50">
               <h2 className="text-lg font-semibold">Task Status</h2>
             </div>
             
@@ -585,13 +634,7 @@ export default function TaskDetailPage() {
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground mb-1">Current Status</h3>
                   <div
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md inline-flex ${
-                      task.Status === 'Completed' || task.Completed
-                        ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                        : task.Status === 'In Progress'
-                        ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                    }`}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md inline-flex ${getStatusBadgeStyles(task.Status, task.Completed)}`}
                   >
                     {task.Status || (task.Completed ? 'Completed' : 'Not Started')}
                   </div>
@@ -600,23 +643,19 @@ export default function TaskDetailPage() {
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground mb-1">Priority</h3>
                   <div
-                    className={`px-3 py-1.5 text-sm font-medium rounded-md inline-flex ${
-                      task.Priority === 'HIGH' 
-                        ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                        : task.Priority === 'MEDIUM'
-                        ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'
-                        : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
-                    }`}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md inline-flex ${getPriorityBadgeStyles(task.Priority)}`}
                   >
                     {task.Priority} Priority
                   </div>
                 </div>
                 
                 {canCompleteTask && (
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={handleCompleteTask}
                     disabled={completing}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-70 mt-4"
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-70 mt-4 shadow-sm"
                   >
                     {completing ? (
                       <>
@@ -629,7 +668,7 @@ export default function TaskDetailPage() {
                         <span>Mark Complete</span>
                       </>
                     )}
-                  </button>
+                  </motion.button>
                 )}
               </div>
             </div>
@@ -657,17 +696,16 @@ export default function TaskDetailPage() {
               transition={{ duration: 0.2 }}
               className="bg-card rounded-xl border shadow-lg max-w-md w-full p-6"
             >
-              <div className="mb-6 text-center">
-                <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
-                  <AlertCircle className="h-6 w-6 text-destructive" />
-                </div>
-                <h2 className="text-xl font-bold mb-2">Delete Task</h2>
-                <p className="text-muted-foreground">
-                  Are you sure you want to delete this task? This action cannot be undone.
-                </p>
+              <div className="mx-auto w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
               </div>
               
-              <div className="flex justify-end gap-3">
+              <h2 className="text-xl font-bold text-center mb-2">Delete Task</h2>
+              <p className="text-muted-foreground text-center mb-6">
+                Are you sure you want to delete this task? This action cannot be undone.
+              </p>
+              
+              <div className="flex justify-center gap-3">
                 <button
                   onClick={() => setConfirmDelete(false)}
                   disabled={deleting}
@@ -679,16 +717,16 @@ export default function TaskDetailPage() {
                 <button
                   onClick={handleDeleteTask}
                   disabled={deleting}
-                  className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors flex items-center gap-2"
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm flex items-center"
                 >
                   {deleting ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
                       <span>Deleting...</span>
                     </>
                   ) : (
                     <>
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4 mr-2" />
                       <span>Delete Task</span>
                     </>
                   )}
