@@ -14,12 +14,12 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/lib/toast';
+import { cn } from '@/lib/utils';
 
 // API imports
 import { getProjectById } from '@/api/ProjectAPI';
 import { createTeam } from '@/api/TeamAPI';
 import { useAuth } from '@/contexts/AuthContext';
-import { cn } from '@/lib/utils';
 
 const TEAM_COLORS = [
   { index: 0, name: 'Ruby Red', gradient: 'from-rose-500 to-red-500' },
@@ -33,7 +33,6 @@ const TEAM_COLORS = [
   { index: 8, name: 'Slate Gray', gradient: 'from-slate-400 to-slate-600' },
   { index: 9, name: 'Ocean Teal', gradient: 'from-teal-400 to-cyan-600' },
 ];
-
 export default function CreateTeamPage() {
   const { id: projectId } = useParams();
   const router = useRouter();
@@ -233,24 +232,46 @@ export default function CreateTeamPage() {
     }
   };
 
+
+  // Team colors with theme support
+  const TEAM_COLORS = [
+    { name: 'Ruby Red', gradient: 'from-rose-500 to-red-500' },
+    { name: 'Sunset Orange', gradient: 'from-orange-400 to-orange-600' },
+    { name: 'Golden Amber', gradient: 'from-amber-400 to-yellow-600' },
+    { name: 'Verdant Green', gradient: 'from-green-400 to-emerald-600' },
+    { name: 'Ocean Blue', gradient: 'from-blue-400 to-sky-600' },
+    { name: 'Royal Indigo', gradient: 'from-indigo-500 to-purple-600' },
+    { name: 'Vibrant Purple', gradient: 'from-purple-400 to-violet-600' },
+    { name: 'Fuchsia Pink', gradient: 'from-pink-400 to-rose-600' },
+    { name: 'Slate Gray', gradient: 'from-slate-400 to-slate-600' },
+    { name: 'Ocean Teal', gradient: 'from-teal-400 to-cyan-600' },
+  ];
+
+
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4 sm:p-6 md:p-8">
       <motion.div 
-        className="bg-card border border-border rounded-2xl shadow-lg max-w-xl w-full overflow-hidden"
+
+        className="bg-card/90 backdrop-blur-md border border-border/50 rounded-2xl shadow-lg max-w-xl w-full overflow-hidden"
+
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
         {/* Card Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-card border-b border-border">
+
+        <div className="flex items-center justify-between px-6 py-4 bg-card/90 border-b border-border/50">
           <div className="flex items-center gap-2">
-            <button 
+            <motion.button 
               onClick={() => router.push(`/projects/${projectId}/team`)}
-              className="p-2 rounded-full text-muted-foreground hover:bg-muted/80 transition-colors"
+              className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
             >
               <ArrowLeft size={18} />
-            </button>
-            <h1 className="text-xl font-semibold">Create New Team</h1>
+            </motion.button>
+            <h1 className="text-xl font-semibold text-foreground">Create New Team</h1>
+
           </div>
         </div>
         
@@ -269,14 +290,15 @@ export default function CreateTeamPage() {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-3 text-sm"
+                  className="mb-6 p-4 bg-red-500/10 rounded-xl flex items-center gap-3 text-sm"
                 >
-                  <AlertCircle size={18} className="text-destructive flex-shrink-0" />
-                  <span className="text-destructive">{serverError}</span>
+                  <AlertCircle size={18} className="text-red-500 flex-shrink-0" />
+                  <span className="text-red-500">{serverError}</span>
                   <button 
                     type="button"
                     onClick={() => setServerError(null)}
-                    className="ml-auto p-1 text-destructive/70 hover:text-destructive rounded-full hover:bg-destructive/10"
+                    className="ml-auto p-1 text-red-500/70 hover:text-red-500 rounded-full hover:bg-red-500/10"
+
                   >
                     <X size={14} />
                   </button>
@@ -285,25 +307,31 @@ export default function CreateTeamPage() {
             </AnimatePresence>
             
             {/* Project Info */}
-            <div className="bg-muted/50 p-4 rounded-lg flex items-center mb-6">
+
+            <div className="bg-muted/30 backdrop-blur-sm p-4 rounded-xl flex items-center mb-6">
+
               <div className="bg-primary/10 p-2 rounded-md mr-3">
                 <Users size={20} className="text-primary" />
               </div>
               <div>
                 <div className="text-sm text-muted-foreground">Project</div>
-                <div className="font-medium">{project?.Name || 'Loading...'}</div>
+
+                <div className="font-medium text-foreground">{project?.Name || 'Loading...'}</div>
+
               </div>
             </div>
             
             {/* Team Preview */}
             <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Team Preview</label>
-              <div className="bg-muted/50 border border-border rounded-lg p-4 flex items-center">
-                <div className={`w-12 h-12 rounded-md bg-gradient-to-br ${TEAM_COLORS[form.ColorIndex].gradient} flex items-center justify-center text-white font-bold text-lg`}>
+
+              <label className="block text-sm font-medium mb-2 text-foreground">Team Preview</label>
+              <div className="bg-muted/30 backdrop-blur-sm border border-border/50 rounded-xl p-4 flex items-center">
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${TEAM_COLORS[form.ColorIndex].gradient} flex items-center justify-center text-white font-bold text-lg shadow-md`}>
                   {getTeamInitials(form.Name) || <Users size={20} />}
                 </div>
                 <div className="ml-4 flex-1 min-w-0">
-                  <h3 className="font-medium truncate">
+                  <h3 className="font-medium truncate text-foreground">
+
                     {form.Name || 'Team Name'}
                   </h3>
                   <p className="text-sm text-muted-foreground line-clamp-1">
@@ -317,8 +345,10 @@ export default function CreateTeamPage() {
             <div className="space-y-6">
               {/* Name Field */}
               <div>
-                <label htmlFor="Name" className="block text-sm font-medium mb-2">
-                  Team Name <span className="text-destructive">*</span>
+
+                <label htmlFor="Name" className="block text-sm font-medium mb-2 text-foreground">
+                  Team Name <span className="text-red-500">*</span>
+
                 </label>
                 <input
                   id="Name"
@@ -328,8 +358,12 @@ export default function CreateTeamPage() {
                   onChange={handleInputChange}
                   placeholder="Enter team name"
                   className={cn(
-                    "w-full px-3 py-2 bg-background border border-input rounded-md transition-colors",
-                    errors.Name ? "border-destructive" : "focus:border-primary"
+
+                    "w-full p-3 rounded-xl border backdrop-blur-sm bg-background/50 text-foreground transition-colors focus:ring-1 focus:ring-primary focus:outline-none",
+                    errors.Name
+                      ? "border-red-500"
+                      : "border-border/50"
+
                   )}
                   maxLength={50}
                   autoFocus
@@ -340,7 +374,9 @@ export default function CreateTeamPage() {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="text-destructive text-sm mt-1"
+
+                      className="text-red-500 text-sm mt-1"
+
                     >
                       {errors.Name}
                     </motion.div>
@@ -353,7 +389,9 @@ export default function CreateTeamPage() {
               
               {/* Description Field */}
               <div>
-                <label htmlFor="Description" className="block text-sm font-medium mb-2">
+
+                <label htmlFor="Description" className="block text-sm font-medium mb-2 text-foreground">
+
                   Description
                 </label>
                 <textarea
@@ -363,8 +401,9 @@ export default function CreateTeamPage() {
                   onChange={handleInputChange}
                   placeholder="Enter team description (optional)"
                   className={cn(
-                    "w-full px-3 py-2 bg-background border border-input rounded-md transition-colors resize-none",
-                    errors.Description ? "border-destructive" : "focus:border-primary"
+                    "w-full p-3 rounded-xl border border-border/50 backdrop-blur-sm bg-background/50 text-foreground transition-colors resize-none focus:ring-1 focus:ring-primary focus:outline-none",
+                    errors.Description ? "border-red-500" : ""
+
                   )}
                   rows={3}
                   maxLength={200}
@@ -375,7 +414,8 @@ export default function CreateTeamPage() {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="text-destructive text-sm mt-1"
+                      className="text-red-500 text-sm mt-1"
+
                     >
                       {errors.Description}
                     </motion.div>
@@ -388,33 +428,39 @@ export default function CreateTeamPage() {
               
               {/* Team Color */}
               <div>
-                <label className="flex items-center gap-2 text-sm font-medium mb-3">
+
+                <label className="flex items-center gap-2 text-sm font-medium mb-3 text-foreground">
+
                   <Palette size={16} className="text-muted-foreground" />
                   Team Color
                 </label>
                 <div className="grid grid-cols-5 gap-3 mb-2">
-                  {TEAM_COLORS.map((color) => (
+
+                  {TEAM_COLORS.map((color, index) => (
                     <motion.button
-                      key={color.index}
+                      key={index}
                       type="button"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
                       className={cn(
-                        "aspect-square rounded-md bg-gradient-to-br",
+                        "aspect-square rounded-xl bg-gradient-to-br",
                         color.gradient,
-                        form.ColorIndex === color.index ? 
-                          "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""
+                        form.ColorIndex === index ? 
+                          "ring-2 ring-primary ring-offset-2 ring-offset-card" : ""
                       )}
-                      onClick={() => handleColorSelect(color.index)}
+                      onClick={() => handleColorSelect(index)}
                       aria-label={`Select ${color.name} color`}
                     >
-                      {form.ColorIndex === color.index && (
+                      {form.ColorIndex === index && (
+
                         <Check className="text-white drop-shadow-md" size={18} />
                       )}
                     </motion.button>
                   ))}
                 </div>
-                <div className="text-sm text-center">
+
+                <div className="text-sm text-center text-foreground">
+
                   {TEAM_COLORS[form.ColorIndex].name}
                 </div>
               </div>
@@ -424,11 +470,13 @@ export default function CreateTeamPage() {
             <div className="mt-8 flex gap-3">
               <motion.button
                 type="button"
-                className="flex-1 py-2.5 px-4 bg-muted text-foreground rounded-md hover:bg-muted/80 transition-colors"
+
+                className="flex-1 py-2.5 px-4 bg-muted/50 backdrop-blur-sm hover:bg-muted text-foreground rounded-full transition-colors"
+
                 onClick={() => router.push(`/projects/${projectId}/team`)}
                 disabled={submitting || showSuccess}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
                 Cancel
               </motion.button>
@@ -436,14 +484,16 @@ export default function CreateTeamPage() {
               <motion.button
                 type="submit"
                 className={cn(
-                  "flex-1 py-2.5 px-4 rounded-md transition-colors flex items-center justify-center gap-2",
+
+                  "flex-1 py-2.5 px-4 rounded-full transition-colors flex items-center justify-center gap-2",
                   showSuccess 
-                    ? "bg-green-600 text-white" 
+                    ? "bg-green-500 text-white" 
+
                     : "bg-primary text-primary-foreground hover:bg-primary/90"
                 )}
                 disabled={submitting || showSuccess}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
                 {showSuccess ? (
                   <>
