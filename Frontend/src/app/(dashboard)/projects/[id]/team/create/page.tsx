@@ -21,6 +21,7 @@ import { getProjectById } from '@/api/ProjectAPI';
 import { createTeam } from '@/api/TeamAPI';
 import { useAuth } from '@/contexts/AuthContext';
 
+
 const TEAM_COLORS = [
   { index: 0, name: 'Ruby Red', gradient: 'from-rose-500 to-red-500' },
   { index: 1, name: 'Sunset Orange', gradient: 'from-orange-400 to-orange-600' },
@@ -33,6 +34,7 @@ const TEAM_COLORS = [
   { index: 8, name: 'Slate Gray', gradient: 'from-slate-400 to-slate-600' },
   { index: 9, name: 'Ocean Teal', gradient: 'from-teal-400 to-cyan-600' },
 ];
+
 export default function CreateTeamPage() {
   const { id: projectId } = useParams();
   const router = useRouter();
@@ -232,7 +234,6 @@ export default function CreateTeamPage() {
     }
   };
 
-
   // Team colors with theme support
   const TEAM_COLORS = [
     { name: 'Ruby Red', gradient: 'from-rose-500 to-red-500' },
@@ -345,7 +346,6 @@ export default function CreateTeamPage() {
             <div className="space-y-6">
               {/* Name Field */}
               <div>
-
                 <label htmlFor="Name" className="block text-sm font-medium mb-2 text-foreground">
                   Team Name <span className="text-red-500">*</span>
 
@@ -374,7 +374,6 @@ export default function CreateTeamPage() {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-
                       className="text-red-500 text-sm mt-1"
 
                     >
@@ -389,7 +388,6 @@ export default function CreateTeamPage() {
               
               {/* Description Field */}
               <div>
-
                 <label htmlFor="Description" className="block text-sm font-medium mb-2 text-foreground">
 
                   Description
@@ -458,7 +456,6 @@ export default function CreateTeamPage() {
                     </motion.button>
                   ))}
                 </div>
-
                 <div className="text-sm text-center text-foreground">
 
                   {TEAM_COLORS[form.ColorIndex].name}
@@ -470,7 +467,6 @@ export default function CreateTeamPage() {
             <div className="mt-8 flex gap-3">
               <motion.button
                 type="button"
-
                 className="flex-1 py-2.5 px-4 bg-muted/50 backdrop-blur-sm hover:bg-muted text-foreground rounded-full transition-colors"
 
                 onClick={() => router.push(`/projects/${projectId}/team`)}

@@ -122,8 +122,9 @@ export default function ProjectTeamsPage() {
   const handleDeleteTeam = async (teamId) => {
     try {
       setDeletingTeam(teamId);
-      await deleteTeam(teamId);
       
+      // Directly call the API to delete the team
+      await deleteTeam(teamId);
 
       setTeams(prevTeams => prevTeams.filter(team => team.Id !== teamId));
       
@@ -252,7 +253,6 @@ export default function ProjectTeamsPage() {
     </motion.div>
   );
 
-
 const renderDeleteConfirmation = (team) => (
   <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
     <motion.div 
@@ -297,7 +297,6 @@ const renderDeleteConfirmation = (team) => (
     </motion.div>
   </div>
 );
-
 
   return (
     <div className="project-teams-container">
@@ -434,8 +433,6 @@ const renderDeleteConfirmation = (team) => (
                                 onClick={(e) => {
                                   e.stopPropagation();
 
-                                  
-                                  
                                   setConfirmDelete(team);
                                   setActiveTeamMenu(null);
                                 }}
