@@ -1,4 +1,4 @@
-// Frontend/src/app/(dashboard)/projects/[id]/risks/[riskid]/edit/page.tsx
+// Frontend/src/app/(dashboard)/projects/[id]/risks/create/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -12,16 +12,15 @@ import {
   Save,
   Gauge,
   BarChart4,
-  AlertCircle,
-  RefreshCw
+  AlertCircle
 } from 'lucide-react';
 
 // API imports
 import { getProjectById } from '@/api/ProjectAPI';
-import { getRiskById, updateRisk } from '@/api/RiskAPI';
+import { createRisk } from '@/api/RiskAPI';
 import { toast } from '@/lib/toast';
 
-// Reuse the create risk form styles
+// CSS
 import './createRisk.css';
 
 // Risk categories
@@ -49,25 +48,25 @@ const RISK_STATUSES = [
   'Resolved'
 ];
 
-export default function EditRiskPage() {
-  const { id, riskId } = useParams();
+export default function CreateRiskPage() {
+  const { id } = useParams();
   const router = useRouter();
   
   // States
   const [project, setProject] = useState<any>(null);
-  const [risk, setRisk] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isProjectOwner, setIsProjectOwner] = useState(false);
   
   // Form state
   const [form, setForm] = useState({
     Name: '',
     Description: '',
-    Category: '',
-    Probability: 0,    // 0 to 1 value
-    Impact: 1,         // 1 to 10 value
-    Status: '',
+    Category: 'Technical',
+    Probability: 0.5,    // 0 to 1 value
+    Impact: 5,         // 1 to 10 value
+    Status: 'Identified',
   });
   
   // Derived values
@@ -75,13 +74,6 @@ export default function EditRiskPage() {
   
   // Validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
-  // Permission state
-  const [permissions, setPermissions] = useState({
-    isProjectOwner: false,
-    isRiskOwner: false,
-    canEdit: false
-  });
   
   // Get user ID from JWT token
   useEffect(() => {
@@ -103,59 +95,38 @@ export default function EditRiskPage() {
     }
   }, [router]);
 
-  // Fetch risk and project data
+  // Fetch project data
   useEffect(() => {
     const fetchData = async () => {
-      if (!id || !riskId || !userId) return;
+      if (!id || !userId) return;
       
       setLoading(true);
       try {
-        // Fetch risk and project in parallel
-        const [riskData, projectData] = await Promise.all([
-          getRiskById(riskId as string),
-          getProjectById(id as string)
-        ]);
+        const projectData = await getProjectById(id as string);
         
-        setRisk(riskData);
         setProject(projectData);
         
-        // Initialize form with risk data
-        setForm({
-          Name: riskData.Name || '',
-          Description: riskData.Description || '',
-          Category: riskData.Category || 'Technical',
-          Probability: riskData.Probability || 0.5,
-          Impact: riskData.Impact || 5,
-          Status: riskData.Status || 'Identified',
-        });
-        
-        // Check permissions
-        const isProjectOwner = projectData.OwnerId === userId;
-        const isRiskOwner = riskData.OwnerId === userId;
-        
-        setPermissions({
-          isProjectOwner,
-          isRiskOwner,
-          canEdit: isProjectOwner || isRiskOwner
-        });
+        // Check if user is project owner
+        const isOwner = projectData.OwnerId === userId;
+        setIsProjectOwner(isOwner);
         
         // If not owner, redirect back
-        if (!isProjectOwner && !isRiskOwner) {
-          toast.error('You do not have permission to edit this risk');
-          router.push(`/projects/${id}/risks/${riskId}`);
+        if (!isOwner) {
+          toast.error('Only project owners can create risks');
+          router.push(`/projects/${id}/risks`);
         }
         
       } catch (error) {
-        console.error('Error fetching data:', error);
-        toast.error('Could not load risk data');
-        router.push(`/projects/${id}/risks`);
+        console.error('Error fetching project:', error);
+        toast.error('Could not load project data');
+        router.push(`/projects/${id}`);
       } finally {
         setLoading(false);
       }
     };
     
     fetchData();
-  }, [id, riskId, userId, router]);
+  }, [id, userId, router]);
 
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -225,23 +196,25 @@ export default function EditRiskPage() {
     try {
       // Prepare data for API
       const riskData = {
+        ProjectId: id as string,
         Name: form.Name,
         Description: form.Description,
         Category: form.Category,
         Probability: form.Probability,
         Impact: form.Impact,
         Severity: severity,
-        Status: form.Status,
+        OwnerId: userId || undefined,
+        Status: form.Status
       };
       
-      // Update risk
-      await updateRisk(riskId as string, riskData);
+      // Create risk
+      await createRisk(riskData);
       
-      toast.success('Risk updated successfully');
-      router.push(`/projects/${id}/risks/${riskId}`);
+      toast.success('Risk created successfully');
+      router.push(`/projects/${id}/risks`);
     } catch (error) {
-      console.error('Error updating risk:', error);
-      toast.error('Failed to update risk');
+      console.error('Error creating risk:', error);
+      toast.error('Failed to create risk');
     } finally {
       setSubmitting(false);
     }
@@ -262,14 +235,14 @@ export default function EditRiskPage() {
       <div className="risk-create-container flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading risk data...</p>
+          <p className="text-muted-foreground">Loading project data...</p>
         </div>
       </div>
     );
   }
 
   // Access denied state
-  if (!permissions.canEdit) {
+  if (!isProjectOwner) {
     return (
       <div className="risk-create-container flex items-center justify-center min-h-[60vh]">
         <div className="bg-card rounded-xl p-8 max-w-md w-full text-center space-y-4 border shadow-sm">
@@ -277,21 +250,13 @@ export default function EditRiskPage() {
             <AlertCircle className="h-8 w-8 text-destructive" />
           </div>
           <h2 className="text-xl font-bold">Access Denied</h2>
-          <p className="text-muted-foreground">You do not have permission to edit this risk.</p>
-          <div className="flex justify-center gap-4 mt-6">
-            <button 
-              onClick={() => router.push(`/projects/${id}/risks`)}
-              className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
-            >
-              Back to Risks
-            </button>
-            <button 
-              onClick={() => router.push(`/projects/${id}/risks/${riskId}`)}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-            >
-              View Risk
-            </button>
-          </div>
+          <p className="text-muted-foreground">Only project owners can create risks for this project.</p>
+          <button 
+            onClick={() => router.push(`/projects/${id}/risks`)}
+            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Back to Risks
+          </button>
         </div>
       </div>
     );
@@ -309,17 +274,17 @@ export default function EditRiskPage() {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => router.push(`/projects/${id}/risks/${riskId}`)}
+          onClick={() => router.push(`/projects/${id}/risks`)}
           className="mr-4 p-2 rounded-full bg-background/80 backdrop-blur border border-border hover:bg-muted transition-colors"
-          aria-label="Back to risk details"
+          aria-label="Back to risks"
         >
           <ArrowLeft className="h-5 w-5 text-foreground" />
         </motion.button>
         
         <div>
-          <h1 className="text-2xl font-bold">Edit Risk</h1>
+          <h1 className="text-2xl font-bold">Create New Risk</h1>
           <p className="text-muted-foreground mt-1">
-            {project?.Name} • {risk?.Name}
+            {project?.Name} • Add a new risk to your project
           </p>
         </div>
       </motion.div>
@@ -543,7 +508,7 @@ export default function EditRiskPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               type="button"
-              onClick={() => router.push(`/projects/${id}/risks/${riskId}`)}
+              onClick={() => router.push(`/projects/${id}/risks`)}
               disabled={submitting}
               className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
             >
@@ -560,12 +525,12 @@ export default function EditRiskPage() {
               {submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Saving...</span>
+                  <span>Creating...</span>
                 </>
               ) : (
                 <>
                   <Save className="h-4 w-4" />
-                  <span>Save Changes</span>
+                  <span>Create Risk</span>
                 </>
               )}
             </motion.button>
