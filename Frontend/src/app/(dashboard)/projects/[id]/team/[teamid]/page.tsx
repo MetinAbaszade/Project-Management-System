@@ -1,5 +1,3 @@
-// Frontend/src/app/(dashboard)/projects/[id]/team/[teamid]/page.tsx
-
 'use client'
 
 import { useState, useEffect } from 'react';
@@ -10,6 +8,7 @@ import {
   ListTodo, 
   ClipboardList, 
   Paperclip,
+  Database,
   Pencil, 
   Trash2,
   UserPlus,
@@ -17,15 +16,27 @@ import {
   Clock,
   AlertCircle,
   Info,
-  Save
+  Activity
+
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import './teamDetail.css';
 
-// API functions
-import { getTeamById, updateTeam, deleteTeam, addTeamMember, removeTeamMember } from '@/api/TeamAPI';
-import { getTeamTasks } from '@/api/TaskAPI';
+
+import { 
+  getTeamById, 
+  updateTeam, 
+  deleteTeam, 
+  addTeamMember, 
+  removeTeamMember,
+  getTeamTasks
+
+import './teamDetail.css';
+
+
+} from '@/api/TeamAPI';
 import { getProjectMembers } from '@/api/ProjectAPI';
 import { getUserIdFromToken } from '@/lib/utils';
 
@@ -34,11 +45,12 @@ import MembersTab from './components/MembersTab';
 import TasksTab from './components/TasksTab';
 import ActivityTab from './components/ActivityTab';
 import AttachmentsTab from './components/AttachmentsTab';
+import ResourcesTab from './components/ResourcesTab';
 import EditTeamDialog from './components/EditTeamDialog';
 import AddMemberDialog from './components/AddMemberDialog';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
-type Tab = 'members' | 'tasks' | 'activity' | 'attachments';
+type Tab = 'members' | 'tasks' | 'activity' | 'attachments' | 'resources';
 
 export default function TeamDetailPage() {
   const { id: projectId, teamid: teamId } = useParams() as { id: string, teamid: string };
@@ -50,9 +62,10 @@ export default function TeamDetailPage() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [projectMembers, setProjectMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('members');
   const [userRole, setUserRole] = useState({ 
-    isOwner: false, 
+    isOwner: true, // Show buttons for all users
     isTeamLeader: false
   });
   
@@ -72,38 +85,49 @@ export default function TeamDetailPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null);
         
         // Get current user ID
         const userId = getCurrentUserId();
         
+        // Fetch project members for add member functionality first
+        // This ensures we have this data even if team fetching fails
+        const projectMembersData = await getProjectMembers(projectId);
+        setProjectMembers(projectMembersData || []);
+        
+
         // Fetch team data
         const teamData = await getTeamById(teamId);
+        
+        // Check if team exists and is not deleted
+        if (!teamData || teamData.IsDeleted) {
+          setError('Team not found or has been deleted');
+          setLoading(false);
+          return;
+        }
+        
         setTeam(teamData);
         
-        // Fetch project members for add member functionality
-        const projectMembersData = await getProjectMembers(projectId);
-        setProjectMembers(projectMembersData);
-        
         // Determine user role
-        const isOwner = teamData.CreatedBy === userId || projectMembersData.some(
-          m => m.UserId === userId && m.Role === 'Project Owner'
-        );
+        const isOwner = true; // Always show buttons
+        
+
         const isTeamLeader = teamData.Members?.some(
           m => m.UserId === userId && m.IsLeader
         );
+        
         setUserRole({ isOwner, isTeamLeader });
         
-        // Fetch team members and tasks
-        const [tasksData] = await Promise.all([
-          getTeamTasks(teamId)
-        ]);
+
+        const tasksData = await getTeamTasks(teamId);
         
-        // Set members (assuming team has Members array)
+        // Set members (from team data) and tasks
         setMembers(teamData.Members || []);
         setTasks(tasksData || []);
       } catch (error) {
         console.error('Failed to load team data:', error);
-        toast.error('Could not load team details');
+        setError('Could not load team details. Please try again later.');
+        toast.error('Failed to load team details');
       } finally {
         setLoading(false);
       }
@@ -206,7 +230,7 @@ export default function TeamDetailPage() {
       return name.substring(0, 2).toUpperCase();
     }
     
-    return (words[0][0] + words[1][0]).toUpperCase();
+    return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
   };
   
   if (loading) {
@@ -218,15 +242,17 @@ export default function TeamDetailPage() {
     );
   }
   
-  if (!team) {
+  if (error || !team) {
     return (
       <div className="flex flex-col items-center justify-center h-96 text-center">
         <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
         <h2 className="text-xl font-semibold mb-2">Team Not Found</h2>
-        <p className="text-muted-foreground mb-6">The team you're looking for doesn't exist or you don't have permission to view it.</p>
+        <p className="text-muted-foreground mb-6">
+          {error || "The team you're looking for doesn't exist or you don't have permission to view it."}
+        </p>
         <button 
           onClick={() => router.push(`/projects/${projectId}/team`)}
-          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
         >
           Back to Teams
         </button>
@@ -236,107 +262,110 @@ export default function TeamDetailPage() {
   
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header with back button */}
+      {/* Header with back button and action buttons */}
       <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center">
+        <motion.div 
+          className="flex items-center" 
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
+        >
           <button 
             onClick={() => router.push(`/projects/${projectId}/team`)}
-            className="flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mr-4"
+            className="flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mr-4 button-hover-effect"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back to Teams
           </button>
-        </div>
+        </motion.div>
         
-        {/* Action buttons - only shown to owners/leaders */}
-        {(userRole.isOwner || userRole.isTeamLeader) && (
-          <div className="flex gap-2">
-            <button 
-              onClick={() => setShowEditDialog(true)}
-              className="flex items-center px-3 py-2 bg-muted hover:bg-muted/80 rounded-md text-sm transition-colors"
-            >
-              <Pencil className="w-4 h-4 mr-2" />
-              Edit Team
-            </button>
-            
-            {userRole.isOwner && (
-              <button 
-                onClick={() => setShowDeleteDialog(true)}
-                className="flex items-center px-3 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-md text-sm transition-colors"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete Team
-              </button>
-            )}
-          </div>
-        )}
+        {/* Action buttons - always visible */}
+        <motion.div 
+          className="flex gap-2"
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
+          <button 
+            onClick={() => setShowEditDialog(true)}
+            className="flex items-center px-3 py-2 bg-muted/60 backdrop-blur-sm hover:bg-muted rounded-full text-sm transition-colors button-hover-effect shadow-sm"
+          >
+            <Pencil className="w-4 h-4 mr-2" />
+            Edit
+          </button>
+          
+          <button 
+            onClick={() => setShowDeleteDialog(true)}
+            className="flex items-center px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-full text-sm transition-colors button-hover-effect shadow-sm backdrop-blur-sm"
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete
+          </button>
+        </motion.div>
       </div>
       
       {/* Team info card */}
-      <div className="bg-card rounded-xl border border-border overflow-hidden mb-8 shadow-sm">
-        <div className="p-6 flex items-start justify-between border-b border-border">
+      <motion.div 
+        className="bg-card/80 backdrop-blur-md rounded-xl border border-border/50 overflow-hidden mb-8 shadow-sm transition-all duration-300 hover:shadow-md"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="p-6 flex items-start justify-between border-b border-border/50">
           <div className="flex items-center">
-            <div className={`flex-shrink-0 w-16 h-16 ${getTeamColor(team.ColorIndex)} rounded-lg flex items-center justify-center text-2xl font-bold`}>
+            <motion.div 
+              className={`flex-shrink-0 w-16 h-16 ${getTeamColor(team.ColorIndex)} rounded-xl flex items-center justify-center text-2xl font-bold shadow-md team-avatar`}
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
               {getTeamInitials(team.Name)}
-            </div>
+            </motion.div>
             <div className="ml-5">
-              <h2 className="text-xl font-semibold">{team.Name}</h2>
+              <h2 className="text-xl font-semibold text-foreground">{team.Name}</h2>
               <p className="text-muted-foreground mt-1">{team.Description || 'No description provided'}</p>
             </div>
           </div>
         </div>
         
         {/* Tabs */}
-        <div className="border-b border-border">
+        <div className="border-b border-border/50 px-2">
           <div className="flex overflow-x-auto">
-            <button
+            <TabButton 
+              icon={<Users className="w-4 h-4" />}
+              label="Members"
+              isActive={activeTab === 'members'}
               onClick={() => setActiveTab('members')}
-              className={cn(
-                "px-4 py-3 flex items-center text-sm font-medium transition-colors",
-                activeTab === 'members' 
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Users className="w-4 h-4 mr-2" />
-              Members
-            </button>
-            <button
+            />
+            
+            <TabButton 
+              icon={<ListTodo className="w-4 h-4" />}
+              label="Tasks"
+              isActive={activeTab === 'tasks'}
               onClick={() => setActiveTab('tasks')}
-              className={cn(
-                "px-4 py-3 flex items-center text-sm font-medium transition-colors",
-                activeTab === 'tasks' 
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <ListTodo className="w-4 h-4 mr-2" />
-              Tasks
-            </button>
-            <button
+            />
+            
+            <TabButton 
+              icon={<Activity className="w-4 h-4" />}
+              label="Activity"
+              isActive={activeTab === 'activity'}
               onClick={() => setActiveTab('activity')}
-              className={cn(
-                "px-4 py-3 flex items-center text-sm font-medium transition-colors",
-                activeTab === 'activity' 
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <ClipboardList className="w-4 h-4 mr-2" />
-              Activity
-            </button>
-            <button
+
+            />
+            
+            <TabButton 
+              icon={<Database className="w-4 h-4" />}
+              label="Resources"
+              isActive={activeTab === 'resources'}
+              onClick={() => setActiveTab('resources')}
+            />
+            
+            <TabButton 
+              icon={<Paperclip className="w-4 h-4" />}
+              label="Attachments"
+              isActive={activeTab === 'attachments'}
+
               onClick={() => setActiveTab('attachments')}
-              className={cn(
-                "px-4 py-3 flex items-center text-sm font-medium transition-colors",
-                activeTab === 'attachments' 
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Paperclip className="w-4 h-4 mr-2" />
-              Attachments
-            </button>
+            />
           </div>
         </div>
         
@@ -348,7 +377,7 @@ export default function TeamDetailPage() {
                 key="members"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
+                exit={{ opacity: 0, y: 10 }}
                 transition={{ duration: 0.2 }}
               >
                 <MembersTab 
@@ -366,7 +395,7 @@ export default function TeamDetailPage() {
                 key="tasks"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
+                exit={{ opacity: 0, y: 10 }}
                 transition={{ duration: 0.2 }}
               >
                 <TasksTab 
@@ -383,10 +412,23 @@ export default function TeamDetailPage() {
                 key="activity"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
+                exit={{ opacity: 0, y: 10 }}
                 transition={{ duration: 0.2 }}
               >
                 <ActivityTab teamId={teamId} />
+              </motion.div>
+            )}
+            
+            {activeTab === 'resources' && (
+              <motion.div
+                key="resources"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ResourcesTab teamId={teamId} projectId={projectId} />
+
               </motion.div>
             )}
             
@@ -395,7 +437,7 @@ export default function TeamDetailPage() {
                 key="attachments"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
+                exit={{ opacity: 0, y: 10 }}
                 transition={{ duration: 0.2 }}
               >
                 <AttachmentsTab teamId={teamId} />
@@ -403,7 +445,7 @@ export default function TeamDetailPage() {
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
       
       {/* Edit Team Dialog */}
       {showEditDialog && (
@@ -450,5 +492,38 @@ export default function TeamDetailPage() {
         />
       )}
     </div>
+  );
+}
+
+// Tab Button Component
+function TabButton({ icon, label, isActive, onClick }: { 
+  icon: React.ReactNode, 
+  label: string, 
+  isActive: boolean, 
+  onClick: () => void 
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "relative px-4 py-3 mx-1 flex items-center text-sm font-medium transition-all rounded-t-lg",
+        isActive 
+          ? "text-primary" 
+          : "text-muted-foreground hover:text-foreground"
+      )}
+    >
+      <div className="flex items-center">
+        {icon}
+        <span className="ml-2">{label}</span>
+      </div>
+      
+      {isActive && (
+        <motion.div 
+          className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full"
+          layoutId="activeTabIndicator"
+          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        />
+      )}
+    </button>
   );
 }

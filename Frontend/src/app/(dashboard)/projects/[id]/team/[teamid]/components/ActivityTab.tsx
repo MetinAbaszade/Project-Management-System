@@ -1,117 +1,77 @@
-// Frontend/src/app/(dashboard)/projects/[id]/team/[teamid]/components/ActivityTab.tsx
-
-import { ClipboardList, User, Calendar, PenSquare, Trash2, UserPlus, UserMinus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ClipboardList, User, Calendar, PenSquare, Trash2, UserPlus, UserMinus, Activity, Search } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface ActivityTabProps {
   teamId: string;
 }
 
 export default function ActivityTab({ teamId }: ActivityTabProps) {
-  // Since this is hardcoded with no backend, we'll create some mock activity data
-  const activities = [
-    {
-      id: 1,
-      type: 'member_added',
-      user: 'John Doe',
-      timestamp: '2025-05-15T14:30:00Z',
-      details: 'Added to the team as a Member'
-    },
-    {
-      id: 2,
-      type: 'task_created',
-      user: 'Sarah Johnson',
-      timestamp: '2025-05-14T11:20:00Z',
-      details: 'Created task "Update design documentation"'
-    },
-    {
-      id: 3,
-      type: 'team_updated',
-      user: 'Michael Smith',
-      timestamp: '2025-05-12T09:45:00Z',
-      details: 'Updated team description'
-    },
-    {
-      id: 4,
-      type: 'task_completed',
-      user: 'Emily Chen',
-      timestamp: '2025-05-10T16:15:00Z',
-      details: 'Completed task "Setup development environment"'
-    },
-    {
-      id: 5,
-      type: 'member_removed',
-      user: 'Alex Brown',
-      timestamp: '2025-05-09T10:30:00Z',
-      details: 'Removed from the team'
-    }
-  ];
+  const [loading, setLoading] = useState(true);
   
-  // Function to format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  };
+  // Simulate loading for demo purposes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
-  // Function to get activity icon
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'member_added':
-        return <UserPlus className="w-4 h-4 text-green-500" />;
-      case 'member_removed':
-        return <UserMinus className="w-4 h-4 text-red-500" />;
-      case 'task_created':
-        return <ClipboardList className="w-4 h-4 text-blue-500" />;
-      case 'task_completed':
-        return <ClipboardList className="w-4 h-4 text-green-500" />;
-      case 'team_updated':
-        return <PenSquare className="w-4 h-4 text-amber-500" />;
-      default:
-        return <Calendar className="w-4 h-4 text-gray-500" />;
-    }
-  };
+  if (loading) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold flex items-center">
+            <ClipboardList className="w-5 h-5 mr-2" />
+            Recent Activity
+          </h3>
+        </div>
+        
+        <div className="relative pl-4">
+          <div className="absolute top-0 bottom-0 left-4 border-l-2 border-muted"></div>
+          
+          <div className="space-y-6 relative">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="ml-6 relative">
+                <div className="absolute -left-10 mt-1 w-4 h-4 rounded-full bg-muted animate-pulse"></div>
+                <div className="bg-card border border-border p-4 rounded-lg">
+                  <div className="flex justify-between items-start">
+                    <div className="h-4 bg-muted rounded w-1/3 animate-pulse"></div>
+                    <div className="h-4 bg-muted rounded w-20 animate-pulse"></div>
+                  </div>
+                  <div className="h-4 bg-muted rounded w-4/5 mt-2 animate-pulse"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold flex items-center">
-          <ClipboardList className="w-5 h-5 mr-2" />
+          <Activity className="w-5 h-5 mr-2" />
           Recent Activity
         </h3>
       </div>
       
-      <div className="relative pl-4">
-        {/* Timeline line */}
-        <div className="absolute top-0 bottom-0 left-4 border-l-2 border-muted"></div>
-        
-        <div className="space-y-6 relative">
-          {activities.map((activity) => (
-            <div key={activity.id} className="ml-6 relative">
-              {/* Timeline node */}
-              <div className="absolute -left-10 mt-1 w-4 h-4 rounded-full bg-card border-2 border-primary flex items-center justify-center">
-                {getActivityIcon(activity.type)}
-              </div>
-              
-              <div className="bg-card border border-border p-4 rounded-lg">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center mb-1">
-                    <User className="w-4 h-4 mr-2 text-muted-foreground" />
-                    <span className="font-medium">{activity.user}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDate(activity.timestamp)}
-                  </span>
-                </div>
-                <p className="text-sm">{activity.details}</p>
-              </div>
-            </div>
-          ))}
+      <div className="bg-muted/50 rounded-lg p-8 text-center">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+          <ClipboardList className="w-8 h-8 text-primary" />
         </div>
+        <h3 className="text-lg font-medium mb-2">No Activity Yet</h3>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          Your team's activity will appear here. This includes task assignments, completions, member additions, and other team events.
+        </p>
       </div>
-    </div>
+    </motion.div>
   );
 }
