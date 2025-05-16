@@ -5,7 +5,6 @@ from Models import *
 
 
 # Routers
-from Router.LanguageRouter import router as language_router
 from Router.EmailRouter import router as email_router
 from Router.AuthRouter import router as auth_router
 from Router.TeamRouter import router as team_router
@@ -50,7 +49,6 @@ def root():
     return {"message": "FastAPI is running 🚀"}
 
 # ✅ Register routers
-app.include_router(language_router)
 app.include_router(email_router)
 app.include_router(auth_router)
 app.include_router(project_router)
