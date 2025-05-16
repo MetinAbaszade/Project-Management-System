@@ -76,8 +76,9 @@ export async function getAllTeams(): Promise<Team[]> {
  */
 export async function getTeamById(teamId: string): Promise<Team> {
   try {
-    // According to API documentation, this should be a path parameter
-    const response = await api.get(`/teams/${teamId}`);
+    const response = await api.get(`/teams/${teamId}`, {
+      params: { teamId }
+    });
     return response.data;
   } catch (error) {
     console.error('[TeamAPI] Error fetching team:', error);
@@ -103,7 +104,10 @@ export async function updateTeam(teamId: string, data: TeamUpdateData): Promise<
  */
 export async function deleteTeam(teamId: string): Promise<void> {
   try {
-    await api.delete(`/teams/${teamId}`);
+
+    await api.delete(`/teams/${teamId}`, {
+      params: { teamId }
+    });
   } catch (error) {
     console.error('[TeamAPI] Error deleting team:', error);
     throw error;

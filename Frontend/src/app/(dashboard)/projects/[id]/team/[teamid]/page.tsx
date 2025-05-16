@@ -1,5 +1,3 @@
-// Frontend/src/app/(dashboard)/projects/[id]/team/[teamid]/page.tsx
-
 'use client'
 
 import { useState, useEffect } from 'react';
@@ -10,22 +8,28 @@ import {
   ListTodo, 
   ClipboardList, 
   Paperclip,
+  Database,
   Pencil, 
   Trash2,
   UserPlus,
   UserMinus,
   Clock,
   AlertCircle,
-  Info,
-  Save
+  Info
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-// API functions
-import { getTeamById, updateTeam, deleteTeam, addTeamMember, removeTeamMember } from '@/api/TeamAPI';
-import { getTeamTasks } from '@/api/TaskAPI';
+// API functions - FIXED: Import getTeamTasks from TeamAPI instead of TaskAPI
+import { 
+  getTeamById, 
+  updateTeam, 
+  deleteTeam, 
+  addTeamMember, 
+  removeTeamMember,
+  getTeamTasks  // This was incorrectly imported from TaskAPI
+} from '@/api/TeamAPI';
 import { getProjectMembers } from '@/api/ProjectAPI';
 import { getUserIdFromToken } from '@/lib/utils';
 
@@ -34,11 +38,12 @@ import MembersTab from './components/MembersTab';
 import TasksTab from './components/TasksTab';
 import ActivityTab from './components/ActivityTab';
 import AttachmentsTab from './components/AttachmentsTab';
+import ResourcesTab from './components/ResourcesTab';
 import EditTeamDialog from './components/EditTeamDialog';
 import AddMemberDialog from './components/AddMemberDialog';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
-type Tab = 'members' | 'tasks' | 'activity' | 'attachments';
+type Tab = 'members' | 'tasks' | 'activity' | 'attachments' | 'resources';
 
 export default function TeamDetailPage() {
   const { id: projectId, teamid: teamId } = useParams() as { id: string, teamid: string };
@@ -50,6 +55,7 @@ export default function TeamDetailPage() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [projectMembers, setProjectMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('members');
   const [userRole, setUserRole] = useState({ 
     isOwner: false, 
@@ -72,38 +78,49 @@ export default function TeamDetailPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null);
         
         // Get current user ID
         const userId = getCurrentUserId();
         
-        // Fetch team data
+        // Fetch project members for add member functionality first
+        // This ensures we have this data even if team fetching fails
+        const projectMembersData = await getProjectMembers(projectId);
+        setProjectMembers(projectMembersData || []);
+        
+        // Fetch team data - Using correct parameters
         const teamData = await getTeamById(teamId);
+        
+        // Check if team exists and is not deleted
+        if (!teamData || teamData.IsDeleted) {
+          setError('Team not found or has been deleted');
+          setLoading(false);
+          return;
+        }
+        
         setTeam(teamData);
         
-        // Fetch project members for add member functionality
-        const projectMembersData = await getProjectMembers(projectId);
-        setProjectMembers(projectMembersData);
-        
         // Determine user role
-        const isOwner = teamData.CreatedBy === userId || projectMembersData.some(
+        const isOwner = teamData.CreatedBy === userId || projectMembersData?.some(
           m => m.UserId === userId && m.Role === 'Project Owner'
         );
+        
         const isTeamLeader = teamData.Members?.some(
           m => m.UserId === userId && m.IsLeader
         );
+        
         setUserRole({ isOwner, isTeamLeader });
         
-        // Fetch team members and tasks
-        const [tasksData] = await Promise.all([
-          getTeamTasks(teamId)
-        ]);
+        // Fetch team tasks - Now using the correct function
+        const tasksData = await getTeamTasks(teamId);
         
-        // Set members (assuming team has Members array)
+        // Set members (from team data) and tasks
         setMembers(teamData.Members || []);
         setTasks(tasksData || []);
       } catch (error) {
         console.error('Failed to load team data:', error);
-        toast.error('Could not load team details');
+        setError('Could not load team details. Please try again later.');
+        toast.error('Failed to load team details');
       } finally {
         setLoading(false);
       }
@@ -206,7 +223,7 @@ export default function TeamDetailPage() {
       return name.substring(0, 2).toUpperCase();
     }
     
-    return (words[0][0] + words[1][0]).toUpperCase();
+    return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
   };
   
   if (loading) {
@@ -218,15 +235,17 @@ export default function TeamDetailPage() {
     );
   }
   
-  if (!team) {
+  if (error || !team) {
     return (
       <div className="flex flex-col items-center justify-center h-96 text-center">
         <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
         <h2 className="text-xl font-semibold mb-2">Team Not Found</h2>
-        <p className="text-muted-foreground mb-6">The team you're looking for doesn't exist or you don't have permission to view it.</p>
+        <p className="text-muted-foreground mb-6">
+          {error || "The team you're looking for doesn't exist or you don't have permission to view it."}
+        </p>
         <button 
           onClick={() => router.push(`/projects/${projectId}/team`)}
-          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
         >
           Back to Teams
         </button>
@@ -326,6 +345,18 @@ export default function TeamDetailPage() {
               Activity
             </button>
             <button
+              onClick={() => setActiveTab('resources')}
+              className={cn(
+                "px-4 py-3 flex items-center text-sm font-medium transition-colors",
+                activeTab === 'resources' 
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Database className="w-4 h-4 mr-2" />
+              Resources
+            </button>
+            <button
               onClick={() => setActiveTab('attachments')}
               className={cn(
                 "px-4 py-3 flex items-center text-sm font-medium transition-colors",
@@ -387,6 +418,18 @@ export default function TeamDetailPage() {
                 transition={{ duration: 0.2 }}
               >
                 <ActivityTab teamId={teamId} />
+              </motion.div>
+            )}
+            
+            {activeTab === 'resources' && (
+              <motion.div
+                key="resources"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ResourcesTab teamId={teamId} />
               </motion.div>
             )}
             
