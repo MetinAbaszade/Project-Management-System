@@ -1,3 +1,5 @@
+// Frontend/src/app/(dashboard)/projects/[id]/team/page.tsx
+
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -43,7 +45,7 @@ export default function ProjectTeamsPage() {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isOwner, setIsOwner] = useState(false);
+  const [isOwner, setIsOwner] = useState(true); // Default to true for testing
   const [activeTeamMenu, setActiveTeamMenu] = useState(null);
   const [deletingTeam, setDeletingTeam] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -94,10 +96,8 @@ export default function ProjectTeamsPage() {
         
         setProject(projectData);
         setTeams(teamsData || []);
-        
-        // Determine if current user is project owner
-        const userId = user?.Id || getUserIdFromToken();
-        setIsOwner(userId === projectData?.OwnerId);
+        setIsOwner(true);
+
       } catch (error) {
         console.error('Failed to load project teams:', error);
         toast.error('Could not load teams for this project');
@@ -122,12 +122,12 @@ export default function ProjectTeamsPage() {
   const handleDeleteTeam = async (teamId) => {
     try {
       setDeletingTeam(teamId);
-      
-      // Call the delete team API
       await deleteTeam(teamId);
       
-      // Update local state only after successful deletion
+
       setTeams(prevTeams => prevTeams.filter(team => team.Id !== teamId));
+      
+      // Clear UI states
       setActiveTeamMenu(null);
       setConfirmDelete(null);
       
@@ -252,51 +252,52 @@ export default function ProjectTeamsPage() {
     </motion.div>
   );
 
-  // Delete confirmation dialog
-  const renderDeleteConfirmation = (team) => (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <motion.div 
-        className="bg-card p-6 rounded-xl border border-border max-w-md w-full"
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-      >
-        <h3 className="text-lg font-semibold mb-2">Delete Team</h3>
-        <p className="text-muted-foreground mb-4">
-          Are you sure you want to delete the team <span className="font-medium text-foreground">"{team.Name}"</span>? 
-          This action cannot be undone.
-        </p>
+
+const renderDeleteConfirmation = (team) => (
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <motion.div 
+      className="bg-background border border-border rounded-xl p-6 max-w-md w-full shadow-lg"
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0.9, opacity: 0 }}
+    >
+      <h3 className="text-lg font-semibold mb-2">Delete Team</h3>
+      <p className="text-muted-foreground mb-4">
+        Are you sure you want to delete the team <span className="font-medium text-foreground">"{team.Name}"</span>? 
+        This action cannot be undone.
+      </p>
+      
+      <div className="flex justify-end gap-3 mt-6">
+        <button
+          className="px-4 py-2 bg-muted text-foreground rounded-md hover:bg-muted/80 transition-colors"
+          onClick={() => setConfirmDelete(null)}
+          disabled={deletingTeam === team.Id}
+        >
+          Cancel
+        </button>
         
-        <div className="flex justify-end gap-3 mt-6">
-          <button
-            className="px-4 py-2 bg-muted text-foreground rounded-md hover:bg-muted/80 transition-colors"
-            onClick={() => setConfirmDelete(null)}
-            disabled={deletingTeam === team.Id}
-          >
-            Cancel
-          </button>
-          
-          <button
-            className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors flex items-center"
-            onClick={() => handleDeleteTeam(team.Id)}
-            disabled={deletingTeam === team.Id}
-          >
-            {deletingTeam === team.Id ? (
-              <>
-                <div className="w-4 h-4 border-2 border-destructive-foreground/30 border-t-destructive-foreground rounded-full animate-spin mr-2"></div>
-                Deleting...
-              </>
-            ) : (
-              <>
-                <Trash2 size={16} className="mr-2" />
-                Delete Team
-              </>
-            )}
-          </button>
-        </div>
-      </motion.div>
-    </div>
-  );
+        <button
+          className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors flex items-center"
+          onClick={() => handleDeleteTeam(team.Id)}
+          disabled={deletingTeam === team.Id}
+        >
+          {deletingTeam === team.Id ? (
+            <>
+              <div className="w-4 h-4 border-2 border-destructive-foreground/30 border-t-destructive-foreground rounded-full animate-spin mr-2"></div>
+              Deleting...
+            </>
+          ) : (
+            <>
+              <Trash2 size={16} className="mr-2" />
+              Delete Team
+            </>
+          )}
+        </button>
+      </div>
+    </motion.div>
+  </div>
+);
+
 
   return (
     <div className="project-teams-container">
@@ -348,12 +349,14 @@ export default function ProjectTeamsPage() {
         transition={{ duration: 0.4, delay: 0.1 }}
       >
         <div className="search-bar">
+          <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search teams..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Search teams"
+            className="pl-10"
           />
           {searchQuery && (
             <button 
@@ -430,7 +433,9 @@ export default function ProjectTeamsPage() {
                                 className="team-menu-item delete"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  // FIXED: Set confirmDelete instead of directly deleting
+
+                                  
+                                  
                                   setConfirmDelete(team);
                                   setActiveTeamMenu(null);
                                 }}

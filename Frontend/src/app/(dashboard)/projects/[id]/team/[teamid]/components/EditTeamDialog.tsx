@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { X, Save, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface EditTeamDialogProps {
   team: {
@@ -21,6 +23,7 @@ export default function EditTeamDialog({ team, onClose, onSave }: EditTeamDialog
   });
   
   const [errors, setErrors] = useState<{Name?: string}>({});
+  const [submitting, setSubmitting] = useState(false);
   
   // Handle form change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -54,12 +57,13 @@ export default function EditTeamDialog({ team, onClose, onSave }: EditTeamDialog
     }
     
     // Submit form
+    setSubmitting(true);
     onSave(formData);
   };
   
-  // Team colors
+  // Team colors that use theme variables
   const teamColors = [
-    { name: 'Red', bg: 'bg-rose-500' },
+    { name: 'Ruby', bg: 'bg-rose-500' },
     { name: 'Orange', bg: 'bg-orange-500' },
     { name: 'Amber', bg: 'bg-amber-500' },
     { name: 'Green', bg: 'bg-green-500' },
@@ -70,22 +74,31 @@ export default function EditTeamDialog({ team, onClose, onSave }: EditTeamDialog
   ];
   
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card border border-border rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Edit Team</h3>
-          <button 
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <motion.div 
+        className="bg-card/90 backdrop-blur-md border border-border/50 rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-lg"
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        transition={{ type: "spring", damping: 25 }}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-foreground">Edit Team</h3>
+          <motion.button 
             onClick={onClose}
-            className="p-1 text-muted-foreground hover:text-foreground"
+            className="p-2 rounded-full hover:bg-muted/70 transition-colors text-muted-foreground hover:text-foreground"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            disabled={submitting}
           >
             <X className="w-5 h-5" />
-          </button>
+          </motion.button>
         </div>
         
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="name">
+              <label className="block text-sm font-medium mb-2 text-foreground" htmlFor="name">
                 Team Name <span className="text-red-500">*</span>
               </label>
               <input 
@@ -94,7 +107,11 @@ export default function EditTeamDialog({ team, onClose, onSave }: EditTeamDialog
                 name="Name"
                 value={formData.Name}
                 onChange={handleChange}
-                className={`w-full p-2 rounded-md border ${errors.Name ? 'border-red-500' : 'border-input'} bg-background`}
+                className={cn(
+                  "w-full p-3 rounded-xl border bg-background/50 text-foreground transition-colors focus:ring-1 focus:ring-primary focus:outline-none",
+                  errors.Name ? "border-red-500" : "border-border/50"
+                )}
+                disabled={submitting}
               />
               {errors.Name && (
                 <p className="text-red-500 text-xs mt-1">{errors.Name}</p>
@@ -102,7 +119,7 @@ export default function EditTeamDialog({ team, onClose, onSave }: EditTeamDialog
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="description">
+              <label className="block text-sm font-medium mb-2 text-foreground" htmlFor="description">
                 Description
               </label>
               <textarea
@@ -110,49 +127,76 @@ export default function EditTeamDialog({ team, onClose, onSave }: EditTeamDialog
                 name="Description"
                 value={formData.Description}
                 onChange={handleChange}
-                className="w-full p-2 rounded-md border border-input bg-background min-h-[100px]"
+                className="w-full p-3 rounded-xl border border-border/50 bg-background/50 text-foreground min-h-[100px] focus:ring-1 focus:ring-primary focus:outline-none resize-none"
+                disabled={submitting}
               ></textarea>
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">
+              <label className="block text-sm font-medium mb-3 text-foreground">
                 Team Color
               </label>
               <div className="grid grid-cols-4 gap-3">
                 {teamColors.map((color, index) => (
-                  <button
+                  <motion.button
                     key={index}
                     type="button"
                     onClick={() => handleColorSelect(index)}
-                    className={`w-full aspect-square rounded-full ${color.bg} flex items-center justify-center ${formData.ColorIndex === index ? 'ring-2 ring-offset-2 ring-primary' : ''}`}
+                    className={cn(
+                      "w-full aspect-square rounded-full", 
+                      color.bg,
+                      "flex items-center justify-center",
+                      formData.ColorIndex === index ? "ring-2 ring-offset-2 ring-primary" : ""
+                    )}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    disabled={submitting}
                   >
                     {formData.ColorIndex === index && (
-                      <Check className="w-5 h-5 text-white" />
+                      <Check className="w-5 h-5 text-white drop-shadow-md" />
                     )}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
+              <p className="text-center text-sm mt-2 text-muted-foreground">
+                {teamColors[formData.ColorIndex]?.name || 'Select a color'}
+              </p>
             </div>
           </div>
           
-          <div className="flex justify-end gap-2 mt-6">
-            <button 
+          <div className="flex justify-end gap-3 mt-8">
+            <motion.button 
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-muted hover:bg-muted/80 rounded-md text-sm transition-colors"
+              className="px-4 py-2.5 bg-muted/50 hover:bg-muted text-foreground rounded-full text-sm transition-colors"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              disabled={submitting}
             >
               Cancel
-            </button>
-            <button 
+            </motion.button>
+            <motion.button 
               type="submit"
-              className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm transition-colors flex items-center"
+              className="px-4 py-2.5 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-sm transition-colors flex items-center"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              disabled={submitting}
             >
-              <Save className="w-4 h-4 mr-2" />
-              Save Changes
-            </button>
+              {submitting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin mr-2"></div>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Changes
+                </>
+              )}
+            </motion.button>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }
