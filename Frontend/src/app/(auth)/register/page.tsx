@@ -4,7 +4,8 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { toast } from "@/lib/toast"
-import api from "@/lib/axios" // ✅ fixed import
+import { api } from '@/lib/axios'; 
+
 
 export default function Register() {
   const router = useRouter()
