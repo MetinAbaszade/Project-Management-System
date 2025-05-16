@@ -33,7 +33,7 @@ import {
   removeTeamMember,
   getTeamTasks
 
-//import './teamDetail.css';
+
 
 
 } from '@/api/TeamAPI';
