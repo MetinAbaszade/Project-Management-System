@@ -1,199 +1,199 @@
-'use client'
+// Frontend/src/app/(dashboard)/projects/[id]/edit/page.tsx
+'use client';
 
-import { useEffect, useState, useRef, useMemo } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { getProjectById, updateProject } from '@/api/ProjectAPI'
-import { getProjectTasks } from '@/api/TaskAPI'
-import { Tabs } from '@/components/ui/tabs'
-import { ProjectScope } from '@/components/project/ProjectScope'
-import { ProjectTeam } from '@/components/project/ProjectTeam'
-import { ProjectStakeholders } from '@/components/project/ProjectStakeholders'
-import { ProjectActivityLog } from '@/components/project/ProjectActivityLog'
-import { ProjectAttachments } from '@/components/project/ProjectAttachments'
-import { GlassPanel } from '@/components/ui/GlassPanel'
-import { Skeleton } from '@/components/ui/skeleton'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useUser } from '@/hooks/useUser'
-import { canEditProject, canCreateTask, canCompleteTask } from '@/lib/roles'
-import { Button } from '@/components/ui/button'
-import { CreateTaskForm } from '@/components/project/CreateTaskForm'
-import { MarkTaskComplete } from '@/components/project/MarkTaskComplete'
-import { ProjectTasks } from '@/components/project/ProjectTasks'
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { getProjectById, updateProject } from '@/api/ProjectAPI';
+import { toast } from '@/lib/toast';
+import { format, parseISO } from 'date-fns';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Save, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
-export default function ProjectDetailPage() {
-  const { id } = useParams()
-  const router = useRouter()
-  const { user } = useUser()
-  const [project, setProject] = useState<any>(null)
-  const [tasks, setTasks] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState('overview')
-  const contentRef = useRef<HTMLDivElement>(null)
+export default function EditProjectPage() {
+  const { id } = useParams();
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [project, setProject] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    Name: '',
+    Description: '',
+    Deadline: null as string | null,
+    Budget: 0
+  });
 
   useEffect(() => {
-    async function load() {
+    async function fetchProject() {
       try {
-        const data = await getProjectById(id as string)
-        const taskData = await getProjectTasks(data.Id)
-        setProject(data)
-        setTasks(taskData)
+        const data = await getProjectById(id as string);
+        setProject(data);
+        setFormData({
+          Name: data.Name || '',
+          Description: data.Description || '',
+          Deadline: data.Deadline || null,
+          Budget: data.TotalBudget || 0
+        });
+      } catch (error) {
+        console.error('Failed to fetch project:', error);
+        toast.error('Failed to load project details');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-    load()
-  }, [id])
 
-  useEffect(() => {
-    contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [tab])
+    fetchProject();
+  }, [id]);
 
-  const progress = useMemo(() => {
-    const total = tasks.length
-    const completed = tasks.filter(t => t.Completed).length
-    return total > 0 ? Math.floor((completed / total) * 100) : 0
-  }, [tasks])
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'Budget' ? parseFloat(value) || 0 : value
+    }));
+  };
 
-  const handleSaveProgress = async () => {
-    if (project && project.Progress !== progress) {
-      await updateProject(project.Id, { ...project, Progress: progress })
-      setProject((prev: any) => ({ ...prev, Progress: progress }))
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      Deadline: e.target.value || null
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+
+    try {
+      const updateData = {
+        Name: formData.Name,
+        Description: formData.Description,
+        Deadline: formData.Deadline,
+        Budget: formData.Budget
+      };
+
+      await updateProject(id as string, updateData);
+      toast.success('Project updated successfully');
+      router.push(`/projects/${id}`);
+    } catch (error) {
+      console.error('Failed to update project:', error);
+      toast.error('Failed to update project');
+    } finally {
+      setSaving(false);
     }
-  }
+  };
 
   if (loading) {
     return (
-      <div className="p-6 space-y-4">
-        <Skeleton className="h-10 w-1/3" />
-        <Skeleton className="h-6 w-1/2" />
-        <Skeleton className="h-96 w-full" />
+      <div className="p-6 space-y-6">
+        <Skeleton className="h-12 w-1/3" />
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-10 w-1/2" />
+          <Skeleton className="h-10 w-1/3" />
+        </div>
       </div>
-    )
+    );
   }
-
-  if (!project) return <div className="p-6">Project not found.</div>
-
-  const tabs = [
-    { label: 'Overview', value: 'overview' },
-    { label: 'Tasks', value: 'tasks' },
-    { label: 'Team', value: 'team' },
-    { label: 'Stakeholders', value: 'stakeholders' },
-    { label: 'Scope', value: 'scope' },
-    { label: 'Activity', value: 'activity' },
-    { label: 'Files', value: 'attachments' },
-  ]
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className="p-6 space-y-6"
+      transition={{ duration: 0.3 }}
+      className="p-6 max-w-4xl mx-auto"
     >
-      <GlassPanel className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold">{project.Name}</h1>
-            <p className="text-muted-foreground mt-2 max-w-3xl">{project.Description}</p>
+      <div className="flex items-center mb-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.back()}
+          className="mr-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+        <h1 className="text-2xl font-semibold">Edit Project</h1>
+      </div>
+
+      <div className="bg-card backdrop-blur-md rounded-xl p-6 shadow-sm border border-border">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Project Name</label>
+            <Input
+              name="Name"
+              value={formData.Name}
+              onChange={handleChange}
+              required
+              className="w-full"
+            />
           </div>
-          {canEditProject(user, project) && (
-            <Button size="sm" onClick={() => router.push(`/dashboard/projects/${project.Id}/edit`)}>
-              Edit
-            </Button>
-          )}
-        </div>
-      </GlassPanel>
 
-      <Tabs tabs={tabs} value={tab} onChange={setTab} fullWidth className="mt-4" />
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Description</label>
+            <Textarea
+              name="Description"
+              value={formData.Description}
+              onChange={handleChange}
+              rows={5}
+              className="w-full"
+            />
+          </div>
 
-      <div ref={contentRef} className="relative min-h-[360px]">
-        <AnimatePresence mode="wait">
-          {tab === 'overview' && (
-            <motion.div
-              key="overview"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.25 }}
-              className="mt-4"
-            >
-              <GlassPanel className="p-4 text-muted-foreground">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <p><strong>Progress:</strong> {progress}%</p>
-                    <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary transition-all duration-300"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  </div>
-                  {canEditProject(user, project) && (
-                    <Button size="sm" onClick={handleSaveProgress} disabled={progress === project.Progress}>
-                      Save Progress
-                    </Button>
-                  )}
-                </div>
-                <p className="mt-4"><strong>Deadline:</strong> {project.Deadline ? new Date(project.Deadline).toLocaleDateString() : '—'}</p>
-                <p><strong>Budget:</strong> ${project.TotalBudget?.toLocaleString()}</p>
-              </GlassPanel>
-            </motion.div>
-          )}
-
-          {tab === 'tasks' && (
-            <motion.div key="tasks" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              {canCreateTask(user, project) && (
-                <div className="mb-4">
-                  <CreateTaskForm projectId={project.Id} />
-                </div>
-              )}
-              <div className="space-y-4">
-                {tasks.map(task => (
-                  <div key={task.Id} className="border rounded-xl p-4">
-                    <div className="font-medium text-base">{task.Title}</div>
-                    <p className="text-muted-foreground text-sm">{task.Description}</p>
-                    {canCompleteTask(user, task) && !task.Completed && (
-                      <div className="mt-2">
-                        <MarkTaskComplete taskId={task.Id} />
-                      </div>
-                    )}
-                  </div>
-                ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Deadline</label>
+              <div className="relative">
+                <Input
+                  type="date"
+                  name="Deadline"
+                  value={formData.Deadline ? formData.Deadline.substring(0, 10) : ''}
+                  onChange={handleDateChange}
+                  className="w-full pl-10"
+                />
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               </div>
-            </motion.div>
-          )}
+            </div>
 
-          {tab === 'team' && (
-            <motion.div key="team" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <ProjectTeam projectId={project.Id} />
-            </motion.div>
-          )}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Budget</label>
+              <Input
+                name="Budget"
+                type="number"
+                value={formData.Budget}
+                onChange={handleChange}
+                min={0}
+                step={0.01}
+                className="w-full"
+              />
+            </div>
+          </div>
 
-          {tab === 'stakeholders' && (
-            <motion.div key="stakeholders" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <ProjectStakeholders projectId={project.Id} />
-            </motion.div>
-          )}
-
-          {tab === 'scope' && (
-            <motion.div key="scope" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <ProjectScope projectId={project.Id} />
-            </motion.div>
-          )}
-
-          {tab === 'activity' && (
-            <motion.div key="activity" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <ProjectActivityLog projectId={project.Id} />
-            </motion.div>
-          )}
-
-          {tab === 'attachments' && (
-            <motion.div key="attachments" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <ProjectAttachments projectId={project.Id} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+          <div className="flex justify-end space-x-4 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={saving}
+              className={cn("gap-2", saving ? "opacity-70" : "")}
+            >
+              <Save className="h-4 w-4" />
+              {saving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </form>
       </div>
     </motion.div>
-  )
+  );
 }

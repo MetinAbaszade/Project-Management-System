@@ -152,7 +152,7 @@ export default function CreateTaskPage() {
     }
     
     if (form.AssignmentType === 'user' && !form.UserId) {
-      newErrors.UserId = 'Please select a team member';
+      newErrors.UserId = 'Please select a  member';
     }
     
     if (form.AssignmentType === 'team' && !form.TeamId) {
@@ -398,7 +398,7 @@ export default function CreateTaskPage() {
                   onChange={handleInputChange}
                   className="h-4 w-4 border-gray-300 text-primary focus:ring-primary"
                 />
-                <label htmlFor="assignUser">Assign to Team Member</label>
+                <label htmlFor="assignUser">Assign to  Member</label>
               </div>
               
               <div className="flex items-center space-x-2">
@@ -419,7 +419,7 @@ export default function CreateTaskPage() {
             {form.AssignmentType === 'user' && (
               <div className="space-y-2 pl-6 border-l-2 border-muted">
                 <label htmlFor="UserId" className="block text-sm font-medium">
-                  Select Team Member <span className="text-destructive">*</span>
+                  Select  Member <span className="text-destructive">*</span>
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -430,7 +430,7 @@ export default function CreateTaskPage() {
                     onChange={handleInputChange}
                     className={`w-full pl-10 pr-4 py-2 bg-background border rounded-md focus:ring-2 focus:ring-primary/30 focus:border-primary focus:outline-none transition-all ${errors.UserId ? 'border-destructive' : 'border-input'}`}
                   >
-                    <option value="">Select a team member...</option>
+                    <option value="">Select a  member...</option>
                     {members.length === 0 ? (
                       <option value="" disabled>No members available</option>
                     ) : (
