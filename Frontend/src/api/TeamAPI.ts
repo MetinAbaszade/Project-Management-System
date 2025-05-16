@@ -76,7 +76,6 @@ export async function getAllTeams(): Promise<Team[]> {
  */
 export async function getTeamById(teamId: string): Promise<Team> {
   try {
-    // FIXED: API expects teamId as a query parameter based on the documentation
     const response = await api.get(`/teams/${teamId}`, {
       params: { teamId }
     });
@@ -105,7 +104,7 @@ export async function updateTeam(teamId: string, data: TeamUpdateData): Promise<
  */
 export async function deleteTeam(teamId: string): Promise<void> {
   try {
-    // FIXED: Using the correct query parameter format according to API docs
+
     await api.delete(`/teams/${teamId}`, {
       params: { teamId }
     });
