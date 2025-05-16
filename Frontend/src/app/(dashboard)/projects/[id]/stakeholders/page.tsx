@@ -1,3 +1,5 @@
+// Path: Frontend/src/app/(dashboard)/projects/[id]/stakeholders/page.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -17,7 +19,7 @@ import { toast } from '@/lib/toast';
 
 // API imports
 import { getProjectById } from '@/api/ProjectAPI';
-import { getProjectStakeholders } from '@/api/StakeholderAPI';
+import { getProjectStakeholders, Stakeholder } from '@/api/StakeholderAPI';
 import { getCurrentUser } from '@/api/UserAPI';
 
 const getRandomColor = (index: number) => {
@@ -37,7 +39,7 @@ const getRandomColor = (index: number) => {
 export default function StakeholdersPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [stakeholders, setStakeholders] = useState<any[]>([]);
+  const [stakeholders, setStakeholders] = useState<Stakeholder[]>([]);
   const [project, setProject] = useState<any>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -48,17 +50,20 @@ export default function StakeholdersPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        if (!id) return;
+        
         // Fetch stakeholders and project data in parallel
         const [stakeholdersData, projectData] = await Promise.all([
           getProjectStakeholders(id as string),
           getProjectById(id as string)
         ]);
         
+        console.log('Fetched stakeholders:', stakeholdersData);
         setStakeholders(stakeholdersData);
         setProject(projectData);
         
         // Calculate total percentage
-        const total = stakeholdersData.reduce((acc: number, curr: any) => acc + curr.Percentage, 0);
+        const total = stakeholdersData.reduce((acc: number, curr: Stakeholder) => acc + curr.Percentage, 0);
         setTotalPercentage(total);
 
         // Check if current user is the project owner
@@ -119,7 +124,7 @@ export default function StakeholdersPage() {
               whileTap={{ scale: 0.95 }}
             >
               <UserPlus className="h-4 w-4" />
-              <span>Become a Stakeholder</span>
+              <span>Add Stakeholder</span>
             </motion.button>
           </div>
         </div>
@@ -192,57 +197,57 @@ export default function StakeholdersPage() {
 }
 
 // Stakeholder Card Component
-function StakeholderCard({ stakeholder, colorClass }: { stakeholder: any, colorClass: string }) {
+function StakeholderCard({ stakeholder, colorClass }: { stakeholder: Stakeholder, colorClass: string }) {
   const router = useRouter();
   const { id } = useParams();
 
   return (
-          <motion.div 
-            whileHover={{ y: -5, boxShadow: "0 8px 20px rgba(0, 0, 0, 0.1)" }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => router.push(`/stakeholder/${stakeholder.Id}`)}
-            className="cursor-pointer"
-          >
-            <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm h-full">
-              <div className={`h-2 w-full bg-gradient-to-r ${colorClass}`} />
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-semibold text-lg">{stakeholder.UserId}</h3>
-                    <p className="text-muted-foreground text-sm">
-                      {new Date(stakeholder.CreatedAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  
-                  <div className="text-xl font-bold text-primary">
-                    {stakeholder.Percentage}%
-                  </div>
-                </div>
-                
-                <div className="mb-4">
-                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                    <motion.div 
-                      className={`h-full rounded-full bg-gradient-to-r ${colorClass}`} 
-                      style={{ width: `${stakeholder.Percentage}%` }}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${stakeholder.Percentage}%` }}
-                      transition={{ duration: 0.8 }}
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex justify-end">
-                  <motion.button 
-                    className="text-xs flex items-center text-muted-foreground hover:text-primary transition-colors group"
-                    whileHover={{ x: 3 }}
-                  >
-                    <span>View Details</span>
-                    <ExternalLink className="h-3 w-3 ml-1 group-hover:translate-x-0.5 transition-transform" />
-                  </motion.button>
-                </div>
-              </div>
+    <motion.div 
+      whileHover={{ y: -5, boxShadow: "0 8px 20px rgba(0, 0, 0, 0.1)" }}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => router.push(`/projects/${id}/stakeholders/${stakeholder.Id}`)}
+      className="cursor-pointer"
+    >
+      <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm h-full">
+        <div className={`h-2 w-full bg-gradient-to-r ${colorClass}`} />
+        <div className="p-6">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h3 className="font-semibold text-lg">{stakeholder.User ? `${stakeholder.User.FirstName} ${stakeholder.User.LastName}` : stakeholder.UserId}</h3>
+              <p className="text-muted-foreground text-sm">
+                {new Date(stakeholder.CreatedAt).toLocaleDateString()}
+              </p>
             </div>
-          </motion.div>
+            
+            <div className="text-xl font-bold text-primary">
+              {stakeholder.Percentage}%
+            </div>
+          </div>
+          
+          <div className="mb-4">
+            <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+              <motion.div 
+                className={`h-full rounded-full bg-gradient-to-r ${colorClass}`} 
+                style={{ width: `${stakeholder.Percentage}%` }}
+                initial={{ width: 0 }}
+                animate={{ width: `${stakeholder.Percentage}%` }}
+                transition={{ duration: 0.8 }}
+              />
+            </div>
+          </div>
+          
+          <div className="flex justify-end">
+            <motion.div 
+              className="text-xs flex items-center text-muted-foreground hover:text-primary transition-colors group"
+              whileHover={{ x: 3 }}
+            >
+              <span>View Details</span>
+              <ExternalLink className="h-3 w-3 ml-1 group-hover:translate-x-0.5 transition-transform" />
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 

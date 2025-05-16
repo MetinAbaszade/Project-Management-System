@@ -8,7 +8,6 @@ import {
   Loader2, 
   Calendar, 
   Users, 
-  Flag, 
   CheckCircle, 
   AlertTriangle,
   User
@@ -22,7 +21,7 @@ interface TaskDialogProps {
   onClose: () => void;
   projectId: string;
   task?: any;
-  onSuccess?: () => void;
+  onSuccess?: (updatedData?: any) => void;
 }
 
 export function TaskDialog({ isOpen, onClose, projectId, task, onSuccess }: TaskDialogProps) {
@@ -144,9 +143,11 @@ export function TaskDialog({ isOpen, onClose, projectId, task, onSuccess }: Task
       newErrors.TeamId = 'Please select a team';
     }
     
-    // Validate deadline is not in the past
-    if (form.Deadline) {
+    // If this is not editing an already completed task, validate deadline is not in the past
+    if (form.Deadline && form.Status !== 'Completed' && !(task && task.Completed)) {
       const selectedDate = new Date(form.Deadline);
+      selectedDate.setHours(0, 0, 0, 0);
+      
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
@@ -183,22 +184,32 @@ export function TaskDialog({ isOpen, onClose, projectId, task, onSuccess }: Task
       // Add assignment
       if (form.AssignmentType === 'user') {
         data.UserId = form.UserId;
+        data.TeamId = null; // Explicitly clear TeamId if assigning to user
       } else if (form.AssignmentType === 'team') {
         data.TeamId = form.TeamId;
+        data.UserId = null; // Explicitly clear UserId if assigning to team
+      } else {
+        // Clear both when not assigning
+        data.UserId = null;
+        data.TeamId = null;
       }
       
       if (task) {
         // Update existing task
-        await updateTask(task.Id, data);
+        const updatedTask = await updateTask(task.Id, data);
         toast.success('Task updated successfully');
+        
+        if (onSuccess) {
+          onSuccess(updatedTask);
+        }
       } else {
         // Create new task
-        await createTask(data);
+        const newTask = await createTask(data);
         toast.success('Task created successfully');
-      }
-      
-      if (onSuccess) {
-        onSuccess();
+        
+        if (onSuccess) {
+          onSuccess(newTask);
+        }
       }
       
       onClose();
@@ -214,22 +225,23 @@ export function TaskDialog({ isOpen, onClose, projectId, task, onSuccess }: Task
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose}></div>
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.95 }}
         transition={{ duration: 0.2 }}
-        className="w-full max-w-xl bg-card rounded-xl shadow-lg overflow-hidden"
+        className="w-full max-w-xl bg-card rounded-xl shadow-lg overflow-hidden relative z-10"
       >
         {/* Header */}
-        <div className="p-5 border-b flex justify-between items-center">
+        <div className="p-5 border-b flex justify-between items-center bg-muted/50">
           <h2 className="text-xl font-semibold">
             {task ? 'Edit Task' : 'Create New Task'}
           </h2>
           <button 
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-muted"
+            className="p-2 rounded-full hover:bg-muted transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -329,7 +341,6 @@ export function TaskDialog({ isOpen, onClose, projectId, task, onSuccess }: Task
                     name="Deadline"
                     value={form.Deadline}
                     onChange={handleChange}
-                    min={format(new Date(), 'yyyy-MM-dd')}
                     className={`w-full pl-10 pr-4 py-2 bg-background border rounded-md focus:ring-2 focus:ring-primary/30 focus:border-primary focus:outline-none transition-all ${errors.Deadline ? 'border-red-500' : 'border-input'}`}
                   />
                 </div>
@@ -458,7 +469,7 @@ export function TaskDialog({ isOpen, onClose, projectId, task, onSuccess }: Task
         </div>
 
         {/* Footer */}
-        <div className="p-5 border-t flex justify-end gap-3">
+        <div className="p-5 border-t flex justify-end gap-3 bg-muted/30">
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-md border border-input bg-background hover:bg-muted transition-colors"
@@ -470,7 +481,7 @@ export function TaskDialog({ isOpen, onClose, projectId, task, onSuccess }: Task
           <button
             onClick={handleSubmit}
             disabled={loading || fetchingData}
-            className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-2"
+            className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-2 shadow-sm"
           >
             {loading ? (
               <>

@@ -1,11 +1,20 @@
 // src/components/task/TaskList.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { AlertCircle, Filter, Loader2 } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { 
+  AlertCircle, 
+  Filter, 
+  Loader2, 
+  X, 
+  Info, 
+  Trash2,
+  Check,
+  AlertTriangle
+} from 'lucide-react';
 import { TaskCard } from './TaskCard';
 import { updateTask, markTaskComplete, deleteTask } from '@/api/TaskAPI';
 import { toast } from '@/lib/toast';
@@ -42,6 +51,8 @@ export function TaskList({
     'In Progress': [],
     'Completed': []
   });
+  const [taskBeingDeleted, setTaskBeingDeleted] = useState<string | null>(null);
+  const toastDisplayed = useRef(false);
 
   // Initialize columns when tasks change
   useEffect(() => {
@@ -106,6 +117,7 @@ export function TaskList({
           await updateTask(task.Id, { Status: newStatus });
         }
         
+        // Don't show toast for every drag operation
         toast.success(`Task moved to ${newStatus}`);
         
         // Refresh the task list if callback is provided
@@ -159,10 +171,16 @@ export function TaskList({
     }
   };
 
+  // Handle task edit
+  const handleEditTask = (taskId) => {
+    router.push(`/tasks/${taskId}`);
+  };
+
   // Handle delete task
   const handleDeleteTask = async (taskId) => {
     if (processingTasks[taskId]) return;
     
+    setTaskBeingDeleted(taskId);
     setProcessingTasks(prev => ({ ...prev, [taskId]: 'deleting' }));
     
     try {
@@ -185,8 +203,20 @@ export function TaskList({
       });
       
       setConfirmDelete(null);
+      setTaskBeingDeleted(null);
     }
   };
+
+  // One-time effect to show drag hint
+  useEffect(() => {
+    if (viewMode === 'kanban' && !toastDisplayed.current && tasks.length > 0) {
+      toast.info('Tip: Drag tasks between columns to update their status', { 
+        duration: 3000,
+        icon: <Info className="h-5 w-5" />
+      });
+      toastDisplayed.current = true;
+    }
+  }, [viewMode, tasks.length]);
 
   // Loading state
   if (loading) {
@@ -203,7 +233,7 @@ export function TaskList({
   // Error state
   if (error) {
     return (
-      <div className="rounded-xl border bg-card p-8 text-center">
+      <div className="rounded-xl border bg-card p-8 text-center shadow-sm">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
           <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
         </div>
@@ -211,7 +241,7 @@ export function TaskList({
         <p className="mb-6 text-muted-foreground">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 shadow-sm"
         >
           Try Again
         </button>
@@ -222,7 +252,7 @@ export function TaskList({
   // Empty state
   if (tasks.length === 0) {
     return (
-      <div className="rounded-xl border bg-card p-8 text-center">
+      <div className="rounded-xl border bg-card p-8 text-center shadow-sm">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
           <Filter className="h-6 w-6 text-muted-foreground" />
         </div>
@@ -235,7 +265,7 @@ export function TaskList({
         {(userRole === 'project_owner' || userRole === 'Project Owner') && projectId && (
           <button
             onClick={() => router.push(`/projects/${projectId}/tasks/create`)}
-            className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 shadow-sm"
           >
             Create Task
           </button>
@@ -250,27 +280,41 @@ export function TaskList({
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {Object.keys(columns).map(columnId => (
-            <div key={columnId} className="bg-card/40 backdrop-blur-sm rounded-xl border shadow-sm overflow-hidden">
+            <motion.div 
+              key={columnId} 
+              className="bg-card/40 backdrop-blur-sm rounded-xl border shadow-sm overflow-hidden"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
               <div className={cn(
                 "p-4 border-b font-medium",
-                columnId === 'Not Started' && "bg-slate-100 dark:bg-slate-800/30",
-                columnId === 'In Progress' && "bg-blue-50 dark:bg-blue-900/20",
-                columnId === 'Completed' && "bg-green-50 dark:bg-green-900/20"
+                columnId === 'Not Started' && "bg-slate-100 dark:bg-slate-800/30 text-slate-800 dark:text-slate-200",
+                columnId === 'In Progress' && "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300",
+                columnId === 'Completed' && "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
               )}>
                 <div className="flex justify-between items-center">
                   <h3>{columnId}</h3>
-                  <span className="text-xs bg-background rounded-full px-2 py-1">
+                  <span className={cn(
+                    "text-xs rounded-full px-2 py-1",
+                    columnId === 'Not Started' && "bg-slate-200 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300",
+                    columnId === 'In Progress' && "bg-blue-100 dark:bg-blue-800/50 text-blue-600 dark:text-blue-300",
+                    columnId === 'Completed' && "bg-green-100 dark:bg-green-800/50 text-green-600 dark:text-green-300",
+                  )}>
                     {columns[columnId].length}
                   </span>
                 </div>
               </div>
               
               <Droppable droppableId={columnId}>
-                {(provided) => (
+                {(provided, snapshot) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className="p-4 min-h-[200px]"
+                    className={cn(
+                      "p-4 min-h-[200px] transition-colors",
+                      snapshot.isDraggingOver && "bg-muted"
+                    )}
                   >
                     <AnimatePresence>
                       {columns[columnId].map((task, index) => (
@@ -280,24 +324,32 @@ export function TaskList({
                           index={index}
                           isDragDisabled={!!processingTasks[task.Id]}
                         >
-                          {(provided) => (
+                          {(provided, snapshot) => (
                             <div
                               ref={provided.innerRef}
                               {...provided.draggableProps}
                               {...provided.dragHandleProps}
                               className="mb-3"
                             >
-                              <TaskCard
-                                task={task}
-                                onClick={() => router.push(`/tasks/${task.Id}`)}
-                                onComplete={() => handleCompleteTask(task.Id)}
-                                onEdit={() => router.push(`/tasks/${task.Id}/edit`)}
-                                onDelete={() => setConfirmDelete(task.Id)}
-                                userRole={userRole}
-                                currentUserId={currentUserId}
-                                showProjectInfo={showProjectInfo}
-                                className={processingTasks[task.Id] ? 'opacity-70 pointer-events-none' : ''}
-                              />
+                              <motion.div
+                                animate={snapshot.isDragging ? { scale: 1.02, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" } : { scale: 1 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                              >
+                                <TaskCard
+                                  task={task}
+                                  onClick={() => router.push(`/tasks/${task.Id}`)}
+                                  onComplete={() => handleCompleteTask(task.Id)}
+                                  onEdit={() => handleEditTask(task.Id)}
+                                  onDelete={() => setConfirmDelete(task.Id)}
+                                  userRole={userRole}
+                                  currentUserId={currentUserId}
+                                  showProjectInfo={showProjectInfo}
+                                  className={cn(
+                                    processingTasks[task.Id] ? 'opacity-70 pointer-events-none' : '',
+                                    snapshot.isDragging && 'opacity-90'
+                                  )}
+                                />
+                              </motion.div>
                             </div>
                           )}
                         </Draggable>
@@ -307,42 +359,52 @@ export function TaskList({
                   </div>
                 )}
               </Droppable>
-            </div>
+            </motion.div>
           ))}
         </div>
 
         {/* Delete Confirmation Dialog */}
         {confirmDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => !taskBeingDeleted && setConfirmDelete(null)}></div>
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="w-full max-w-md rounded-xl bg-card p-6 shadow-lg"
+              className="w-full max-w-md rounded-xl bg-card p-6 shadow-lg relative z-10"
             >
-              <h3 className="mb-4 text-lg font-bold">Delete Task</h3>
-              <p className="mb-6 text-muted-foreground">
+              <div className="mx-auto w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+              </div>
+              
+              <h3 className="text-xl font-bold text-center mb-2">Delete Task</h3>
+              <p className="mb-6 text-muted-foreground text-center">
                 Are you sure you want to delete this task? This action cannot be undone.
               </p>
-              <div className="flex justify-end gap-3">
+              
+              <div className="flex justify-center gap-3">
                 <button
-                  onClick={() => setConfirmDelete(null)}
-                  className="rounded-md bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/90"
-                  disabled={processingTasks[confirmDelete] === 'deleting'}
+                  onClick={() => !taskBeingDeleted && setConfirmDelete(null)}
+                  className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-colors"
+                  disabled={!!taskBeingDeleted}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleDeleteTask(confirmDelete)}
-                  className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-                  disabled={processingTasks[confirmDelete] === 'deleting'}
+                  className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors shadow-sm flex items-center"
+                  disabled={!!taskBeingDeleted}
                 >
-                  {processingTasks[confirmDelete] === 'deleting' ? (
-                    <span className="flex items-center">
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...
-                    </span>
+                  {taskBeingDeleted ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                      <span>Deleting...</span>
+                    </>
                   ) : (
-                    'Delete'
+                    <>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      <span>Delete</span>
+                    </>
                   )}
                 </button>
               </div>
@@ -377,7 +439,7 @@ export function TaskList({
               onEdit={
                 !processingTasks[task.Id] && 
                 (userRole === 'project_owner' || userRole === 'Project Owner')
-                  ? () => router.push(`/tasks/${task.Id}/edit`)
+                  ? () => handleEditTask(task.Id)
                   : undefined
               }
               onDelete={
@@ -397,36 +459,46 @@ export function TaskList({
 
       {/* Delete Confirmation Dialog */}
       {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => !taskBeingDeleted && setConfirmDelete(null)}></div>
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="w-full max-w-md rounded-xl bg-card p-6 shadow-lg"
+            className="w-full max-w-md rounded-xl bg-card p-6 shadow-lg relative z-10"
           >
-            <h3 className="mb-4 text-lg font-bold">Delete Task</h3>
-            <p className="mb-6 text-muted-foreground">
+            <div className="mx-auto w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+              <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+            </div>
+            
+            <h3 className="text-xl font-bold text-center mb-2">Delete Task</h3>
+            <p className="mb-6 text-muted-foreground text-center">
               Are you sure you want to delete this task? This action cannot be undone.
             </p>
-            <div className="flex justify-end gap-3">
+            
+            <div className="flex justify-center gap-3">
               <button
-                onClick={() => setConfirmDelete(null)}
-                className="rounded-md bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/90"
-                disabled={processingTasks[confirmDelete] === 'deleting'}
+                onClick={() => !taskBeingDeleted && setConfirmDelete(null)}
+                className="px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-colors"
+                disabled={!!taskBeingDeleted}
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDeleteTask(confirmDelete)}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-                disabled={processingTasks[confirmDelete] === 'deleting'}
+                className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors shadow-sm flex items-center"
+                disabled={!!taskBeingDeleted}
               >
-                {processingTasks[confirmDelete] === 'deleting' ? (
-                  <span className="flex items-center">
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...
-                  </span>
+                {taskBeingDeleted ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                    <span>Deleting...</span>
+                  </>
                 ) : (
-                  'Delete'
+                  <>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    <span>Delete</span>
+                  </>
                 )}
               </button>
             </div>

@@ -12,9 +12,8 @@ import {
   Users,
   AlertTriangle,
   CheckCircle,
-  ArrowRight,
-  Trash2,
-  PencilLine
+  Edit,
+  Trash2
 } from 'lucide-react';
 
 interface TaskCardProps {
@@ -109,7 +108,8 @@ export function TaskCard({
     if (task.Completed) {
       return {
         color: 'text-green-600 dark:text-green-400',
-        bg: 'bg-green-100 dark:bg-green-900/20'
+        bg: 'bg-green-100 dark:bg-green-900/20',
+        border: 'border-green-200 dark:border-green-800'
       };
     }
 
@@ -117,17 +117,20 @@ export function TaskCard({
       case 'In Progress':
         return {
           color: 'text-blue-600 dark:text-blue-400',
-          bg: 'bg-blue-100 dark:bg-blue-900/20'
+          bg: 'bg-blue-100 dark:bg-blue-900/20',
+          border: 'border-blue-200 dark:border-blue-800'
         };
       case 'Not Started':
         return {
           color: 'text-gray-600 dark:text-gray-400',
-          bg: 'bg-gray-100 dark:bg-gray-800/30'
+          bg: 'bg-gray-100 dark:bg-gray-800/30',
+          border: 'border-gray-200 dark:border-gray-700'
         };
       default:
         return {
           color: 'text-gray-600 dark:text-gray-400',
-          bg: 'bg-gray-100 dark:bg-gray-800/30'
+          bg: 'bg-gray-100 dark:bg-gray-800/30',
+          border: 'border-gray-200 dark:border-gray-700'
         };
     }
   };
@@ -173,7 +176,11 @@ export function TaskCard({
             )}
           </div>
           
-          <div className={cn('shrink-0 ml-2 px-2 py-1 rounded-full text-xs font-medium', statusStyles.bg, statusStyles.color)}>
+          <div className={cn(
+            'shrink-0 ml-2 px-2 py-1 rounded-full text-xs font-medium',
+            statusStyles.bg, 
+            statusStyles.color
+          )}>
             {task.Completed ? 'Completed' : task.Status}
           </div>
         </div>
@@ -184,8 +191,8 @@ export function TaskCard({
               <div 
                 className={cn(
                   "flex items-center gap-1",
-                  isOverdue() && !task.Completed && "text-red-500",
-                  isDueToday() && !task.Completed && "text-amber-500"
+                  isOverdue() && !task.Completed && "text-red-500 dark:text-red-400",
+                  isDueToday() && !task.Completed && "text-amber-500 dark:text-amber-400"
                 )}
               >
                 <Calendar className="h-3.5 w-3.5" />
@@ -229,9 +236,10 @@ export function TaskCard({
                     e.stopPropagation();
                     onEdit(e);
                   }}
-                  className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="p-1.5 rounded-full hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-colors"
+                  aria-label="Edit task"
                 >
-                  <PencilLine className="h-3.5 w-3.5 text-blue-500" />
+                  <Edit className="h-3.5 w-3.5" />
                 </button>
               )}
               
@@ -241,9 +249,10 @@ export function TaskCard({
                     e.stopPropagation();
                     onDelete(e);
                   }}
-                  className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="p-1.5 rounded-full hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
+                  aria-label="Delete task"
                 >
-                  <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
@@ -260,6 +269,7 @@ export function TaskCard({
                   e.stopPropagation();
                   onComplete(e);
                 }}
+                aria-label="Mark task as complete"
               >
                 <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
               </button>
