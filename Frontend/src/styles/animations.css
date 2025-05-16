@@ -1,0 +1,430 @@
+/* src/styles/animations.css */
+
+/* General animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--color-primary), 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(var(--color-primary), 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--color-primary), 0);
+  }
+}
+
+@keyframes shine {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(-10px);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+@keyframes ripple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--color-primary), 0.1),
+                0 0 0 1px rgba(var(--color-primary), 0.1);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(var(--color-primary), 0),
+                0 0 0 3px rgba(var(--color-primary), 0);
+  }
+}
+
+/* Task specific animations */
+.task-card {
+  animation: fadeIn 0.3s ease-out;
+  transition: all 0.2s ease-out;
+}
+
+.task-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+.task-enter {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.task-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.task-exit {
+  opacity: 1;
+}
+
+.task-exit-active {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 300ms, transform 300ms;
+}
+
+/* Status badge animations */
+.status-badge {
+  animation: fadeIn 0.3s ease-out;
+  transition: all 0.2s ease-out;
+}
+
+.status-badge.completed {
+  animation: pulse 2s infinite;
+}
+
+/* New tag/element animations */
+.new-tag {
+  position: relative;
+  overflow: hidden;
+}
+
+.new-tag::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.6), transparent);
+  transform: skewX(-25deg);
+  animation: shine 2s infinite;
+}
+
+.float-icon {
+  animation: float 3s ease-in-out infinite;
+}
+
+.bounce-icon {
+  animation: bounce 1.5s infinite;
+}
+
+.ripple-button {
+  animation: ripple 1.5s infinite;
+}
+
+/* Shimmer loading effect for placeholders */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: 200px 0;
+  }
+}
+
+.loading-shimmer {
+  background: linear-gradient(to right, rgba(var(--color-muted), 0.1) 8%, rgba(var(--color-muted), 0.2) 18%, rgba(var(--color-muted), 0.1) 33%);
+  background-size: 800px 104px;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Utility animations for common elements */
+.animate-shine {
+  animation: shine 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-bounce-slow {
+  animation: bounce 2s infinite;
+}
+
+.animate-ripple {
+  animation: ripple 1.5s infinite;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideInUp 0.3s ease-out;
+}
+
+.animate-slide-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+/* Status column highlights */
+.status-column-not-started {
+  border-top: 3px solid rgba(var(--color-slate-400), 0.5);
+  animation: fadeIn 0.5s ease-out;
+}
+
+.status-column-in-progress {
+  border-top: 3px solid rgba(var(--color-blue-500), 0.5);
+  animation: fadeIn 0.5s ease-out 0.1s;
+}
+
+.status-column-completed {
+  border-top: 3px solid rgba(var(--color-green-500), 0.5);
+  animation: fadeIn 0.5s ease-out 0.2s;
+}
+
+/* Background animation for drag and drop */
+.drag-active {
+  background-color: rgba(var(--color-primary), 0.05);
+  animation: pulse 1.5s infinite;
+}
+
+/* Priority indicator animations */
+.priority-high {
+  border-left: 4px solid rgba(var(--color-red-500), 0.8);
+  animation: pulse 2s infinite;
+}
+
+.priority-medium {
+  border-left: 4px solid rgba(var(--color-amber-500), 0.8);
+}
+
+.priority-low {
+  border-left: 4px solid rgba(var(--color-blue-500), 0.8);
+}
+
+/* Dialog animations */
+.dialog-backdrop {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.dialog-content {
+  animation: slideInUp 0.3s ease-out;
+}
+
+/* Animation for task completion */
+.task-complete-check {
+  transform-origin: center;
+  animation: scale 0.5s ease-in-out;
+}
+
+@keyframes scale {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Toast animations */
+.toast-enter {
+  transform: translateX(100%);
+}
+
+.toast-enter-active {
+  transform: translateX(0);
+  transition: transform 300ms ease-out;
+}
+
+.toast-exit {
+  transform: translateX(0);
+}
+
+.toast-exit-active {
+  transform: translateX(100%);
+  transition: transform 300ms ease-in;
+}
+
+/* Button animations */
+.button-pulse {
+  position: relative;
+}
+
+.button-pulse::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  box-shadow: 0 0 0 0 rgba(var(--color-primary), 0.4);
+  animation: pulse 2s infinite;
+  z-index: -1;
+}
+
+/* Custom cursor animations */
+.custom-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(var(--color-primary), 0.5);
+  pointer-events: none;
+  transition: transform 0.2s ease-out;
+  z-index: 9999;
+}
+
+.custom-cursor::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: rgba(var(--color-primary), 0.8);
+}
+
+/* Team card interactions */
+.team-card {
+  transition: all 0.3s ease;
+}
+
+.team-card:hover {
+  transform: translateY(-5px) scale(1.02);
+}
+
+.team-member-avatar {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.team-member-avatar:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease-out;
+}
+
+/* Rotating icons */
+.icon-rotate:hover {
+  animation: rotate 1s linear;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Loading states */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Task progress bar animation */
+.progress-bar {
+  position: relative;
+  height: 6px;
+  background-color: rgba(var(--color-muted), 0.3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background-color: rgba(var(--color-primary), 0.8);
+  border-radius: 3px;
+  transition: width 0.3s ease-out;
+}
+
+/* Resource usage animation */
+.resource-usage {
+  transition: width 0.5s ease-out;
+}
+
+.resource-usage-low {
+  background-color: rgba(var(--color-green-500), 0.8);
+}
+
+.resource-usage-medium {
+  background-color: rgba(var(--color-amber-500), 0.8);
+}
+
+.resource-usage-high {
+  background-color: rgba(var(--color-red-500), 0.8);
+  animation: pulse 2s infinite;
+}
+
+/* Page transitions */
+.page-transition-enter {
+  opacity: 0;
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transition: opacity 300ms;
+}
+
+.page-transition-exit {
+  opacity: 1;
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transition: opacity 300ms;
+}

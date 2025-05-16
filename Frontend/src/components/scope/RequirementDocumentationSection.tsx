@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { FileBarChart, Plus, Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface RequirementDocumentationSectionProps {
   data: {
@@ -27,11 +28,11 @@ export function RequirementDocumentationSection({
 }: RequirementDocumentationSectionProps) {
   return (
     <GlassPanel className="relative overflow-hidden transition-all duration-300">
-      <div className="absolute top-0 left-0 w-1 h-full bg-pink-500"></div>
+      <div className="absolute top-0 left-0 w-1 h-full bg-primary"></div>
       
       <div className="p-6">
         <div className="flex items-center mb-4">
-          <FileBarChart className="h-5 w-5 text-pink-500 mr-2" />
+          <FileBarChart className="h-5 w-5 text-primary mr-2" />
           <h2 className="text-xl font-semibold">Requirement Documentation</h2>
         </div>
         
@@ -39,7 +40,7 @@ export function RequirementDocumentationSection({
           {/* Stakeholder Needs List */}
           <div>
             <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="block text-sm font-medium text-foreground">
                 Stakeholder Needs
               </label>
               
@@ -48,6 +49,7 @@ export function RequirementDocumentationSection({
                   variant="ghost"
                   size="sm"
                   onClick={() => onAddListItem('requirementDocumentation', 'StakeholderNeeds')}
+                  className="text-primary hover:text-primary/80"
                 >
                   <Plus className="h-3.5 w-3.5 mr-1" /> Add Need
                 </Button>
@@ -56,8 +58,8 @@ export function RequirementDocumentationSection({
             
             <div className="space-y-2">
               {data.StakeholderNeeds.length === 0 ? (
-                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
-                  <span className="text-gray-400 dark:text-gray-500 italic">No stakeholder needs defined</span>
+                <div className="p-3 bg-muted/20 rounded-md">
+                  <span className="text-muted-foreground italic">No stakeholder needs defined</span>
                 </div>
               ) : (
                 data.StakeholderNeeds.map((need, index) => (
@@ -68,13 +70,13 @@ export function RequirementDocumentationSection({
                           value={need || ''}
                           onChange={(e) => onListChange('requirementDocumentation', 'StakeholderNeeds', index, e.target.value)}
                           placeholder={`Stakeholder need #${index + 1}`}
-                          className="flex-1"
+                          className="flex-1 bg-background"
                         />
                         
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/20"
+                          className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
                           onClick={() => onRemoveListItem('requirementDocumentation', 'StakeholderNeeds', index)}
                           disabled={data.StakeholderNeeds.length <= 1}
                         >
@@ -82,8 +84,8 @@ export function RequirementDocumentationSection({
                         </Button>
                       </>
                     ) : (
-                      <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md w-full">
-                        {need || <span className="text-gray-400 dark:text-gray-500 italic">Empty need</span>}
+                      <div className="p-3 bg-muted/20 rounded-md w-full text-foreground">
+                        {need || <span className="text-muted-foreground italic">Empty need</span>}
                       </div>
                     )}
                   </div>
@@ -95,7 +97,7 @@ export function RequirementDocumentationSection({
           {/* Quantified Expectations List */}
           <div>
             <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="block text-sm font-medium text-foreground">
                 Quantified Expectations
               </label>
               
@@ -104,6 +106,7 @@ export function RequirementDocumentationSection({
                   variant="ghost"
                   size="sm"
                   onClick={() => onAddListItem('requirementDocumentation', 'QuantifiedExpectations')}
+                  className="text-primary hover:text-primary/80"
                 >
                   <Plus className="h-3.5 w-3.5 mr-1" /> Add Expectation
                 </Button>
@@ -112,8 +115,8 @@ export function RequirementDocumentationSection({
             
             <div className="space-y-2">
               {data.QuantifiedExpectations.length === 0 ? (
-                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
-                  <span className="text-gray-400 dark:text-gray-500 italic">No quantified expectations defined</span>
+                <div className="p-3 bg-muted/20 rounded-md">
+                  <span className="text-muted-foreground italic">No quantified expectations defined</span>
                 </div>
               ) : (
                 data.QuantifiedExpectations.map((expectation, index) => (
@@ -124,13 +127,13 @@ export function RequirementDocumentationSection({
                           value={expectation || ''}
                           onChange={(e) => onListChange('requirementDocumentation', 'QuantifiedExpectations', index, e.target.value)}
                           placeholder={`Quantified expectation #${index + 1}`}
-                          className="flex-1"
+                          className="flex-1 bg-background"
                         />
                         
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/20"
+                          className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
                           onClick={() => onRemoveListItem('requirementDocumentation', 'QuantifiedExpectations', index)}
                           disabled={data.QuantifiedExpectations.length <= 1}
                         >
@@ -138,8 +141,8 @@ export function RequirementDocumentationSection({
                         </Button>
                       </>
                     ) : (
-                      <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md w-full">
-                        {expectation || <span className="text-gray-400 dark:text-gray-500 italic">Empty expectation</span>}
+                      <div className="p-3 bg-muted/20 rounded-md w-full text-foreground">
+                        {expectation || <span className="text-muted-foreground italic">Empty expectation</span>}
                       </div>
                     )}
                   </div>
@@ -150,7 +153,7 @@ export function RequirementDocumentationSection({
           
           {/* Traceability */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Traceability
             </label>
             {isEditing ? (
@@ -158,12 +161,12 @@ export function RequirementDocumentationSection({
                 value={data.Traceability || ''}
                 onChange={(e) => onChange('Traceability', e.target.value)}
                 placeholder="Describe how requirements will be traced throughout the project lifecycle..."
-                className="min-h-[100px]"
+                className="min-h-[100px] bg-background/50"
               />
             ) : (
-              <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+              <div className="p-3 bg-muted/20 rounded-md text-foreground">
                 {data.Traceability || (
-                  <span className="text-gray-400 dark:text-gray-500 italic">No traceability defined</span>
+                  <span className="text-muted-foreground italic">No traceability defined</span>
                 )}
               </div>
             )}

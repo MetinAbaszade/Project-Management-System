@@ -3,11 +3,20 @@
 // Import CSS
 import './scope.css';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getProjectById } from '@/api/ProjectAPI';
-import { getProjectScope, addProjectScope, editProjectScope } from '@/api/ScopeAPI';
-import { getAttachmentsByEntity, uploadAttachment, deleteAttachment } from '@/api/AttachmentAPI';
+import { 
+  getProjectScope, 
+  addProjectScope, 
+  editProjectScope, 
+  deleteProjectScope,
+  addScopeManagementPlan,
+  addRequirementManagementPlan,
+  addRequirementDocumentation,
+  addProjectScopeStatement,
+  addWorkBreakdownStructure
+} from '@/api/ScopeAPI';
 import { toast } from '@/lib/toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -16,7 +25,6 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Skeleton } from '@/components/ui/skeleton';
 import { 
   ArrowLeft, 
   Edit, 
@@ -27,7 +35,9 @@ import {
   Paperclip,
   ClipboardList,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 
 // Project scope sections components
@@ -37,6 +47,9 @@ import { RequirementDocumentationSection } from '@/components/scope/RequirementD
 import { ProjectScopeStatementSection } from '@/components/scope/ProjectScopeStatementSection';
 import { WorkBreakdownStructureSection } from '@/components/scope/WorkBreakdownStructureSection';
 import { AttachmentsSection } from '@/components/scope/AttachmentsSection';
+import { SectionAttachments } from '@/components/scope/SectionAttachments';
+import { DeleteScopeDialog } from '@/components/scope/DeleteScopeDialog';
+import { StepProgressBar } from '@/components/scope/StepProgressBar';
 
 // Function to extract user ID from JWT token
 function getUserIdFromToken() {
@@ -68,16 +81,29 @@ export default function ProjectScopePage() {
   const [project, setProject] = useState<any>(null);
   const [scope, setScope] = useState<any>(null);
   const [originalScope, setOriginalScope] = useState<any>(null);
-  const [attachments, setAttachments] = useState<any[]>([]);
   
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isCreateMode, setIsCreateMode] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [scopeExists, setScopeExists] = useState(false);
   const [activeSection, setActiveSection] = useState('all');
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
+  // Step-by-step creation state
+  const [creationStep, setCreationStep] = useState('scopeManagement');
+  const contentRef = useRef<HTMLDivElement>(null);
+  
+  const creationSteps = [
+    { id: 'scopeManagement', label: 'Scope Plan' },
+    { id: 'requirementManagement', label: 'Requirements' },
+    { id: 'scopeStatement', label: 'Scope Statement' },
+    { id: 'wbs', label: 'Work Breakdown' },
+    { id: 'review', label: 'Review' },
+  ];
   
   // Extract userId from token on client side
   useEffect(() => {
@@ -123,19 +149,12 @@ export default function ProjectScopePage() {
           setOriginalScope(JSON.parse(JSON.stringify(scopeData))); // Deep copy
           setScopeExists(true);
         } catch (scopeError) {
+          console.log("No existing scope found, creating empty structure");
           // Create empty scope structure
           const emptyScope = createEmptyScope();
           setScope(emptyScope);
           setOriginalScope(JSON.parse(JSON.stringify(emptyScope))); // Deep copy
           setScopeExists(false);
-        }
-        
-        // Load scope attachments
-        try {
-          const attachmentsData = await getAttachmentsByEntity(id as string, 'Scope', id as string);
-          setAttachments(attachmentsData);
-        } catch (attachmentsError) {
-          setAttachments([]);
         }
       } catch (error) {
         console.error("Unexpected error during load:", error);
@@ -147,6 +166,13 @@ export default function ProjectScopePage() {
     
     loadProjectData();
   }, [id, userId]);
+  
+  // Scroll to top when changing steps
+  useEffect(() => {
+    if (contentRef.current && isCreateMode) {
+      contentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [creationStep, isCreateMode]);
   
   const createEmptyScope = () => {
     return {
@@ -264,6 +290,53 @@ export default function ProjectScopePage() {
     });
   };
   
+  const handleStepContinue = async () => {
+    // Save the current step
+    try {
+      setSaving(true);
+      let saveResult;
+      
+      // Save specific section data
+      switch (creationStep) {
+        case 'scopeManagement':
+          saveResult = await addScopeManagementPlan(id as string, scope.scopeManagementPlan);
+          setCreationStep('requirementManagement');
+          break;
+        case 'requirementManagement':
+          saveResult = await Promise.all([
+            addRequirementManagementPlan(id as string, scope.requirementManagementPlan),
+            addRequirementDocumentation(id as string, scope.requirementDocumentation)
+          ]);
+          setCreationStep('scopeStatement');
+          break;
+        case 'scopeStatement':
+          saveResult = await addProjectScopeStatement(id as string, scope.projectScopeStatement);
+          setCreationStep('wbs');
+          break;
+        case 'wbs':
+          saveResult = await addWorkBreakdownStructure(id as string, scope.workBreakdownStructure);
+          setCreationStep('review');
+          break;
+        case 'review':
+          // Final save already happened, just exit review
+          setIsCreateMode(false);
+          setScopeExists(true);
+          break;
+      }
+      
+      toast.success(`Saved ${creationStep.replace(/([A-Z])/g, ' $1').trim()} successfully`);
+    } catch (error) {
+      console.error(`Failed to save ${creationStep}:`, error);
+      toast.error(`Failed to save: ${error.message || "Unknown error"}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+  
+  const handleStepNavigation = (stepId: string) => {
+    setCreationStep(stepId);
+  };
+  
   const handleSaveScope = async () => {
     if (!scope) return;
     
@@ -278,6 +351,7 @@ export default function ProjectScopePage() {
       
       setOriginalScope(JSON.parse(JSON.stringify(scope))); // Update original after save
       setIsEditing(false);
+      setIsCreateMode(false);
       toast.success('Project scope saved successfully');
     } catch (error) {
       console.error('Failed to save project scope:', error);
@@ -291,44 +365,33 @@ export default function ProjectScopePage() {
     // Revert to original scope
     setScope(JSON.parse(JSON.stringify(originalScope)));
     setIsEditing(false);
+    setIsCreateMode(false);
   };
   
-  const handleFileUpload = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    
+  const handleDeleteScope = async () => {
     try {
-      const newAttachment = await uploadAttachment(file, 'Scope', id as string, id as string);
-      setAttachments(prev => [...prev, newAttachment]);
-      toast.success('File uploaded successfully');
+      await deleteProjectScope(id as string);
+      // Reset the scope state
+      const emptyScope = createEmptyScope();
+      setScope(emptyScope);
+      setOriginalScope(JSON.parse(JSON.stringify(emptyScope)));
+      setScopeExists(false);
+      toast.success('Project scope deleted successfully');
     } catch (error) {
-      console.error('Failed to upload file:', error);
-      toast.error(`Failed to upload file: ${error.message || "Unknown error"}`);
-    } finally {
-      // Reset file input
-      event.target.value = '';
+      console.error('Failed to delete project scope:', error);
+      toast.error(`Failed to delete project scope: ${error.message || "Unknown error"}`);
     }
   };
   
-  const handleDeleteAttachment = async (attachmentId) => {
-    try {
-      await deleteAttachment(attachmentId);
-      setAttachments(prev => prev.filter(att => att.Id !== attachmentId));
-      toast.success('File deleted successfully');
-    } catch (error) {
-      console.error('Failed to delete file:', error);
-      toast.error(`Failed to delete file: ${error.message || "Unknown error"}`);
-    }
+  const handleStartCreate = () => {
+    setIsCreateMode(true);
+    setCreationStep('scopeManagement');
   };
   
   const handleRetry = () => {
     setLoading(true);
     setError(null);
     window.location.reload();
-  };
-  
-  const redirectToScopeCreate = () => {
-    router.push(`/projects/${id}/scope/create`);
   };
   
   if (loading) {
@@ -386,8 +449,11 @@ export default function ProjectScopePage() {
   if (!scope) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <GlassPanel className="p-8 text-center">
-          <AlertCircle className="h-12 w-12 mx-auto text-amber-500 mb-4" />
+<GlassPanel className={cn("p-6 mb-8", {
+  "border-l-4": true,
+  "border-primary": true,
+  "shadow-md": true,
+})}>          <AlertCircle className="h-12 w-12 mx-auto text-amber-500 mb-4" />
           <h2 className="text-2xl font-bold mb-2">Scope Data Issue</h2>
           <p className="text-muted-foreground mb-4">There was an issue loading the project scope data.</p>
           <Button onClick={handleRetry}>
@@ -406,6 +472,330 @@ export default function ProjectScopePage() {
     { id: 'workBreakdownStructure', label: 'Work Breakdown', icon: <FileText className="h-4 w-4" /> },
     { id: 'attachments', label: 'Attachments', icon: <Paperclip className="h-4 w-4" /> },
   ];
+  
+  // Step-by-step creation mode
+  if (isCreateMode) {
+    return (
+      <div className="min-h-screen animate-gradientBackground pb-20">
+        {/* Header */}
+        <div className="sticky top-0 z-40 glass-header">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center">
+                <button
+                  onClick={() => {
+                    if (confirm('Are you sure you want to exit? Your progress will be saved.')) {
+                      setIsCreateMode(false);
+                    }
+                  }}
+                  className="mr-3 p-1.5 rounded-full hover-effect"
+                >
+                  <ArrowLeft className="h-5 w-5 text-foreground/70" />
+                </button>
+                
+                <div>
+                  <h1 className="text-xl font-semibold text-foreground/90">
+                    Define Scope for {project.Name}
+                  </h1>
+                  <p className="text-sm text-foreground/60">
+                    Step {creationSteps.findIndex(s => s.id === creationStep) + 1} of {creationSteps.length}: {creationSteps.find(s => s.id === creationStep)?.label}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Cancel and Save buttons */}
+              <div className="flex gap-2 self-end md:self-auto">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    if (confirm('Are you sure you want to cancel? Your changes will be lost.')) {
+                      handleCancelEdit();
+                    }
+                  }}
+                  disabled={saving}
+                  className="button-hover"
+                >
+                  <X className="h-4 w-4 mr-2" /> Cancel
+                </Button>
+                
+                {creationStep === 'review' ? (
+                  <Button 
+                    onClick={handleStepContinue}
+                    disabled={saving}
+                    className="save-button-animation"
+                  >
+                    {saving ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Finalizing...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4 mr-2" /> Complete Scope Definition
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={handleStepContinue}
+                    disabled={saving}
+                    className="save-button-animation"
+                  >
+                    {saving ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        Continue <ArrowRight className="h-4 w-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div ref={contentRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Progress bar */}
+          <div className="mb-8">
+            <StepProgressBar 
+              steps={creationSteps}
+              currentStep={creationStep}
+              onStepClick={handleStepNavigation}
+            />
+          </div>
+          
+          <div className="space-y-8">
+            <AnimatePresence mode="wait">
+              {/* Scope Management Plan Step */}
+              {creationStep === 'scopeManagement' && (
+                <motion.div
+                  key="scopeManagement"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+<GlassPanel className={cn("p-6 mb-8", {
+  "border-l-4": true,
+  "border-primary": true,
+  "shadow-md": true,
+})}>                    <h2 className="text-lg font-semibold mb-2">Scope Management Plan</h2>
+                    <p className="text-muted-foreground">
+                      Define how the project scope will be defined, validated, and controlled. This is the foundation for the rest of your scope documentation.
+                    </p>
+                  </GlassPanel>
+                  
+                  <ScopeManagementPlanSection
+                    data={scope.scopeManagementPlan}
+                    isEditing={true}
+                    onChange={(field, value) => handleScopeChange('scopeManagementPlan', field, value)}
+                  />
+                  
+                  <SectionAttachments 
+                    projectId={id as string}
+                    sectionType="scopeManagementPlan"
+                    userId={userId as string}
+                    isOwner={isOwner}
+                  />
+                </motion.div>
+              )}
+              
+              {/* Requirements Management Step */}
+              {creationStep === 'requirementManagement' && (
+                <motion.div
+                  key="requirementManagement"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+<GlassPanel className={cn("p-6 mb-8", {
+  "border-l-4": true,
+  "border-primary": true,
+  "shadow-md": true,
+})}>                    <h2 className="text-lg font-semibold mb-2">Requirements Management</h2>
+                    <p className="text-muted-foreground">
+                      Define how project requirements will be analyzed, documented, and managed throughout the project lifecycle.
+                    </p>
+                  </GlassPanel>
+                  
+                  <RequirementManagementPlanSection
+                    data={scope.requirementManagementPlan}
+                    isEditing={true}
+                    onChange={(field, value) => handleScopeChange('requirementManagementPlan', field, value)}
+                  />
+                  
+                  <div className="mt-8">
+                    <RequirementDocumentationSection
+                      data={scope.requirementDocumentation}
+                      isEditing={true}
+                      onChange={(field, value) => handleScopeChange('requirementDocumentation', field, value)}
+                      onListChange={handleListChange}
+                      onAddListItem={handleAddListItem}
+                      onRemoveListItem={handleRemoveListItem}
+                    />
+                  </div>
+                  
+                  <SectionAttachments 
+                    projectId={id as string}
+                    sectionType="requirementManagement"
+                    userId={userId as string}
+                    isOwner={isOwner}
+                  />
+                </motion.div>
+              )}
+              
+              {/* Scope Statement Step */}
+              {creationStep === 'scopeStatement' && (
+                <motion.div
+                  key="scopeStatement"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+<GlassPanel className={cn("p-6 mb-8", {
+  "border-l-4": true,
+  "border-primary": true,
+  "shadow-md": true,
+})}>                    <h2 className="text-lg font-semibold mb-2">Project Scope Statement</h2>
+                    <p className="text-muted-foreground">
+                      Clearly define what is included and excluded from the project, including deliverables and acceptance criteria.
+                    </p>
+                  </GlassPanel>
+                  
+                  <ProjectScopeStatementSection
+                    data={scope.projectScopeStatement}
+                    isEditing={true}
+                    onChange={(field, value) => handleScopeChange('projectScopeStatement', field, value)}
+                    onListChange={handleListChange}
+                    onAddListItem={handleAddListItem}
+                    onRemoveListItem={handleRemoveListItem}
+                  />
+                  
+                  <SectionAttachments 
+                    projectId={id as string}
+                    sectionType="scopeStatement"
+                    userId={userId as string}
+                    isOwner={isOwner}
+                  />
+                </motion.div>
+              )}
+              
+              {/* WBS Step */}
+              {creationStep === 'wbs' && (
+                <motion.div
+                  key="wbs"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+<GlassPanel className={cn("p-6 mb-8", {
+  "border-l-4": true,
+  "border-primary": true,
+  "shadow-md": true,
+})}>                    <h2 className="text-lg font-semibold mb-2">Work Breakdown Structure</h2>
+                    <p className="text-muted-foreground">
+                      Break down the project scope into manageable work packages. Define each component with descriptions, durations, and costs.
+                    </p>
+                  </GlassPanel>
+                  
+                  <WorkBreakdownStructureSection
+                    data={scope.workBreakdownStructure}
+                    isEditing={true}
+                    onChange={(field, value) => handleScopeChange('workBreakdownStructure', field, value)}
+                    onAddWorkPackage={handleAddWorkPackage}
+                    onWorkPackageChange={handleWorkPackageChange}
+                    onRemoveWorkPackage={handleRemoveWorkPackage}
+                  />
+                  
+                  <SectionAttachments 
+                    projectId={id as string}
+                    sectionType="wbs"
+                    userId={userId as string}
+                    isOwner={isOwner}
+                  />
+                </motion.div>
+              )}
+              
+              {/* Review Step */}
+              {creationStep === 'review' && (
+                <motion.div
+                  key="review"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+<GlassPanel className={cn("p-6 mb-8", {
+  "border-l-4": true,
+  "border-primary": true,
+  "shadow-md": true,
+})}>                    <h2 className="text-lg font-semibold mb-2">Review & Complete</h2>
+                    <p className="text-muted-foreground">
+                      Review all components of your project scope before finalizing.
+                    </p>
+                  </GlassPanel>
+                  
+                  <div className="space-y-8">
+                    <ScopeManagementPlanSection
+                      data={scope.scopeManagementPlan}
+                      isEditing={false}
+                      onChange={() => {}}
+                    />
+                    
+                    <RequirementManagementPlanSection
+                      data={scope.requirementManagementPlan}
+                      isEditing={false}
+                      onChange={() => {}}
+                    />
+                    
+                    <RequirementDocumentationSection
+                      data={scope.requirementDocumentation}
+                      isEditing={false}
+                      onChange={() => {}}
+                      onListChange={() => {}}
+                      onAddListItem={() => {}}
+                      onRemoveListItem={() => {}}
+                    />
+                    
+                    <ProjectScopeStatementSection
+                      data={scope.projectScopeStatement}
+                      isEditing={false}
+                      onChange={() => {}}
+                      onListChange={() => {}}
+                      onAddListItem={() => {}}
+                      onRemoveListItem={() => {}}
+                    />
+                    
+                    <WorkBreakdownStructureSection
+                      data={scope.workBreakdownStructure}
+                      isEditing={false}
+                      onChange={() => {}}
+                      onAddWorkPackage={() => {}}
+                      onWorkPackageChange={() => {}}
+                      onRemoveWorkPackage={() => {}}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen animate-gradientBackground text-foreground bg-background">
@@ -464,34 +854,56 @@ export default function ProjectScopePage() {
                     </Button>
                   </>
                 ) : (
-                  <Button 
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Edit className="h-4 w-4 mr-2" /> {scopeExists ? 'Edit Scope' : 'Define Scope'}
-                  </Button>
+                  <>
+                    {scopeExists && (
+                      <Button 
+                        variant="outline"
+                        onClick={() => setIsDeleteDialogOpen(true)}
+                        className="text-red-500 border-red-200 hover:bg-red-50 dark:hover:bg-red-950 dark:border-red-800"
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" /> Delete Scope
+                      </Button>
+                    )}
+                    {scopeExists ? (
+                      <Button 
+                        onClick={() => setIsEditing(true)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" /> Edit Scope
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={handleStartCreate}
+                        className="bg-primary hover:bg-primary/90"
+                      >
+                        <Plus className="h-4 w-4 mr-2" /> Define Scope
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             )}
           </div>
           
           {/* Section Navigation */}
-          <div className="flex items-center space-x-2 overflow-x-auto mt-4 pb-2 hide-scrollbar">
-            {sections.map(section => (
-              <button
-                key={section.id}
-                onClick={() => setActiveSection(section.id)}
-                className={cn(
-                  "flex items-center px-3 py-1.5 text-sm rounded-full transition-colors",
-                  activeSection === section.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                )}
-              >
-                {section.icon}
-                <span className="ml-1.5">{section.label}</span>
-              </button>
-            ))}
-          </div>
+          {scopeExists && (
+            <div className="flex items-center space-x-2 overflow-x-auto mt-4 pb-2 hide-scrollbar">
+              {sections.map(section => (
+                <button
+                  key={section.id}
+                  onClick={() => setActiveSection(section.id)}
+                  className={cn(
+                    "flex items-center px-3 py-1.5 text-sm rounded-full transition-colors",
+                    activeSection === section.id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}
+                >
+                  {section.icon}
+                  <span className="ml-1.5">{section.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       
@@ -504,7 +916,7 @@ export default function ProjectScopePage() {
             icon={<FileText className="h-16 w-16" />}
             action={
               isOwner ? (
-                <Button onClick={() => setIsEditing(true)}>
+                <Button onClick={handleStartCreate} className="mt-4">
                   <Plus className="h-4 w-4 mr-2" /> Define Scope
                 </Button>
               ) : undefined
@@ -527,6 +939,15 @@ export default function ProjectScopePage() {
                     isEditing={isEditing}
                     onChange={(field, value) => handleScopeChange('scopeManagementPlan', field, value)}
                   />
+                  
+                  {!isEditing && (
+                    <SectionAttachments 
+                      projectId={id as string}
+                      sectionType="scopeManagementPlan"
+                      userId={userId as string}
+                      isOwner={isOwner}
+                    />
+                  )}
                 </motion.div>
               )}
               
@@ -544,6 +965,15 @@ export default function ProjectScopePage() {
                     isEditing={isEditing}
                     onChange={(field, value) => handleScopeChange('requirementManagementPlan', field, value)}
                   />
+                  
+                  {!isEditing && (
+                    <SectionAttachments 
+                      projectId={id as string}
+                      sectionType="requirementManagementPlan"
+                      userId={userId as string}
+                      isOwner={isOwner}
+                    />
+                  )}
                 </motion.div>
               )}
               
@@ -564,6 +994,15 @@ export default function ProjectScopePage() {
                     onAddListItem={handleAddListItem}
                     onRemoveListItem={handleRemoveListItem}
                   />
+                  
+                  {!isEditing && (
+                    <SectionAttachments 
+                      projectId={id as string}
+                      sectionType="requirementDocumentation"
+                      userId={userId as string}
+                      isOwner={isOwner}
+                    />
+                  )}
                 </motion.div>
               )}
               
@@ -584,6 +1023,15 @@ export default function ProjectScopePage() {
                     onAddListItem={handleAddListItem}
                     onRemoveListItem={handleRemoveListItem}
                   />
+                  
+                  {!isEditing && (
+                    <SectionAttachments 
+                      projectId={id as string}
+                      sectionType="projectScopeStatement"
+                      userId={userId as string}
+                      isOwner={isOwner}
+                    />
+                  )}
                 </motion.div>
               )}
               
@@ -604,6 +1052,15 @@ export default function ProjectScopePage() {
                     onWorkPackageChange={handleWorkPackageChange}
                     onRemoveWorkPackage={handleRemoveWorkPackage}
                   />
+                  
+                  {!isEditing && (
+                    <SectionAttachments 
+                      projectId={id as string}
+                      sectionType="workBreakdownStructure"
+                      userId={userId as string}
+                      isOwner={isOwner}
+                    />
+                  )}
                 </motion.div>
               )}
               
@@ -617,10 +1074,10 @@ export default function ProjectScopePage() {
                   transition={{ duration: 0.3, delay: 0.5 }}
                 >
                   <AttachmentsSection
-                    attachments={attachments}
+                    attachments={[]} // Use global attachments here if needed
                     isOwner={isOwner}
-                    onUpload={handleFileUpload}
-                    onDelete={handleDeleteAttachment}
+                    onUpload={() => {}}
+                    onDelete={() => {}}
                   />
                 </motion.div>
               )}
@@ -628,6 +1085,54 @@ export default function ProjectScopePage() {
           </div>
         )}
       </div>
+      
+      {/* Delete Confirmation Dialog */}
+      <DeleteScopeDialog
+        projectName={project.Name}
+        isOpen={isDeleteDialogOpen}
+        setIsOpen={setIsDeleteDialogOpen}
+        onConfirmDelete={handleDeleteScope}
+      />
     </div>
+  );
+}
+
+// Helper component for the step-by-step creation flow
+function ArrowRight(props) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M5 12h14" />
+      <path d="m12 5 7 7-7 7" />
+    </svg>
+  );
+}
+
+function Check(props) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
   );
 }

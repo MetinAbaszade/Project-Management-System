@@ -10,7 +10,8 @@ import {
   X, 
   User, 
   MoreHorizontal,
-  Trash2
+  Trash2,
+  Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/lib/toast';
@@ -45,6 +46,7 @@ export default function ProjectTeamsPage() {
   const [isOwner, setIsOwner] = useState(false);
   const [activeTeamMenu, setActiveTeamMenu] = useState(null);
   const [deletingTeam, setDeletingTeam] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
   
   // Ref for dropdown menu closing
   const menuRef = useRef(null);
@@ -91,11 +93,11 @@ export default function ProjectTeamsPage() {
         ]);
         
         setProject(projectData);
-        setTeams(teamsData);
+        setTeams(teamsData || []);
         
         // Determine if current user is project owner
         const userId = user?.Id || getUserIdFromToken();
-        setIsOwner(userId === projectData.OwnerId);
+        setIsOwner(userId === projectData?.OwnerId);
       } catch (error) {
         console.error('Failed to load project teams:', error);
         toast.error('Could not load teams for this project');
@@ -116,20 +118,23 @@ export default function ProjectTeamsPage() {
     (team.Description && team.Description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
   
-  // Delete team handler
+  // Delete team handler - Fixed implementation
   const handleDeleteTeam = async (teamId) => {
     try {
       setDeletingTeam(teamId);
+      
+      // Call the delete team API
       await deleteTeam(teamId);
       
-      // Update local state
+      // Update local state only after successful deletion
       setTeams(prevTeams => prevTeams.filter(team => team.Id !== teamId));
       setActiveTeamMenu(null);
+      setConfirmDelete(null);
       
       toast.success('Team deleted successfully');
     } catch (error) {
       console.error('Failed to delete team:', error);
-      toast.error('Could not delete team');
+      toast.error('Could not delete team: ' + (error.message || 'Unknown error'));
     } finally {
       setDeletingTeam(null);
     }
@@ -150,7 +155,7 @@ export default function ProjectTeamsPage() {
       return name.substring(0, 2).toUpperCase();
     }
     
-    return (words[0][0] + words[1][0]).toUpperCase();
+    return (words[0][0] + (words[1]?.[0] || '')).toUpperCase();
   };
   
   // Render loading skeletons
@@ -174,47 +179,47 @@ export default function ProjectTeamsPage() {
     </div>
   );
   
-        const renderEmptyState = () => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-    className="modern-empty-state"
-  >
-    <div className="empty-illustration">
-      <div className="empty-icons">
-        <div className="empty-icon icon-1"><Users size={28} /></div>
-        <div className="empty-icon icon-2"><User size={24} /></div>
-        <div className="empty-icon icon-3"><User size={20} /></div>
-        <div className="empty-icon icon-4"><User size={22} /></div>
+  const renderEmptyState = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="modern-empty-state"
+    >
+      <div className="empty-illustration">
+        <div className="empty-icons">
+          <div className="empty-icon icon-1"><Users size={28} /></div>
+          <div className="empty-icon icon-2"><User size={24} /></div>
+          <div className="empty-icon icon-3"><User size={20} /></div>
+          <div className="empty-icon icon-4"><User size={22} /></div>
+        </div>
+        <div className="empty-circle"></div>
+        <div className="empty-shadow"></div>
       </div>
-      <div className="empty-circle"></div>
-      <div className="empty-shadow"></div>
-    </div>
-    
-    <div className="empty-content">
-      <h2>Build Your Team</h2>
-      <p>
-        Teams help organize members and assign tasks efficiently.
-        {isOwner ? ' Create your first team to get started.' : ' The project owner needs to create teams for this project.'}
-      </p>
       
-      <div className="button-container">
-        {isOwner && (
-          <motion.button 
-            className="create-first-team-button"
-            onClick={() => router.push(`/projects/${id}/team/create`)}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-          >
-            <Plus size={16} />
-            <span>Create First Team</span>
-          </motion.button>
-        )}
+      <div className="empty-content">
+        <h2>Build Your Team</h2>
+        <p>
+          Teams help organize members and assign tasks efficiently.
+          {isOwner ? ' Create your first team to get started.' : ' The project owner needs to create teams for this project.'}
+        </p>
+        
+        <div className="button-container">
+          {isOwner && (
+            <motion.button 
+              className="create-first-team-button"
+              onClick={() => router.push(`/projects/${id}/team/create`)}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              <Plus size={16} />
+              <span>Create First Team</span>
+            </motion.button>
+          )}
+        </div>
       </div>
-    </div>
-  </motion.div>
-       );
+    </motion.div>
+  );
   
   // Render search empty state
   const renderSearchEmptyState = () => (
@@ -245,6 +250,52 @@ export default function ProjectTeamsPage() {
         </motion.button>
       </div>
     </motion.div>
+  );
+
+  // Delete confirmation dialog
+  const renderDeleteConfirmation = (team) => (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <motion.div 
+        className="bg-card p-6 rounded-xl border border-border max-w-md w-full"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+      >
+        <h3 className="text-lg font-semibold mb-2">Delete Team</h3>
+        <p className="text-muted-foreground mb-4">
+          Are you sure you want to delete the team <span className="font-medium text-foreground">"{team.Name}"</span>? 
+          This action cannot be undone.
+        </p>
+        
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            className="px-4 py-2 bg-muted text-foreground rounded-md hover:bg-muted/80 transition-colors"
+            onClick={() => setConfirmDelete(null)}
+            disabled={deletingTeam === team.Id}
+          >
+            Cancel
+          </button>
+          
+          <button
+            className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors flex items-center"
+            onClick={() => handleDeleteTeam(team.Id)}
+            disabled={deletingTeam === team.Id}
+          >
+            {deletingTeam === team.Id ? (
+              <>
+                <div className="w-4 h-4 border-2 border-destructive-foreground/30 border-t-destructive-foreground rounded-full animate-spin mr-2"></div>
+                Deleting...
+              </>
+            ) : (
+              <>
+                <Trash2 size={16} className="mr-2" />
+                Delete Team
+              </>
+            )}
+          </button>
+        </div>
+      </motion.div>
+    </div>
   );
 
   return (
@@ -289,7 +340,7 @@ export default function ProjectTeamsPage() {
         )}
       </motion.div>
       
-      {/* Search bar - fixed with more visible borders and no redundant icon */}
+      {/* Search bar */}
       <motion.div 
         className="search-container"
         initial={{ opacity: 0, y: 15 }}
@@ -379,9 +430,9 @@ export default function ProjectTeamsPage() {
                                 className="team-menu-item delete"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (window.confirm(`Are you sure you want to delete the team "${team.Name}"?`)) {
-                                    handleDeleteTeam(team.Id);
-                                  }
+                                  // FIXED: Set confirmDelete instead of directly deleting
+                                  setConfirmDelete(team);
+                                  setActiveTeamMenu(null);
                                 }}
                                 disabled={deletingTeam === team.Id}
                               >
@@ -412,6 +463,11 @@ export default function ProjectTeamsPage() {
           </div>
         )}
       </div>
+      
+      {/* Delete confirmation dialog */}
+      <AnimatePresence>
+        {confirmDelete && renderDeleteConfirmation(confirmDelete)}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+// Frontend/src/app/(dashboard)/projects/[id]/risks/create/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -5,58 +6,71 @@ import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
-  ShieldAlert,
+  Shield,
+  AlertTriangle,
   Loader2,
   Save,
-  HelpCircle,
-  ClipboardList
+  Gauge,
+  BarChart4,
+  AlertCircle
 } from 'lucide-react';
 
 // API imports
-import { getRiskById } from '@/api/RiskAPI';
-import { createRiskResponsePlan } from '@/api/RiskAPI';
+import { getProjectById } from '@/api/ProjectAPI';
+import { createRisk } from '@/api/RiskAPI';
 import { toast } from '@/lib/toast';
 
-// Reuse the analysis form styles
-import '../[riskid]/analysis/create/analysisForm.css';
+// CSS
+import './createRisk.css';
 
-// Response strategies based on the actual options
-const RESPONSE_STRATEGIES = [
-  'Avoid',
-  'Mitigate',
-  'Transfer',
-  'Accept',
-  'Exploit',
-  'Share',
-  'Enhance',
-  'Contingent',
+// Risk categories
+const RISK_CATEGORIES = [
+  'Technical',
+  'Schedule',
+  'Cost',
+  'Resource',
+  'Quality',
+  'Stakeholder',
+  'Scope',
+  'Operational',
+  'External',
+  'Regulatory',
+  'Security',
   'Other'
 ];
 
-// Response status options
-const RESPONSE_STATUSES = [
-  'Not Started',
-  'In Progress',
-  'Completed'
+// Risk statuses
+const RISK_STATUSES = [
+  'Identified',
+  'Analyzing',
+  'Monitoring',
+  'Mitigating',
+  'Resolved'
 ];
 
-export default function CreateRiskResponsePage() {
-  const { id, riskId } = useParams();
+export default function CreateRiskPage() {
+  const { id } = useParams();
   const router = useRouter();
   
   // States
-  const [risk, setRisk] = useState<any>(null);
+  const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isProjectOwner, setIsProjectOwner] = useState(false);
   
   // Form state
   const [form, setForm] = useState({
-    Strategy: 'Mitigate',
+    Name: '',
     Description: '',
-    PlannedActions: '',
-    Status: 'Not Started'
+    Category: 'Technical',
+    Probability: 0.5,    // 0 to 1 value
+    Impact: 5,         // 1 to 10 value
+    Status: 'Identified',
   });
+  
+  // Derived values
+  const severity = form.Probability * form.Impact;
   
   // Validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -81,32 +95,59 @@ export default function CreateRiskResponsePage() {
     }
   }, [router]);
 
-  // Fetch risk data
+  // Fetch project data
   useEffect(() => {
     const fetchData = async () => {
-      if (!riskId) return;
+      if (!id || !userId) return;
       
       setLoading(true);
       try {
-        const riskData = await getRiskById(riskId as string);
-        setRisk(riskData);
+        const projectData = await getProjectById(id as string);
+        
+        setProject(projectData);
+        
+        // Check if user is project owner
+        const isOwner = projectData.OwnerId === userId;
+        setIsProjectOwner(isOwner);
+        
+        // If not owner, redirect back
+        if (!isOwner) {
+          toast.error('Only project owners can create risks');
+          router.push(`/projects/${id}/risks`);
+        }
+        
       } catch (error) {
-        console.error('Error fetching risk:', error);
-        toast.error('Could not load risk data');
-        router.push(`/projects/${id}/risks/${riskId}`);
+        console.error('Error fetching project:', error);
+        toast.error('Could not load project data');
+        router.push(`/projects/${id}`);
       } finally {
         setLoading(false);
       }
     };
     
     fetchData();
-  }, [id, riskId, router]);
+  }, [id, userId, router]);
 
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    setForm(prev => ({ ...prev, [name]: value }));
+    // Handle special cases for validation
+    if (name === 'Probability') {
+      // Ensure probability is between 0 and 1
+      const probability = parseFloat(value);
+      if (probability < 0) return;
+      if (probability > 1) return;
+      setForm(prev => ({ ...prev, [name]: probability }));
+    } else if (name === 'Impact') {
+      // Ensure impact is between 1 and 10
+      const impact = parseInt(value);
+      if (impact < 1) return;
+      if (impact > 10) return;
+      setForm(prev => ({ ...prev, [name]: impact }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: value }));
+    }
     
     // Clear validation error when field is changed
     if (errors[name]) {
@@ -122,16 +163,20 @@ export default function CreateRiskResponsePage() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!form.Strategy) {
-      newErrors.Strategy = 'Response strategy is required';
+    if (!form.Name.trim()) {
+      newErrors.Name = 'Risk name is required';
     }
     
-    if (!form.PlannedActions.trim()) {
-      newErrors.PlannedActions = 'Planned actions are required';
+    if (!form.Category) {
+      newErrors.Category = 'Please select a category';
     }
     
-    if (!form.Status) {
-      newErrors.Status = 'Status is required';
+    if (form.Probability < 0 || form.Probability > 1) {
+      newErrors.Probability = 'Probability must be between 0 and 1';
+    }
+    
+    if (form.Impact < 1 || form.Impact > 10) {
+      newErrors.Impact = 'Impact must be between 1 and 10';
     }
     
     setErrors(newErrors);
@@ -150,37 +195,36 @@ export default function CreateRiskResponsePage() {
     
     try {
       // Prepare data for API
-      const responseData = {
-        RiskId: riskId as string,
-        Strategy: form.Strategy,
+      const riskData = {
+        ProjectId: id as string,
+        Name: form.Name,
         Description: form.Description,
-        PlannedActions: form.PlannedActions,
-        Status: form.Status,
-        OwnerId: userId || undefined
+        Category: form.Category,
+        Probability: form.Probability,
+        Impact: form.Impact,
+        Severity: severity,
+        OwnerId: userId || undefined,
+        Status: form.Status
       };
       
-      // Create response plan
-      await createRiskResponsePlan(responseData);
+      // Create risk
+      await createRisk(riskData);
       
-      toast.success('Response plan created successfully');
-      router.push(`/projects/${id}/risks/${riskId}`);
+      toast.success('Risk created successfully');
+      router.push(`/projects/${id}/risks`);
     } catch (error) {
-      console.error('Error creating response plan:', error);
-      toast.error('Failed to create response plan');
+      console.error('Error creating risk:', error);
+      toast.error('Failed to create risk');
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Helper function to calculate the severity level
+  // Helper to determine severity level and color
   const getSeverityLevel = () => {
-    if (!risk) return { level: '', color: '' };
-    
-    const severity = risk.Severity || (risk.Probability * risk.Impact);
-    
-    if (severity >= 7) return { level: 'High', color: 'red' };
-    if (severity >= 4) return { level: 'Medium', color: 'amber' };
-    return { level: 'Low', color: 'green' };
+    if (severity >= 7) return { level: 'High', color: 'destructive' };
+    if (severity >= 4) return { level: 'Medium', color: 'warning' };
+    return { level: 'Low', color: 'success' };
   };
   
   const severityInfo = getSeverityLevel();
@@ -188,72 +232,60 @@ export default function CreateRiskResponsePage() {
   // Loading state
   if (loading) {
     return (
-      <div className="risk-analysis-container flex items-center justify-center min-h-[60vh]">
+      <div className="risk-create-container flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading risk data...</p>
+          <p className="text-muted-foreground">Loading project data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Access denied state
+  if (!isProjectOwner) {
+    return (
+      <div className="risk-create-container flex items-center justify-center min-h-[60vh]">
+        <div className="bg-card rounded-xl p-8 max-w-md w-full text-center space-y-4 border shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mx-auto">
+            <AlertCircle className="h-8 w-8 text-destructive" />
+          </div>
+          <h2 className="text-xl font-bold">Access Denied</h2>
+          <p className="text-muted-foreground">Only project owners can create risks for this project.</p>
+          <button 
+            onClick={() => router.push(`/projects/${id}/risks`)}
+            className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Back to Risks
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="risk-analysis-container">
+    <div className="risk-create-container">
       {/* Header */}
-      <div className="mb-8 flex items-center">
-        <button
-          onClick={() => router.push(`/projects/${id}/risks/${riskId}`)}
-          className="mr-4 p-2 rounded-full bg-background/80 backdrop-blur border border-border hover:bg-muted transition-colors"
-          aria-label="Back to risk details"
-        >
-          <ArrowLeft className="h-5 w-5 text-foreground" />
-        </button>
-        
-        <div>
-          <h1 className="text-2xl font-bold">Add Response Plan</h1>
-          <p className="text-muted-foreground mt-1">
-            {risk?.Name} • {severityInfo.level} Severity Risk
-          </p>
-        </div>
-      </div>
-      
-      {/* Risk Summary Card */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="bg-card rounded-xl border shadow-sm overflow-hidden mb-6"
+        className="mb-8 flex items-center"
       >
-        <div className="p-4 border-b">
-          <h2 className="text-lg font-semibold">Risk Summary</h2>
-        </div>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => router.push(`/projects/${id}/risks`)}
+          className="mr-4 p-2 rounded-full bg-background/80 backdrop-blur border border-border hover:bg-muted transition-colors"
+          aria-label="Back to risks"
+        >
+          <ArrowLeft className="h-5 w-5 text-foreground" />
+        </motion.button>
         
-        <div className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-1">
-              <div className="text-sm text-muted-foreground">Probability</div>
-              <div className="font-medium">{risk?.Probability ? `${Math.round(risk.Probability * 100)}%` : 'N/A'}</div>
-            </div>
-            
-            <div className="space-y-1">
-              <div className="text-sm text-muted-foreground">Impact</div>
-              <div className="font-medium">{risk?.Impact ? `${risk.Impact}/10` : 'N/A'}</div>
-            </div>
-            
-            <div className="space-y-1">
-              <div className="text-sm text-muted-foreground">Severity</div>
-              <div className={`font-medium text-${severityInfo.color}-600 dark:text-${severityInfo.color}-400`}>
-                {risk?.Severity || (risk?.Probability && risk?.Impact ? (risk.Probability * risk.Impact).toFixed(1) : 'N/A')} 
-              </div>
-            </div>
-          </div>
-          
-          {risk?.Description && (
-            <div className="mt-4 pt-4 border-t">
-              <div className="text-sm text-muted-foreground mb-1">Description:</div>
-              <p className="text-sm">{risk.Description}</p>
-            </div>
-          )}
+        <div>
+          <h1 className="text-2xl font-bold">Create New Risk</h1>
+          <p className="text-muted-foreground mt-1">
+            {project?.Name} • Add a new risk to your project
+          </p>
         </div>
       </motion.div>
       
@@ -262,47 +294,41 @@ export default function CreateRiskResponsePage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
-        className="risk-analysis-form"
+        className="risk-form"
       >
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Response Plan Information Section */}
-          <div className="risk-analysis-form-section">
-            <h2 className="risk-analysis-form-section-title">Response Plan Information</h2>
+          {/* Risk Information Section */}
+          <div className="risk-form-section">
+            <h2 className="risk-form-section-title">
+              <Shield className="h-5 w-5" />
+              Risk Information
+            </h2>
             
-            {/* Response Strategy */}
-            <div className="risk-analysis-form-group">
-              <label htmlFor="strategy" className="risk-analysis-form-label flex items-center gap-2">
-                <ShieldAlert className="h-4 w-4 text-primary" />
-                Response Strategy <span className="text-destructive">*</span>
-                <div className="relative group">
-                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                  <div className="absolute left-0 -bottom-1 translate-y-full w-64 bg-popover p-3 rounded-md shadow-md text-xs text-muted-foreground invisible group-hover:visible z-10 border border-border">
-                    <ul className="space-y-1">
-                      <li><span className="font-medium">Avoid</span>: Eliminate the threat</li>
-                      <li><span className="font-medium">Mitigate</span>: Reduce probability or impact</li>
-                      <li><span className="font-medium">Transfer</span>: Shift impact to third party</li>
-                      <li><span className="font-medium">Accept</span>: Acknowledge without action</li>
-                    </ul>
-                  </div>
-                </div>
+            {/* Name */}
+            <div className="risk-form-group">
+              <label htmlFor="name" className="risk-form-label">
+                Risk Name <span className="text-destructive">*</span>
               </label>
-              <select
-                id="strategy"
-                name="Strategy"
-                value={form.Strategy}
+              <input
+                id="name"
+                name="Name"
+                type="text"
+                value={form.Name}
                 onChange={handleInputChange}
-                className={`risk-analysis-form-select ${errors.Strategy ? 'border-destructive' : ''}`}
-              >
-                {RESPONSE_STRATEGIES.map(strategy => (
-                  <option key={strategy} value={strategy}>{strategy}</option>
-                ))}
-              </select>
-              {errors.Strategy && <p className="risk-analysis-form-error">{errors.Strategy}</p>}
+                placeholder="Enter risk name"
+                className={`risk-form-input ${errors.Name ? 'border-destructive' : ''}`}
+              />
+              {errors.Name && (
+                <p className="risk-form-error">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  {errors.Name}
+                </p>
+              )}
             </div>
             
             {/* Description */}
-            <div className="risk-analysis-form-group">
-              <label htmlFor="description" className="risk-analysis-form-label">
+            <div className="risk-form-group">
+              <label htmlFor="description" className="risk-form-label">
                 Description
               </label>
               <textarea
@@ -310,62 +336,188 @@ export default function CreateRiskResponsePage() {
                 name="Description"
                 value={form.Description}
                 onChange={handleInputChange}
-                placeholder="Describe the response strategy and its rationale"
-                rows={3}
-                className="risk-analysis-form-textarea"
-              ></textarea>
+                placeholder="Describe the risk, its potential impact, and any relevant information"
+                rows={4}
+                className="risk-form-textarea"
+              />
             </div>
             
-            {/* Planned Actions */}
-            <div className="risk-analysis-form-group">
-              <label htmlFor="plannedActions" className="risk-analysis-form-label flex items-center gap-2">
-                <ClipboardList className="h-4 w-4 text-primary" />
-                Planned Actions <span className="text-destructive">*</span>
+            {/* Category */}
+            <div className="risk-form-group">
+              <label htmlFor="category" className="risk-form-label">
+                Category <span className="text-destructive">*</span>
               </label>
-              <textarea
-                id="plannedActions"
-                name="PlannedActions"
-                value={form.PlannedActions}
+              <select
+                id="category"
+                name="Category"
+                value={form.Category}
                 onChange={handleInputChange}
-                placeholder="List the specific actions to be taken to implement this response strategy"
-                rows={5}
-                className={`risk-analysis-form-textarea ${errors.PlannedActions ? 'border-destructive' : ''}`}
-              ></textarea>
-              {errors.PlannedActions && <p className="risk-analysis-form-error">{errors.PlannedActions}</p>}
+                className={`risk-form-select ${errors.Category ? 'border-destructive' : ''}`}
+              >
+                {RISK_CATEGORIES.map(category => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+              {errors.Category && (
+                <p className="risk-form-error">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  {errors.Category}
+                </p>
+              )}
             </div>
             
             {/* Status */}
-            <div className="risk-analysis-form-group">
-              <label htmlFor="status" className="risk-analysis-form-label">
-                Status <span className="text-destructive">*</span>
+            <div className="risk-form-group">
+              <label htmlFor="status" className="risk-form-label">
+                Status
               </label>
               <select
                 id="status"
                 name="Status"
                 value={form.Status}
                 onChange={handleInputChange}
-                className={`risk-analysis-form-select ${errors.Status ? 'border-destructive' : ''}`}
+                className="risk-form-select"
               >
-                {RESPONSE_STATUSES.map(status => (
+                {RISK_STATUSES.map(status => (
                   <option key={status} value={status}>{status}</option>
                 ))}
               </select>
-              {errors.Status && <p className="risk-analysis-form-error">{errors.Status}</p>}
             </div>
+          </div>
+          
+          {/* Risk Assessment Section */}
+          <div className="risk-form-section">
+            <h2 className="risk-form-section-title">
+              <AlertTriangle className="h-5 w-5" />
+              Risk Assessment
+            </h2>
+            
+            <div className="grid gap-6 sm:grid-cols-2">
+              {/* Probability */}
+              <div className="risk-form-group">
+                <label htmlFor="probability" className="risk-form-label flex items-center gap-2">
+                  <Gauge className="h-4 w-4 text-primary" />
+                  Probability <span className="text-destructive">*</span>
+                </label>
+                <div className="space-y-2">
+                  <input
+                    id="probability"
+                    name="Probability"
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.01"
+                    value={form.Probability}
+                    onChange={handleInputChange}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-sm">
+                    <span>0%</span>
+                    <span className="font-semibold">{Math.round(form.Probability * 100)}%</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+                {errors.Probability && (
+                  <p className="risk-form-error">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    {errors.Probability}
+                  </p>
+                )}
+              </div>
+              
+              {/* Impact */}
+              <div className="risk-form-group">
+                <label htmlFor="impact" className="risk-form-label flex items-center gap-2">
+                  <BarChart4 className="h-4 w-4 text-primary" />
+                  Impact <span className="text-destructive">*</span>
+                </label>
+                <div className="space-y-2">
+                  <input
+                    id="impact"
+                    name="Impact"
+                    type="range"
+                    min="1"
+                    max="10"
+                    step="1"
+                    value={form.Impact}
+                    onChange={handleInputChange}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-sm">
+                    <span>Low (1)</span>
+                    <span className="font-semibold">{form.Impact}/10</span>
+                    <span>High (10)</span>
+                  </div>
+                </div>
+                {errors.Impact && (
+                  <p className="risk-form-error">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    {errors.Impact}
+                  </p>
+                )}
+              </div>
+            </div>
+            
+            {/* Severity calculation (read-only) */}
+            <motion.div 
+              animate={{
+                backgroundColor: severityInfo.level === 'High' 
+                  ? "hsla(var(--destructive) / 0.1)" 
+                  : severityInfo.level === 'Medium' 
+                  ? "hsla(var(--warning) / 0.1)" 
+                  : "hsla(var(--success) / 0.1)"
+              }}
+              transition={{ duration: 0.3 }}
+              className="risk-severity-display mt-4 p-4 rounded-lg"
+            >
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-medium">Calculated Severity</h3>
+                <div className={`px-2.5 py-1 text-xs font-medium rounded-full ${
+                  severityInfo.level === 'High' 
+                    ? "bg-destructive/20 text-destructive" 
+                    : severityInfo.level === 'Medium' 
+                    ? "bg-warning/20 text-warning" 
+                    : "bg-success/20 text-success"
+                }`}>
+                  {severityInfo.level}
+                </div>
+              </div>
+              <div className="relative h-2 w-full bg-muted-foreground/20 rounded-full overflow-hidden">
+                <motion.div 
+                  className={`absolute top-0 left-0 h-full rounded-full ${
+                    severityInfo.level === 'High' 
+                      ? "bg-destructive" 
+                      : severityInfo.level === 'Medium' 
+                      ? "bg-warning" 
+                      : "bg-success"
+                  }`}
+                  animate={{ width: `${(severity / 10) * 100}%` }}
+                  transition={{ duration: 0.5 }}
+                ></motion.div>
+              </div>
+              <div className="flex justify-between mt-2 text-xs">
+                <span>Severity: {severity.toFixed(2)}/10</span>
+                <span>Formula: Probability ({form.Probability.toFixed(2)}) × Impact ({form.Impact})</span>
+              </div>
+            </motion.div>
           </div>
           
           {/* Form Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               type="button"
-              onClick={() => router.push(`/projects/${id}/risks/${riskId}`)}
+              onClick={() => router.push(`/projects/${id}/risks`)}
               disabled={submitting}
               className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
             >
               Cancel
-            </button>
+            </motion.button>
             
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               type="submit"
               disabled={submitting}
               className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors flex items-center gap-2"
@@ -378,10 +530,10 @@ export default function CreateRiskResponsePage() {
               ) : (
                 <>
                   <Save className="h-4 w-4" />
-                  <span>Save Response Plan</span>
+                  <span>Create Risk</span>
                 </>
               )}
-            </button>
+            </motion.button>
           </div>
         </form>
       </motion.div>
