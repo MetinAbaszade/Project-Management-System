@@ -96,9 +96,8 @@ export default function ProjectTeamsPage() {
         
         setProject(projectData);
         setTeams(teamsData || []);
-        
-        // Always enable features for testing
         setIsOwner(true);
+
       } catch (error) {
         console.error('Failed to load project teams:', error);
         toast.error('Could not load teams for this project');
@@ -123,11 +122,9 @@ export default function ProjectTeamsPage() {
   const handleDeleteTeam = async (teamId) => {
     try {
       setDeletingTeam(teamId);
-      
-      // Directly call the API to delete the team
       await deleteTeam(teamId);
       
-      // Update state to remove the deleted team
+
       setTeams(prevTeams => prevTeams.filter(team => team.Id !== teamId));
       
       // Clear UI states
@@ -255,7 +252,7 @@ export default function ProjectTeamsPage() {
     </motion.div>
   );
 
-  // Delete confirmation dialog
+
 const renderDeleteConfirmation = (team) => (
   <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
     <motion.div 
@@ -300,6 +297,7 @@ const renderDeleteConfirmation = (team) => (
     </motion.div>
   </div>
 );
+
 
   return (
     <div className="project-teams-container">
@@ -435,6 +433,9 @@ const renderDeleteConfirmation = (team) => (
                                 className="team-menu-item delete"
                                 onClick={(e) => {
                                   e.stopPropagation();
+
+                                  
+                                  
                                   setConfirmDelete(team);
                                   setActiveTeamMenu(null);
                                 }}
