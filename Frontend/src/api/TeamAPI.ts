@@ -104,6 +104,10 @@ export async function updateTeam(teamId: string, data: TeamUpdateData): Promise<
  */
 export async function deleteTeam(teamId: string): Promise<void> {
   try {
+<<<<<<< HEAD
+=======
+
+>>>>>>> 81788b2e8481af2e3883541ef9e8fcb54fc56a09
     await api.delete(`/teams/${teamId}`, {
       params: { teamId }
     });
