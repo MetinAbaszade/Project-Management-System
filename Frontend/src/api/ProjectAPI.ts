@@ -95,9 +95,10 @@ export async function createProject(data: ProjectCreateData): Promise<Project> {
   return response.json();
 }
 
+
 export async function updateProject(projectId: string, data: ProjectUpdateData): Promise<Project> {
   const headers = getAuthHeaders();
-  const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+  const response = await fetch(`${API_BASE_URL}/projects/${projectId}/update`, {
     method: 'PUT',
     headers,
     body: JSON.stringify(data)
