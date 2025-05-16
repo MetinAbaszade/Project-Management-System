@@ -82,10 +82,10 @@ export default function ResourcesTab({ teamId, projectId }: ResourcesTabProps) {
             </div>
 
             <div className="mt-8 pt-6 border-t border-border">
-              <div
-                className="flex items-center justify-center gap-2 text-sm text-primary cursor-pointer"
-                onClick={() => router.push(`/projects/${projectId}/resource`)}
-              >
+
+              <div className="flex items-center justify-center gap-2 text-sm text-primary cursor-pointer"
+                   onClick={() => router.push(`/projects/${projectId}/resource`)}>
+
                 <Box size={14} />
                 <span>Learn about team resource management</span>
                 <ArrowRight size={14} />

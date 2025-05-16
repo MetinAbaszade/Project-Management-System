@@ -33,6 +33,9 @@ import {
   removeTeamMember,
   getTeamTasks
 
+import './teamDetail.css';
+
+
 } from '@/api/TeamAPI';
 import { getProjectMembers } from '@/api/ProjectAPI';
 import { getUserIdFromToken } from '@/lib/utils';
@@ -93,6 +96,7 @@ export default function TeamDetailPage() {
         setProjectMembers(projectMembersData || []);
         
 
+        // Fetch team data
         const teamData = await getTeamById(teamId);
         
         // Check if team exists and is not deleted
@@ -104,10 +108,10 @@ export default function TeamDetailPage() {
         
         setTeam(teamData);
         
-
+        // Determine user role
         const isOwner = true; // Always show buttons
-
         
+
         const isTeamLeader = teamData.Members?.some(
           m => m.UserId === userId && m.IsLeader
         );
