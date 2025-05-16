@@ -17,15 +17,14 @@ import {
   AlertCircle,
   Info,
   Activity
+
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-
-// Import CSS for animations
 import './teamDetail.css';
 
-// API functions
+
 import { 
   getTeamById, 
   updateTeam, 
@@ -33,6 +32,10 @@ import {
   addTeamMember, 
   removeTeamMember,
   getTeamTasks
+
+import './teamDetail.css';
+
+
 } from '@/api/TeamAPI';
 import { getProjectMembers } from '@/api/ProjectAPI';
 import { getUserIdFromToken } from '@/lib/utils';
@@ -92,6 +95,7 @@ export default function TeamDetailPage() {
         const projectMembersData = await getProjectMembers(projectId);
         setProjectMembers(projectMembersData || []);
         
+
         // Fetch team data
         const teamData = await getTeamById(teamId);
         
@@ -107,13 +111,14 @@ export default function TeamDetailPage() {
         // Determine user role
         const isOwner = true; // Always show buttons
         
+
         const isTeamLeader = teamData.Members?.some(
           m => m.UserId === userId && m.IsLeader
         );
         
         setUserRole({ isOwner, isTeamLeader });
         
-        // Fetch team tasks
+
         const tasksData = await getTeamTasks(teamId);
         
         // Set members (from team data) and tasks
@@ -344,6 +349,7 @@ export default function TeamDetailPage() {
               label="Activity"
               isActive={activeTab === 'activity'}
               onClick={() => setActiveTab('activity')}
+
             />
             
             <TabButton 
@@ -357,6 +363,7 @@ export default function TeamDetailPage() {
               icon={<Paperclip className="w-4 h-4" />}
               label="Attachments"
               isActive={activeTab === 'attachments'}
+
               onClick={() => setActiveTab('attachments')}
             />
           </div>
@@ -421,6 +428,7 @@ export default function TeamDetailPage() {
                 transition={{ duration: 0.2 }}
               >
                 <ResourcesTab teamId={teamId} projectId={projectId} />
+
               </motion.div>
             )}
             

@@ -21,6 +21,20 @@ import { getProjectById } from '@/api/ProjectAPI';
 import { createTeam } from '@/api/TeamAPI';
 import { useAuth } from '@/contexts/AuthContext';
 
+
+const TEAM_COLORS = [
+  { index: 0, name: 'Ruby Red', gradient: 'from-rose-500 to-red-500' },
+  { index: 1, name: 'Sunset Orange', gradient: 'from-orange-400 to-orange-600' },
+  { index: 2, name: 'Golden Amber', gradient: 'from-amber-400 to-yellow-600' },
+  { index: 3, name: 'Verdant Green', gradient: 'from-green-400 to-emerald-600' },
+  { index: 4, name: 'Ocean Blue', gradient: 'from-blue-400 to-sky-600' },
+  { index: 5, name: 'Royal Indigo', gradient: 'from-indigo-500 to-purple-600' },
+  { index: 6, name: 'Vibrant Purple', gradient: 'from-purple-400 to-violet-600' },
+  { index: 7, name: 'Fuchsia Pink', gradient: 'from-pink-400 to-rose-600' },
+  { index: 8, name: 'Slate Gray', gradient: 'from-slate-400 to-slate-600' },
+  { index: 9, name: 'Ocean Teal', gradient: 'from-teal-400 to-cyan-600' },
+];
+
 export default function CreateTeamPage() {
   const { id: projectId } = useParams();
   const router = useRouter();
@@ -234,15 +248,19 @@ export default function CreateTeamPage() {
     { name: 'Ocean Teal', gradient: 'from-teal-400 to-cyan-600' },
   ];
 
+
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4 sm:p-6 md:p-8">
       <motion.div 
+
         className="bg-card/90 backdrop-blur-md border border-border/50 rounded-2xl shadow-lg max-w-xl w-full overflow-hidden"
+
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
         {/* Card Header */}
+
         <div className="flex items-center justify-between px-6 py-4 bg-card/90 border-b border-border/50">
           <div className="flex items-center gap-2">
             <motion.button 
@@ -254,6 +272,7 @@ export default function CreateTeamPage() {
               <ArrowLeft size={18} />
             </motion.button>
             <h1 className="text-xl font-semibold text-foreground">Create New Team</h1>
+
           </div>
         </div>
         
@@ -280,6 +299,7 @@ export default function CreateTeamPage() {
                     type="button"
                     onClick={() => setServerError(null)}
                     className="ml-auto p-1 text-red-500/70 hover:text-red-500 rounded-full hover:bg-red-500/10"
+
                   >
                     <X size={14} />
                   </button>
@@ -288,18 +308,23 @@ export default function CreateTeamPage() {
             </AnimatePresence>
             
             {/* Project Info */}
+
             <div className="bg-muted/30 backdrop-blur-sm p-4 rounded-xl flex items-center mb-6">
+
               <div className="bg-primary/10 p-2 rounded-md mr-3">
                 <Users size={20} className="text-primary" />
               </div>
               <div>
                 <div className="text-sm text-muted-foreground">Project</div>
+
                 <div className="font-medium text-foreground">{project?.Name || 'Loading...'}</div>
+
               </div>
             </div>
             
             {/* Team Preview */}
             <div className="mb-6">
+
               <label className="block text-sm font-medium mb-2 text-foreground">Team Preview</label>
               <div className="bg-muted/30 backdrop-blur-sm border border-border/50 rounded-xl p-4 flex items-center">
                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${TEAM_COLORS[form.ColorIndex].gradient} flex items-center justify-center text-white font-bold text-lg shadow-md`}>
@@ -307,6 +332,7 @@ export default function CreateTeamPage() {
                 </div>
                 <div className="ml-4 flex-1 min-w-0">
                   <h3 className="font-medium truncate text-foreground">
+
                     {form.Name || 'Team Name'}
                   </h3>
                   <p className="text-sm text-muted-foreground line-clamp-1">
@@ -322,6 +348,7 @@ export default function CreateTeamPage() {
               <div>
                 <label htmlFor="Name" className="block text-sm font-medium mb-2 text-foreground">
                   Team Name <span className="text-red-500">*</span>
+
                 </label>
                 <input
                   id="Name"
@@ -331,10 +358,12 @@ export default function CreateTeamPage() {
                   onChange={handleInputChange}
                   placeholder="Enter team name"
                   className={cn(
+
                     "w-full p-3 rounded-xl border backdrop-blur-sm bg-background/50 text-foreground transition-colors focus:ring-1 focus:ring-primary focus:outline-none",
                     errors.Name
                       ? "border-red-500"
                       : "border-border/50"
+
                   )}
                   maxLength={50}
                   autoFocus
@@ -346,6 +375,7 @@ export default function CreateTeamPage() {
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       className="text-red-500 text-sm mt-1"
+
                     >
                       {errors.Name}
                     </motion.div>
@@ -359,6 +389,7 @@ export default function CreateTeamPage() {
               {/* Description Field */}
               <div>
                 <label htmlFor="Description" className="block text-sm font-medium mb-2 text-foreground">
+
                   Description
                 </label>
                 <textarea
@@ -370,6 +401,7 @@ export default function CreateTeamPage() {
                   className={cn(
                     "w-full p-3 rounded-xl border border-border/50 backdrop-blur-sm bg-background/50 text-foreground transition-colors resize-none focus:ring-1 focus:ring-primary focus:outline-none",
                     errors.Description ? "border-red-500" : ""
+
                   )}
                   rows={3}
                   maxLength={200}
@@ -381,6 +413,7 @@ export default function CreateTeamPage() {
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       className="text-red-500 text-sm mt-1"
+
                     >
                       {errors.Description}
                     </motion.div>
@@ -393,11 +426,14 @@ export default function CreateTeamPage() {
               
               {/* Team Color */}
               <div>
+
                 <label className="flex items-center gap-2 text-sm font-medium mb-3 text-foreground">
+
                   <Palette size={16} className="text-muted-foreground" />
                   Team Color
                 </label>
                 <div className="grid grid-cols-5 gap-3 mb-2">
+
                   {TEAM_COLORS.map((color, index) => (
                     <motion.button
                       key={index}
@@ -414,12 +450,14 @@ export default function CreateTeamPage() {
                       aria-label={`Select ${color.name} color`}
                     >
                       {form.ColorIndex === index && (
+
                         <Check className="text-white drop-shadow-md" size={18} />
                       )}
                     </motion.button>
                   ))}
                 </div>
                 <div className="text-sm text-center text-foreground">
+
                   {TEAM_COLORS[form.ColorIndex].name}
                 </div>
               </div>
@@ -430,6 +468,7 @@ export default function CreateTeamPage() {
               <motion.button
                 type="button"
                 className="flex-1 py-2.5 px-4 bg-muted/50 backdrop-blur-sm hover:bg-muted text-foreground rounded-full transition-colors"
+
                 onClick={() => router.push(`/projects/${projectId}/team`)}
                 disabled={submitting || showSuccess}
                 whileHover={{ scale: 1.03 }}
@@ -441,9 +480,11 @@ export default function CreateTeamPage() {
               <motion.button
                 type="submit"
                 className={cn(
+
                   "flex-1 py-2.5 px-4 rounded-full transition-colors flex items-center justify-center gap-2",
                   showSuccess 
                     ? "bg-green-500 text-white" 
+
                     : "bg-primary text-primary-foreground hover:bg-primary/90"
                 )}
                 disabled={submitting || showSuccess}
