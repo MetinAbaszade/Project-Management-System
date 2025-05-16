@@ -1,12 +1,10 @@
-// Improved TaskCard.tsx
+// src/components/task/TaskCard.tsx
 'use client';
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { format, isPast, isToday } from 'date-fns';
+import { format, isPast, isToday, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   Calendar,
   Clock,
@@ -14,7 +12,8 @@ import {
   Users,
   AlertTriangle,
   CheckCircle,
-  ArrowRight,
+  Edit,
+  Trash2
 } from 'lucide-react';
 
 interface TaskCardProps {
@@ -26,16 +25,18 @@ interface TaskCardProps {
     TeamId?: string;
     Status: string;
     Priority: string;
-    CreatedBy: string;
+    CreatedBy?: string;
     Deadline?: string;
     Completed: boolean;
     ProjectId?: string;
+    projectName?: string;
   };
   onClick: () => void;
   onComplete?: (e: React.MouseEvent) => void;
-  userRole?: string | null;
+  onEdit?: (e: React.MouseEvent) => void;
+  onDelete?: (e: React.MouseEvent) => void;
+  userRole?: string;
   currentUserId?: string;
-  project?: any; // Optional project info
   showProjectInfo?: boolean;
   className?: string;
 }
@@ -44,27 +45,28 @@ export function TaskCard({
   task,
   onClick,
   onComplete,
+  onEdit,
+  onDelete,
   userRole,
   currentUserId,
-  project,
   showProjectInfo = false,
   className,
 }: TaskCardProps) {
   const isTeamTask = !!task.TeamId;
   const isAssigned = task.UserId === currentUserId;
   const isCreator = task.CreatedBy === currentUserId;
-  const canComplete = isAssigned || isCreator || userRole === 'project_owner';
+  const canComplete = isAssigned || isCreator || userRole === 'project_owner' || userRole === 'Project Owner';
+  const isProjectOwner = userRole === 'project_owner' || userRole === 'Project Owner';
 
-  // Check if task is overdue
+  // Check if task is overdue or due today
   const isOverdue = () => {
     if (!task.Deadline || task.Completed) return false;
-    return isPast(new Date(task.Deadline)) && !isToday(new Date(task.Deadline));
+    return isPast(parseISO(task.Deadline)) && !isToday(parseISO(task.Deadline));
   };
 
-  // Check if task is due today
   const isDueToday = () => {
     if (!task.Deadline || task.Completed) return false;
-    return isToday(new Date(task.Deadline));
+    return isToday(parseISO(task.Deadline));
   };
 
   // Get priority styling
@@ -106,7 +108,8 @@ export function TaskCard({
     if (task.Completed) {
       return {
         color: 'text-green-600 dark:text-green-400',
-        bg: 'bg-green-100 dark:bg-green-900/20'
+        bg: 'bg-green-100 dark:bg-green-900/20',
+        border: 'border-green-200 dark:border-green-800'
       };
     }
 
@@ -114,17 +117,20 @@ export function TaskCard({
       case 'In Progress':
         return {
           color: 'text-blue-600 dark:text-blue-400',
-          bg: 'bg-blue-100 dark:bg-blue-900/20'
+          bg: 'bg-blue-100 dark:bg-blue-900/20',
+          border: 'border-blue-200 dark:border-blue-800'
         };
       case 'Not Started':
         return {
           color: 'text-gray-600 dark:text-gray-400',
-          bg: 'bg-gray-100 dark:bg-gray-800/30'
+          bg: 'bg-gray-100 dark:bg-gray-800/30',
+          border: 'border-gray-200 dark:border-gray-700'
         };
       default:
         return {
           color: 'text-gray-600 dark:text-gray-400',
-          bg: 'bg-gray-100 dark:bg-gray-800/30'
+          bg: 'bg-gray-100 dark:bg-gray-800/30',
+          border: 'border-gray-200 dark:border-gray-700'
         };
     }
   };
@@ -170,9 +176,13 @@ export function TaskCard({
             )}
           </div>
           
-          <Badge className={cn('ml-auto shrink-0', statusStyles.bg, statusStyles.color)}>
+          <div className={cn(
+            'shrink-0 ml-2 px-2 py-1 rounded-full text-xs font-medium',
+            statusStyles.bg, 
+            statusStyles.color
+          )}>
             {task.Completed ? 'Completed' : task.Status}
-          </Badge>
+          </div>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 pl-2">
@@ -181,8 +191,8 @@ export function TaskCard({
               <div 
                 className={cn(
                   "flex items-center gap-1",
-                  isOverdue() && !task.Completed && "text-red-500",
-                  isDueToday() && !task.Completed && "text-amber-500"
+                  isOverdue() && !task.Completed && "text-red-500 dark:text-red-400",
+                  isDueToday() && !task.Completed && "text-amber-500 dark:text-amber-400"
                 )}
               >
                 <Calendar className="h-3.5 w-3.5" />
@@ -191,7 +201,7 @@ export function TaskCard({
                     ? 'Overdue' 
                     : isDueToday() && !task.Completed 
                       ? 'Due today' 
-                      : format(new Date(task.Deadline), 'MMM d')}
+                      : format(parseISO(task.Deadline), 'MMM d')}
                 </span>
                 {isOverdue() && !task.Completed && <AlertTriangle className="h-3.5 w-3.5 ml-0.5" />}
               </div>
@@ -205,50 +215,64 @@ export function TaskCard({
             ) : task.UserId ? (
               <div className="flex items-center gap-1">
                 <User className="h-3.5 w-3.5" />
-                <span>{isAssigned ? 'Assigned to you' : 'Assigned'}</span>
+                <span>{isAssigned ? 'You' : 'Assigned'}</span>
               </div>
             ) : null}
             
-            {showProjectInfo && project && (
+            {showProjectInfo && task.projectName && (
               <div className="flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5" />
-                <span className="truncate max-w-[120px]">{project.Name || project.Title}</span>
+                <span className="truncate max-w-[120px]">{task.projectName}</span>
               </div>
             )}
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Details button */}
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              className="h-8 gap-1 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => {
-                e.stopPropagation();
-                onClick();
-              }}
-            >
-              Details
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
+            {/* Action buttons */}
+            <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+              {isProjectOwner && onEdit && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(e);
+                  }}
+                  className="p-1.5 rounded-full hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-900/30 dark:hover:text-blue-400 transition-colors"
+                  aria-label="Edit task"
+                >
+                  <Edit className="h-3.5 w-3.5" />
+                </button>
+              )}
+              
+              {isProjectOwner && onDelete && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(e);
+                  }}
+                  className="p-1.5 rounded-full hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30 dark:hover:text-red-400 transition-colors"
+                  aria-label="Delete task"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
             
             {/* Complete button */}
             {!task.Completed && canComplete && onComplete && (
-              <Button 
-                size="icon" 
-                variant="outline" 
+              <button 
                 className={cn(
-                  "h-8 w-8 rounded-full border border-green-200 bg-green-100/50 text-green-600 hover:bg-green-200 hover:text-green-700",
-                  "dark:border-green-800 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40",
+                  "h-7 w-7 rounded-full flex items-center justify-center border-2 border-green-200 hover:bg-green-100/50 hover:border-green-300",
+                  "dark:border-green-800 dark:hover:bg-green-900/30 dark:hover:border-green-700",
                   "transition-all"
                 )}
                 onClick={(e) => {
                   e.stopPropagation();
                   onComplete(e);
                 }}
+                aria-label="Mark task as complete"
               >
-                <CheckCircle className="h-4 w-4" />
-              </Button>
+                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </button>
             )}
           </div>
         </div>

@@ -1,3 +1,5 @@
+// Path: Frontend/src/app/(dashboard)/projects/[id]/stakeholders/[stakeholderid]/page.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -24,7 +26,7 @@ import { getProjectById } from '@/api/ProjectAPI';
 import { getCurrentUser } from '@/api/UserAPI';
 
 export default function StakeholderDetailPage() {
-  const { stakeholderId } = useParams();
+  const { id, stakeholderid } = useParams();
   const router = useRouter();
   const [stakeholder, setStakeholder] = useState<any>(null);
   const [project, setProject] = useState<any>(null);
@@ -46,8 +48,14 @@ export default function StakeholderDetailPage() {
       try {
         setLoading(true);
         
+        if (!stakeholderid) {
+          toast.error('Invalid stakeholder ID');
+          router.push(`/projects/${id}/stakeholders`);
+          return;
+        }
+        
         // Fetch stakeholder details
-        const stakeholderData = await getStakeholderById(stakeholderId as string);
+        const stakeholderData = await getStakeholderById(stakeholderid as string);
         setStakeholder(stakeholderData);
         
         // Initialize edit percentage
@@ -63,15 +71,14 @@ export default function StakeholderDetailPage() {
       } catch (error) {
         console.error('Failed to load stakeholder data:', error);
         toast.error('Could not load stakeholder details');
+        router.push(`/projects/${id}/stakeholders`);
       } finally {
         setLoading(false);
       }
     };
     
-    if (stakeholderId) {
-      fetchData();
-    }
-  }, [stakeholderId]);
+    fetchData();
+  }, [stakeholderid, id, router]);
 
   // Handle update stakeholder
   const handleUpdateStakeholder = async () => {
@@ -83,7 +90,7 @@ export default function StakeholderDetailPage() {
     
     setIsUpdating(true);
     try {
-      await updateStakeholder(stakeholderId as string, { Percentage: percentage });
+      await updateStakeholder(stakeholderid as string, { Percentage: percentage });
       
       // Update local state
       setStakeholder(prev => ({ ...prev, Percentage: percentage }));
@@ -101,7 +108,7 @@ export default function StakeholderDetailPage() {
   const handleDeleteStakeholder = async () => {
     setIsDeleting(true);
     try {
-      await deleteStakeholder(stakeholderId as string);
+      await deleteStakeholder(stakeholderid as string);
       toast.success('Stakeholder removed successfully');
       
       // Redirect back to stakeholders list
@@ -132,7 +139,7 @@ export default function StakeholderDetailPage() {
             We couldn't find the stakeholder you're looking for. It may have been removed.
           </p>
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push(`/projects/${id}/stakeholders`)}
             className="px-4 py-2 rounded-lg bg-primary text-primary-foreground"
           >
             Go Back
@@ -179,29 +186,38 @@ export default function StakeholderDetailPage() {
                   <User className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold">{stakeholder.UserId}</h2>
-                  <p className="text-muted-foreground">Stakeholder ID: {stakeholder.Id.substring(0, 8)}...</p>
+                  {stakeholder.User ? (
+                    <>
+                      <h2 className="text-xl font-semibold">{stakeholder.User.FirstName} {stakeholder.User.LastName}</h2>
+                      <p className="text-muted-foreground">{stakeholder.User.Email}</p>
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="text-xl font-semibold">{stakeholder.UserId}</h2>
+                      <p className="text-muted-foreground">Stakeholder ID: {stakeholder.Id.substring(0, 8)}...</p>
+                    </>
+                  )}
                 </div>
               </div>
               
               {isOwner && (
                 <div className="flex gap-2">
-              <motion.button
-                onClick={() => setIsEditing(!isEditing)}
-                className="p-2 rounded-lg bg-muted hover:bg-muted/80"
-                whileHover={{ scale: 1.1, rotate: 15 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <Edit className="h-5 w-5 text-primary" />
-              </motion.button>
-              <motion.button
-                onClick={() => setShowDeleteDialog(true)}
-                className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <Trash2 className="h-5 w-5" />
-              </motion.button>
+                  <motion.button
+                    onClick={() => setIsEditing(!isEditing)}
+                    className="p-2 rounded-lg bg-muted hover:bg-muted/80"
+                    whileHover={{ scale: 1.1, rotate: 15 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <Edit className="h-5 w-5 text-primary" />
+                  </motion.button>
+                  <motion.button
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </motion.button>
                 </div>
               )}
             </div>
@@ -294,13 +310,13 @@ export default function StakeholderDetailPage() {
                     This stakeholder owns {stakeholder.Percentage}% of the project.
                   </p>
                   <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
-              <motion.div 
-                className="h-full bg-gradient-to-r from-primary to-primary-dark rounded-full"
-                style={{ width: `${stakeholder.Percentage}%` }}
-                initial={{ width: 0 }}
-                animate={{ width: `${stakeholder.Percentage}%` }}
-                transition={{ duration: 1.2, ease: "easeOut" }}
-              />
+                    <motion.div 
+                      className="h-full bg-gradient-to-r from-primary to-primary-dark rounded-full"
+                      style={{ width: `${stakeholder.Percentage}%` }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${stakeholder.Percentage}%` }}
+                      transition={{ duration: 1.2, ease: "easeOut" }}
+                    />
                   </div>
                 </>
               )}
@@ -331,14 +347,14 @@ export default function StakeholderDetailPage() {
               
               <div className="mt-4 pt-4 border-t border-border">
                 <motion.button
-                onClick={() => router.push(`/projects/${project.Id}`)}
-                className="px-4 py-2 text-sm rounded-lg bg-muted hover:bg-muted/80 text-foreground flex items-center gap-2"
-                whileHover={{ scale: 1.05, x: 3 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                <span>View Project Details</span>
-              </motion.button>
+                  onClick={() => router.push(`/projects/${project.Id}`)}
+                  className="px-4 py-2 text-sm rounded-lg bg-muted hover:bg-muted/80 text-foreground flex items-center gap-2"
+                  whileHover={{ scale: 1.05, x: 3 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  <span>View Project Details</span>
+                </motion.button>
               </div>
             </div>
           </div>
@@ -365,7 +381,7 @@ export default function StakeholderDetailPage() {
             </div>
             
             <div className="mb-4 p-3 bg-muted rounded-lg">
-              <p className="font-medium">{stakeholder.UserId}</p>
+              <p className="font-medium">{stakeholder.User ? `${stakeholder.User.FirstName} ${stakeholder.User.LastName}` : stakeholder.UserId}</p>
               <p className="text-sm text-muted-foreground">
                 Current allocation: {stakeholder.Percentage}%
               </p>

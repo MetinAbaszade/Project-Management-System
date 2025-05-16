@@ -54,8 +54,7 @@ def GetAllRisksByProject(
     projectId: str,
     riskService: RiskService = Depends(RiskService)
 ):
-    return riskService.GetAllRisksByProject(projectId)
-
+    return riskService.GetAllRisks(projectId)
 
 
 # -----------------------------

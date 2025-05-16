@@ -1,34 +1,37 @@
+// src/app/(dashboard)/projects/[id]/tasks/page.tsx
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { format, isPast, isToday, parseISO } from 'date-fns';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Search,
   Plus,
-  Calendar,
-  Flag,
-  X,
   Filter,
   ChevronDown,
-  ChevronUp,
   ArrowLeft,
-  CheckCircle2,
-  Clock,
   AlertTriangle,
   Loader2,
+  LayoutGrid,
+  LayoutList,
+  X,
+  ChevronsUpDown,
+  SlidersHorizontal
 } from 'lucide-react';
 
 // API and utils
 import { getProjectById } from '@/api/ProjectAPI';
-import { getProjectTasks, markTaskComplete } from '@/api/TaskAPI';
+import { getProjectTasks } from '@/api/TaskAPI';
 import { cn } from '@/lib/utils';
 import { toast } from '@/lib/toast';
 
-// CSS for animations and layout
-import './taskStyles.css';
+// Components
+import { TaskList } from '@/components/task/TaskList';
+import { TaskDialog } from '@/components/task/TaskDialog';
+
+// Import animations
+import '@/styles/animations.css';
 
 export default function ProjectTasksPage() {
   const { id } = useParams();
@@ -40,6 +43,7 @@ export default function ProjectTasksPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -48,6 +52,9 @@ export default function ProjectTasksPage() {
   const [sortBy, setSortBy] = useState('deadline');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [showFilters, setShowFilters] = useState(false);
+  
+  // View mode (list or kanban)
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('kanban');
   
   // Get user ID from JWT token
   useEffect(() => {
@@ -89,6 +96,19 @@ export default function ProjectTasksPage() {
     
     fetchData();
   }, [id]);
+
+  // Refresh tasks
+  const refreshTasks = async () => {
+    if (!id) return;
+    
+    try {
+      const tasksData = await getProjectTasks(id as string);
+      setTasks(tasksData || []);
+    } catch (err) {
+      console.error('Error refreshing tasks:', err);
+      toast.error('Could not refresh tasks');
+    }
+  };
 
   // Check if user is project owner
   const isProjectOwner = useMemo(() => {
@@ -150,34 +170,6 @@ export default function ProjectTasksPage() {
       });
   }, [tasks, searchQuery, priorityFilter, statusFilter, sortBy, sortDirection]);
 
-  // Group tasks by status for Kanban view if needed
-  const groupedTasks = useMemo(() => {
-    return {
-      'Not Started': filteredTasks.filter(task => !task.Completed && (task.Status === 'Not Started' || !task.Status)),
-      'In Progress': filteredTasks.filter(task => !task.Completed && task.Status === 'In Progress'),
-      'Completed': filteredTasks.filter(task => task.Completed || task.Status === 'Completed'),
-    };
-  }, [filteredTasks]);
-
-  // Handle task completion
-  const handleCompleteTask = async (taskId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    
-    try {
-      await markTaskComplete(taskId);
-      
-      // Update local state
-      setTasks(prevTasks => prevTasks.map(task => 
-        task.Id === taskId ? { ...task, Status: 'Completed', Completed: true } : task
-      ));
-      
-      toast.success('Task marked as complete');
-    } catch (error) {
-      console.error('Failed to complete task:', error);
-      toast.error('Could not complete task');
-    }
-  };
-
   // Reset all filters
   const resetFilters = () => {
     setSearchQuery('');
@@ -187,77 +179,66 @@ export default function ProjectTasksPage() {
     setSortDirection('asc');
   };
 
-  // Determine if user can complete a task
-  const canCompleteTask = (task: any) => {
-    if (task.Completed) return false;
-    return isProjectOwner || userId === task.UserId || userId === task.CreatedBy;
+  // Handle task dialog success
+  const handleTaskDialogSuccess = () => {
+    refreshTasks();
+    setIsCreateDialogOpen(false);
   };
 
-  // UI Helper for priority color
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'HIGH': return 'var(--destructive)';
-      case 'MEDIUM': return 'var(--warning)';
-      case 'LOW': return 'var(--success)';
-      default: return 'var(--muted-foreground)';
-    }
-  };
-
-  // UI Helper for deadline status
-  const getDeadlineStatus = (deadline: string | null) => {
-    if (!deadline) return null;
-    
-    try {
-      const date = parseISO(deadline);
-      if (isPast(date) && !isToday(date)) return { label: 'Overdue', color: 'text-destructive' };
-      if (isToday(date)) return { label: 'Due today', color: 'text-warning' };
-      return null;
-    } catch (error) {
-      return null;
-    }
-  };
-
+  // Render loading state
   if (loading) {
     return (
-      <div className="task-container flex items-center justify-center min-h-[50vh]">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading tasks...</p>
         </div>
       </div>
     );
   }
 
+  // Render error state
   if (error) {
     return (
-      <div className="task-container flex items-center justify-center min-h-[50vh]">
-        <div className="bg-card rounded-xl p-8 max-w-md w-full text-center space-y-4 border shadow-sm">
-          <AlertTriangle className="h-12 w-12 text-destructive mx-auto" />
-          <h2 className="text-xl font-bold">Failed to load tasks</h2>
-          <p className="text-muted-foreground">{error}</p>
-          <div className="flex justify-center gap-4 mt-6">
-            <button 
-              onClick={() => router.push(`/projects/${id}`)}
-              className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
-            >
-              Back to Project
-            </button>
-            <button 
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-card rounded-xl p-8 max-w-md w-full text-center space-y-4 border shadow-sm"
+          >
+            <AlertTriangle className="h-12 w-12 text-destructive mx-auto" />
+            <h2 className="text-xl font-bold">Failed to load tasks</h2>
+            <p className="text-muted-foreground">{error}</p>
+            <div className="flex justify-center gap-4 mt-6">
+              <button 
+                onClick={() => router.push(`/projects/${id}`)}
+                className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
+              >
+                Back to Project
+              </button>
+              <button 
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors shadow-sm"
+              >
+                Try Again
+              </button>
+            </div>
+          </motion.div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="project-tasks-container">
+    <div className="max-w-7xl mx-auto p-6">
       {/* Header with back button, title and create button */}
-      <div className="flex justify-between items-start mb-8">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="flex justify-between items-start mb-8"
+      >
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.push(`/projects/${id}`)}
@@ -268,7 +249,7 @@ export default function ProjectTasksPage() {
           </button>
           
           <div>
-            <h1 className="text-2xl font-bold">{project?.Name || 'Project'} Tasks</h1>
+            <h1 className="text-2xl font-bold text-foreground">{project?.Name || 'Project'} Tasks</h1>
             <p className="text-muted-foreground mt-1">
               {filteredTasks.length} {filteredTasks.length === 1 ? 'task' : 'tasks'}
               {filteredTasks.length !== tasks.length && ` (filtered from ${tasks.length})`}
@@ -276,18 +257,47 @@ export default function ProjectTasksPage() {
           </div>
         </div>
         
-        {isProjectOwner && (
-          <Link href={`/projects/${id}/tasks/create`}>
-            <button className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-sm">
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setViewMode(viewMode === 'list' ? 'kanban' : 'list')}
+            className="inline-flex items-center px-3 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-all shadow-sm"
+          >
+            {viewMode === 'list' ? (
+              <>
+                <LayoutGrid className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Kanban View</span>
+              </>
+            ) : (
+              <>
+                <LayoutList className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">List View</span>
+              </>
+            )}
+          </motion.button>
+          
+          {isProjectOwner && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-sm"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Create Task
-            </button>
-          </Link>
-        )}
-      </div>
+            </motion.button>
+          )}
+        </div>
+      </motion.div>
       
       {/* Search and filters */}
-      <div className="mb-6 space-y-4">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+        className="mb-6 space-y-4"
+      >
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -296,7 +306,7 @@ export default function ProjectTasksPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search tasks..."
-              className="w-full pl-10 pr-4 py-2 bg-background border rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary focus:outline-none transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-background border rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary focus:outline-none transition-all shadow-sm"
             />
             {searchQuery && (
               <button 
@@ -309,49 +319,73 @@ export default function ProjectTasksPage() {
           </div>
           
           <div className="flex gap-2">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setShowFilters(!showFilters)}
-              className={`inline-flex items-center px-3 py-2 rounded-lg border ${showFilters ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border hover:bg-muted'} transition-colors`}
+              className={`inline-flex items-center px-3 py-2 rounded-lg border ${showFilters ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border hover:bg-muted'} transition-colors shadow-sm`}
             >
-              <Filter className="h-4 w-4 mr-2" />
+              <SlidersHorizontal className="h-4 w-4 mr-2" />
               Filters
-            </button>
+            </motion.button>
             
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2 bg-background border rounded-lg focus:ring-2 focus:ring-primary/30 focus:border-primary focus:outline-none transition-all cursor-pointer"
-            >
-              <option value="deadline">Sort by Deadline</option>
-              <option value="priority">Sort by Priority</option>
-              <option value="title">Sort by Title</option>
-              <option value="status">Sort by Status</option>
-            </select>
-            
-            <button
-              onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
-              className="inline-flex items-center px-3 py-2 rounded-lg border bg-background border-border hover:bg-muted transition-colors"
-              aria-label={sortDirection === 'asc' ? 'Sort descending' : 'Sort ascending'}
-            >
-              {sortDirection === 'asc' ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </button>
+            <div className="relative inline-block">
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                className="inline-flex items-center px-3 py-2 rounded-lg border bg-background border-border hover:bg-muted transition-colors shadow-sm"
+              >
+                <span className="mr-2 hidden sm:inline">Sort by</span>
+                <span className="mr-1">{
+                  sortBy === 'deadline' ? 'Deadline' : 
+                  sortBy === 'priority' ? 'Priority' : 
+                  sortBy === 'title' ? 'Title' : 'Status'
+                }</span>
+                <ChevronsUpDown className="h-4 w-4" />
+              </motion.button>
+              <div className="absolute right-0 mt-1 bg-card border rounded-md shadow-md z-10 hidden group-hover:block">
+                <button 
+                  onClick={() => setSortBy('deadline')}
+                  className="w-full px-4 py-2 text-left hover:bg-muted text-sm transition-colors whitespace-nowrap"
+                >
+                  Deadline
+                </button>
+                <button 
+                  onClick={() => setSortBy('priority')}
+                  className="w-full px-4 py-2 text-left hover:bg-muted text-sm transition-colors whitespace-nowrap"
+                >
+                  Priority
+                </button>
+                <button 
+                  onClick={() => setSortBy('title')}
+                  className="w-full px-4 py-2 text-left hover:bg-muted text-sm transition-colors whitespace-nowrap"
+                >
+                  Title
+                </button>
+                <button 
+                  onClick={() => setSortBy('status')}
+                  className="w-full px-4 py-2 text-left hover:bg-muted text-sm transition-colors whitespace-nowrap"
+                >
+                  Status
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         
         {/* Filter panel */}
-        <AnimatePresence>
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ 
+            height: showFilters ? 'auto' : 0, 
+            opacity: showFilters ? 1 : 0 
+          }}
+          transition={{ duration: 0.3 }}
+          className="overflow-hidden"
+        >
           {showFilters && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden bg-card border rounded-lg shadow-sm"
-            >
+            <div className="bg-card border rounded-lg shadow-sm">
               <div className="p-4 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
@@ -392,242 +426,36 @@ export default function ProjectTasksPage() {
                   </button>
                 </div>
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
-      </div>
+        </motion.div>
+      </motion.div>
       
-      {/* Main content - Task grid */}
-      {tasks.length === 0 ? (
-        <div className="bg-card border rounded-xl p-8 text-center shadow-sm">
-          <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Clock className="h-10 w-10 text-muted-foreground/50" />
-          </div>
-          <h2 className="text-xl font-bold mb-2">No Tasks Yet</h2>
-          <p className="text-muted-foreground max-w-md mx-auto mb-6">
-            {isProjectOwner
-              ? "Get started by creating tasks and assigning them to team members."
-              : "The project owner hasn't created any tasks for this project yet."}
-          </p>
-          
-          {isProjectOwner && (
-            <Link href={`/projects/${id}/tasks/create`}>
-              <button className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Create First Task
-              </button>
-            </Link>
-          )}
-        </div>
-      ) : filteredTasks.length === 0 ? (
-        <div className="bg-card border rounded-xl p-8 text-center shadow-sm">
-          <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Filter className="h-10 w-10 text-muted-foreground/50" />
-          </div>
-          <h2 className="text-xl font-bold mb-2">No Matching Tasks</h2>
-          <p className="text-muted-foreground max-w-md mx-auto mb-6">
-            No tasks match your current filters or search criteria.
-          </p>
-          <button
-            onClick={resetFilters}
-            className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-sm"
-          >
-            Reset All Filters
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Not Started Column */}
-          <div className="task-column">
-            <div className="bg-muted/40 p-4 rounded-t-lg border-b">
-              <div className="flex justify-between items-center">
-                <h3 className="font-medium">Not Started</h3>
-                <span className="bg-background px-2 py-1 text-xs rounded-full">
-                  {groupedTasks['Not Started'].length}
-                </span>
-              </div>
-            </div>
-            
-            <div className="p-4 space-y-3">
-              {groupedTasks['Not Started'].length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground text-sm border border-dashed rounded-lg">
-                  No tasks in this category
-                </div>
-              ) : (
-                groupedTasks['Not Started'].map((task) => (
-                  <TaskCard
-                    key={task.Id}
-                    task={task}
-                    canComplete={canCompleteTask(task)}
-                    onComplete={handleCompleteTask}
-                    onClick={() => router.push(`/tasks/${task.Id}`)}
-                  />
-                ))
-              )}
-            </div>
-          </div>
-          
-          {/* In Progress Column */}
-          <div className="task-column">
-            <div className="bg-primary/10 p-4 rounded-t-lg border-b">
-              <div className="flex justify-between items-center">
-                <h3 className="font-medium">In Progress</h3>
-                <span className="bg-background px-2 py-1 text-xs rounded-full">
-                  {groupedTasks['In Progress'].length}
-                </span>
-              </div>
-            </div>
-            
-            <div className="p-4 space-y-3">
-              {groupedTasks['In Progress'].length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground text-sm border border-dashed rounded-lg">
-                  No tasks in this category
-                </div>
-              ) : (
-                groupedTasks['In Progress'].map((task) => (
-                  <TaskCard
-                    key={task.Id}
-                    task={task}
-                    canComplete={canCompleteTask(task)}
-                    onComplete={handleCompleteTask}
-                    onClick={() => router.push(`/tasks/${task.Id}`)}
-                  />
-                ))
-              )}
-            </div>
-          </div>
-          
-          {/* Completed Column */}
-          <div className="task-column">
-            <div className="bg-success/10 p-4 rounded-t-lg border-b">
-              <div className="flex justify-between items-center">
-                <h3 className="font-medium">Completed</h3>
-                <span className="bg-background px-2 py-1 text-xs rounded-full">
-                  {groupedTasks['Completed'].length}
-                </span>
-              </div>
-            </div>
-            
-            <div className="p-4 space-y-3">
-              {groupedTasks['Completed'].length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground text-sm border border-dashed rounded-lg">
-                  No tasks in this category
-                </div>
-              ) : (
-                groupedTasks['Completed'].map((task) => (
-                  <TaskCard
-                    key={task.Id}
-                    task={task}
-                    canComplete={false}
-                    onComplete={handleCompleteTask}
-                    onClick={() => router.push(`/tasks/${task.Id}`)}
-                  />
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Task List or Kanban */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      >
+        <TaskList
+          tasks={filteredTasks}
+          userRole={isProjectOwner ? 'project_owner' : 'member'}
+          currentUserId={userId || ''}
+          projectId={id as string}
+          loading={false}
+          error={null}
+          onTasksChange={refreshTasks}
+          viewMode={viewMode}
+        />
+      </motion.div>
+      
+      {/* Create Task Dialog */}
+      <TaskDialog
+        isOpen={isCreateDialogOpen}
+        onClose={() => setIsCreateDialogOpen(false)}
+        projectId={id as string}
+        onSuccess={handleTaskDialogSuccess}
+      />
     </div>
   );
-}
-
-// Task Card Component
-function TaskCard({ task, canComplete, onComplete, onClick }) {
-  const deadlineStatus = task.Deadline ? getDeadlineStatus(task.Deadline) : null;
-  
-  return (
-    <motion.div
-      whileHover={{ y: -3 }}
-      whileTap={{ scale: 0.98 }}
-      className={cn(
-        "cursor-pointer bg-card border rounded-lg overflow-hidden transition-all duration-200 shadow-sm hover:shadow-md",
-        task.Completed && "opacity-75"
-      )}
-      onClick={onClick}
-    >
-      <div className="flex">
-        <div 
-          className="w-1.5" 
-          style={{ backgroundColor: getPriorityColor(task.Priority) }}
-        />
-        
-        <div className="flex-1 p-4">
-          <div className="flex justify-between items-start gap-2 mb-2">
-            <h4 className={cn("font-medium", task.Completed && "line-through opacity-70")}>
-              {task.Title}
-            </h4>
-            
-            <div className="flex-shrink-0">
-              <span 
-                className={cn(
-                  "px-2 py-1 text-xs rounded-full",
-                  task.Priority === 'HIGH' && "bg-destructive/10 text-destructive",
-                  task.Priority === 'MEDIUM' && "bg-warning/10 text-warning",
-                  task.Priority === 'LOW' && "bg-success/10 text-success",
-                )}
-              >
-                {task.Priority}
-              </span>
-            </div>
-          </div>
-          
-          {task.Description && (
-            <p className={cn(
-              "text-sm text-muted-foreground line-clamp-2 mb-3",
-              task.Completed && "opacity-70"
-            )}>
-              {task.Description}
-            </p>
-          )}
-          
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              {task.Deadline && (
-                <div className={cn(
-                  "flex items-center",
-                  deadlineStatus?.color
-                )}>
-                  <Calendar className="h-3.5 w-3.5 mr-1" />
-                  <span>{format(new Date(task.Deadline), 'MMM d')}</span>
-                </div>
-              )}
-            </div>
-            
-            {canComplete && (
-              <button
-                onClick={(e) => onComplete(task.Id, e)}
-                className="flex items-center justify-center h-6 w-6 rounded-full border border-muted-foreground/30 hover:border-primary hover:bg-primary/10 transition-colors"
-              >
-                <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// Helper functions
-function getPriorityColor(priority: string) {
-  switch (priority) {
-    case 'HIGH': return 'var(--destructive)';
-    case 'MEDIUM': return 'var(--warning)';
-    case 'LOW': return 'var(--success)';
-    default: return 'var(--muted-foreground)';
-  }
-}
-
-function getDeadlineStatus(deadline: string | null) {
-  if (!deadline) return null;
-  
-  try {
-    const date = parseISO(deadline);
-    if (isPast(date) && !isToday(date)) return { label: 'Overdue', color: 'text-destructive' };
-    if (isToday(date)) return { label: 'Due today', color: 'text-warning' };
-    return null;
-  } catch (error) {
-    return null;
-  }
 }

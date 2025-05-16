@@ -1,7 +1,6 @@
 'use client';
 
-import './createTeam.css'
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { 
   ArrowLeft,
@@ -9,35 +8,37 @@ import {
   CheckCircle,
   PlusCircle,
   AlertCircle,
-  X
+  X,
+  Check,
+  Palette
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/lib/toast';
-import { useTheme } from '@/hooks/useTheme'; 
+import { cn } from '@/lib/utils';
 
 // API imports
 import { getProjectById } from '@/api/ProjectAPI';
 import { createTeam } from '@/api/TeamAPI';
 import { useAuth } from '@/contexts/AuthContext';
 
+
 const TEAM_COLORS = [
-  { index: 0, bg: '#FF2D55', name: 'Red' },
-  { index: 1, bg: '#FF9500', name: 'Orange' },
-  { index: 2, bg: '#FFCC00', name: 'Yellow' },
-  { index: 3, bg: '#34C759', name: 'Green' },
-  { index: 4, bg: '#5AC8FA', name: 'Sky Blue' },
-  { index: 5, bg: '#007AFF', name: 'Royal Blue' }, // Default
-  { index: 6, bg: '#5856D6', name: 'Purple' },
-  { index: 7, bg: '#AF52DE', name: 'Violet' },
-  { index: 8, bg: '#FF375F', name: 'Pink' },
-  { index: 9, bg: '#8E8E93', name: 'Gray' },
+  { index: 0, name: 'Ruby Red', gradient: 'from-rose-500 to-red-500' },
+  { index: 1, name: 'Sunset Orange', gradient: 'from-orange-400 to-orange-600' },
+  { index: 2, name: 'Golden Amber', gradient: 'from-amber-400 to-yellow-600' },
+  { index: 3, name: 'Verdant Green', gradient: 'from-green-400 to-emerald-600' },
+  { index: 4, name: 'Ocean Blue', gradient: 'from-blue-400 to-sky-600' },
+  { index: 5, name: 'Royal Indigo', gradient: 'from-indigo-500 to-purple-600' },
+  { index: 6, name: 'Vibrant Purple', gradient: 'from-purple-400 to-violet-600' },
+  { index: 7, name: 'Fuchsia Pink', gradient: 'from-pink-400 to-rose-600' },
+  { index: 8, name: 'Slate Gray', gradient: 'from-slate-400 to-slate-600' },
+  { index: 9, name: 'Ocean Teal', gradient: 'from-teal-400 to-cyan-600' },
 ];
 
 export default function CreateTeamPage() {
   const { id: projectId } = useParams();
   const router = useRouter();
   const { user } = useAuth();
-  const { theme } = useTheme(); // Get current theme
   
   // States
   const [project, setProject] = useState(null);
@@ -71,7 +72,7 @@ export default function CreateTeamPage() {
   };
   
   // Get user ID from JWT token as fallback
-  const getUserIdFromToken = useCallback(() => {
+  const getUserIdFromToken = () => {
     try {
       const token = localStorage.getItem('authToken');
       if (!token) return null;
@@ -85,7 +86,7 @@ export default function CreateTeamPage() {
       console.error('Error extracting user ID from token:', error);
       return null;
     }
-  }, []);
+  };
   
   // Fetch project data and check permissions
   useEffect(() => {
@@ -96,14 +97,12 @@ export default function CreateTeamPage() {
         
         // Fetch project data
         const projectData = await getProjectById(projectId);
-        console.log("Project data fetched:", projectData);
         setProject(projectData);
         
         // Check if current user is project owner
         let userId = user?.Id;
         if (!userId) {
           userId = getUserIdFromToken();
-          console.log("Using userId from token:", userId);
         }
         
         // Update form with project ID to ensure it's correct
@@ -113,7 +112,6 @@ export default function CreateTeamPage() {
         }));
         
         const userIsOwner = userId === projectData.OwnerId;
-        console.log("Is user owner?", userIsOwner, { userId, ownerId: projectData.OwnerId });
         setIsOwner(userIsOwner);
         
         if (!userIsOwner) {
@@ -134,7 +132,7 @@ export default function CreateTeamPage() {
     if (projectId) {
       loadData();
     }
-  }, [projectId, user, router, getUserIdFromToken]);
+  }, [projectId, user, router]);
   
   // Handle input change
   const handleInputChange = (e) => {
@@ -158,6 +156,12 @@ export default function CreateTeamPage() {
     
     if (!form.Name.trim()) {
       newErrors.Name = 'Team name is required';
+    } else if (form.Name.length > 50) {
+      newErrors.Name = 'Team name cannot exceed 50 characters';
+    }
+    
+    if (form.Description && form.Description.length > 200) {
+      newErrors.Description = 'Description cannot exceed 200 characters';
     }
     
     setErrors(newErrors);
@@ -175,7 +179,7 @@ export default function CreateTeamPage() {
     setSubmitting(true);
     setServerError(null);
     
-    // Log what we're sending
+    // Prepare payload
     const payload = {
       Name: form.Name,
       Description: form.Description || "", // Send empty string instead of undefined
@@ -183,12 +187,9 @@ export default function CreateTeamPage() {
       ProjectId: projectId
     };
     
-    console.log("Creating team with payload:", payload);
-    
     try {
       // Create team with all form data
       const team = await createTeam(payload);
-      console.log("Team created successfully:", team);
       
       // Show success animation before redirecting
       setShowSuccess(true);
@@ -205,138 +206,165 @@ export default function CreateTeamPage() {
       
       // Try to extract meaningful error information
       if (error?.response) {
-        console.log("Error response status:", error.response.status);
-        
-        // Handle 422 specifically (validation error)
         if (error.response.status === 422) {
           try {
             const errorDetail = error.response.data?.detail;
             if (Array.isArray(errorDetail)) {
-              // API returns array of validation errors
               errorMsg = errorDetail.map(item => item.msg || 'Validation error').join(', ');
-              console.log("Validation errors:", errorDetail);
             } else if (typeof errorDetail === 'string') {
               errorMsg = errorDetail;
             } else {
               errorMsg = 'Validation failed. Please check your input.';
             }
           } catch (parseError) {
-            console.error("Error parsing validation errors:", parseError);
             errorMsg = 'Validation error occurred';
           }
         } else {
-          // General error with response
           errorMsg = `Server error: ${error.response.status}`;
         }
       } else if (error.request) {
-        // Request was made but no response received
         errorMsg = 'No response from server. Please check your connection.';
       } else if (error.message) {
-        // Error in setting up the request
         errorMsg = error.message;
       }
       
       setServerError(errorMsg);
-      
-      // Use a setTimeout to avoid React state updates during render
-      setTimeout(() => {
-        toast.error(`Failed to create team: ${errorMsg}`);
-      }, 0);
-      
+      toast.error(`Failed to create team: ${errorMsg}`);
       setSubmitting(false);
     }
   };
-  
-  // If not the project owner (after check), return null
-  if (!loading && !isOwner) {
-    return null;
-  }
+
+  // Team colors with theme support
+  const TEAM_COLORS = [
+    { name: 'Ruby Red', gradient: 'from-rose-500 to-red-500' },
+    { name: 'Sunset Orange', gradient: 'from-orange-400 to-orange-600' },
+    { name: 'Golden Amber', gradient: 'from-amber-400 to-yellow-600' },
+    { name: 'Verdant Green', gradient: 'from-green-400 to-emerald-600' },
+    { name: 'Ocean Blue', gradient: 'from-blue-400 to-sky-600' },
+    { name: 'Royal Indigo', gradient: 'from-indigo-500 to-purple-600' },
+    { name: 'Vibrant Purple', gradient: 'from-purple-400 to-violet-600' },
+    { name: 'Fuchsia Pink', gradient: 'from-pink-400 to-rose-600' },
+    { name: 'Slate Gray', gradient: 'from-slate-400 to-slate-600' },
+    { name: 'Ocean Teal', gradient: 'from-teal-400 to-cyan-600' },
+  ];
+
 
   return (
-    <div className="ios-design-container">
-      <div className="ios-card-container">
-        {/* Card Header with back button */}
-        <div className="ios-card-header">
-          <button 
-            className="ios-back-button" 
-            onClick={() => router.push(`/projects/${projectId}/team`)}
-            type="button"
-          >
-            <ArrowLeft size={18} />
-            <span>Back</span>
-          </button>
-          
-          <h1 className="ios-card-title">Create New Team</h1>
-        </div>
-        
-        {/* Server error message */}
-        <AnimatePresence>
-          {serverError && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="ios-error-banner"
+    <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4 sm:p-6 md:p-8">
+      <motion.div 
+
+        className="bg-card/90 backdrop-blur-md border border-border/50 rounded-2xl shadow-lg max-w-xl w-full overflow-hidden"
+
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        {/* Card Header */}
+
+        <div className="flex items-center justify-between px-6 py-4 bg-card/90 border-b border-border/50">
+          <div className="flex items-center gap-2">
+            <motion.button 
+              onClick={() => router.push(`/projects/${projectId}/team`)}
+              className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
             >
-              <AlertCircle size={16} />
-              <span>{serverError}</span>
-              <button 
-                onClick={() => setServerError(null)}
-                className="ios-error-close"
-                type="button"
-              >
-                <X size={14} />
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <ArrowLeft size={18} />
+            </motion.button>
+            <h1 className="text-xl font-semibold text-foreground">Create New Team</h1>
+
+          </div>
+        </div>
         
         {/* Content */}
         {loading ? (
-          <div className="ios-loading-container">
-            <div className="ios-loading-spinner"></div>
-            <p>Loading project details...</p>
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-muted-foreground">Loading project details...</p>
           </div>
         ) : (
-          <div className="ios-create-form">
-            <div className="ios-form-row">
-              <label className="ios-form-label">Project</label>
-              <div className="ios-form-value">{project?.Name || 'Unknown Project'}</div>
+          <form onSubmit={handleSubmit} className="p-6">
+            {/* Server error message */}
+            <AnimatePresence>
+              {serverError && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mb-6 p-4 bg-red-500/10 rounded-xl flex items-center gap-3 text-sm"
+                >
+                  <AlertCircle size={18} className="text-red-500 flex-shrink-0" />
+                  <span className="text-red-500">{serverError}</span>
+                  <button 
+                    type="button"
+                    onClick={() => setServerError(null)}
+                    className="ml-auto p-1 text-red-500/70 hover:text-red-500 rounded-full hover:bg-red-500/10"
+
+                  >
+                    <X size={14} />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
+            {/* Project Info */}
+
+            <div className="bg-muted/30 backdrop-blur-sm p-4 rounded-xl flex items-center mb-6">
+
+              <div className="bg-primary/10 p-2 rounded-md mr-3">
+                <Users size={20} className="text-primary" />
+              </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Project</div>
+
+                <div className="font-medium text-foreground">{project?.Name || 'Loading...'}</div>
+
+              </div>
             </div>
             
             {/* Team Preview */}
-            <div className="ios-preview-section">
-              <div 
-                className="ios-team-avatar"
-                style={{ backgroundColor: TEAM_COLORS[form.ColorIndex].bg }}
-              >
-                {getTeamInitials(form.Name) || <Users size={24} strokeWidth={1.5} />}
-              </div>
-              
-              <div className="ios-preview-details">
-                <h3 className="ios-preview-title">
-                  {form.Name || 'Team Name'}
-                </h3>
-                <p className="ios-preview-description">
-                  {form.Description || 'Team description will appear here'}
-                </p>
+            <div className="mb-6">
+
+              <label className="block text-sm font-medium mb-2 text-foreground">Team Preview</label>
+              <div className="bg-muted/30 backdrop-blur-sm border border-border/50 rounded-xl p-4 flex items-center">
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${TEAM_COLORS[form.ColorIndex].gradient} flex items-center justify-center text-white font-bold text-lg shadow-md`}>
+                  {getTeamInitials(form.Name) || <Users size={20} />}
+                </div>
+                <div className="ml-4 flex-1 min-w-0">
+                  <h3 className="font-medium truncate text-foreground">
+
+                    {form.Name || 'Team Name'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground line-clamp-1">
+                    {form.Description || 'Team description will appear here'}
+                  </p>
+                </div>
               </div>
             </div>
             
             {/* Form Fields */}
-            <div className="ios-form-group">
-              <div className="ios-form-field">
-                <label htmlFor="Name" className="ios-field-label">
-                  Team Name <span className="ios-required">*</span>
+            <div className="space-y-6">
+              {/* Name Field */}
+              <div>
+                <label htmlFor="Name" className="block text-sm font-medium mb-2 text-foreground">
+                  Team Name <span className="text-red-500">*</span>
+
                 </label>
                 <input
-                  type="text"
                   id="Name"
                   name="Name"
+                  type="text"
                   value={form.Name}
                   onChange={handleInputChange}
                   placeholder="Enter team name"
-                  className={`ios-text-input ${errors.Name ? 'ios-input-error' : ''}`}
+                  className={cn(
+
+                    "w-full p-3 rounded-xl border backdrop-blur-sm bg-background/50 text-foreground transition-colors focus:ring-1 focus:ring-primary focus:outline-none",
+                    errors.Name
+                      ? "border-red-500"
+                      : "border-border/50"
+
+                  )}
                   maxLength={50}
                   autoFocus
                 />
@@ -346,16 +374,22 @@ export default function CreateTeamPage() {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="ios-error-message"
+                      className="text-red-500 text-sm mt-1"
+
                     >
                       {errors.Name}
                     </motion.div>
                   )}
                 </AnimatePresence>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {50 - (form.Name?.length || 0)} characters remaining
+                </div>
               </div>
               
-              <div className="ios-form-field">
-                <label htmlFor="Description" className="ios-field-label">
+              {/* Description Field */}
+              <div>
+                <label htmlFor="Description" className="block text-sm font-medium mb-2 text-foreground">
+
                   Description
                 </label>
                 <textarea
@@ -364,77 +398,120 @@ export default function CreateTeamPage() {
                   value={form.Description}
                   onChange={handleInputChange}
                   placeholder="Enter team description (optional)"
-                  className="ios-textarea"
+                  className={cn(
+                    "w-full p-3 rounded-xl border border-border/50 backdrop-blur-sm bg-background/50 text-foreground transition-colors resize-none focus:ring-1 focus:ring-primary focus:outline-none",
+                    errors.Description ? "border-red-500" : ""
+
+                  )}
                   rows={3}
                   maxLength={200}
                 ></textarea>
+                <AnimatePresence>
+                  {errors.Description && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="text-red-500 text-sm mt-1"
+
+                    >
+                      {errors.Description}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {200 - (form.Description?.length || 0)} characters remaining
+                </div>
               </div>
-            </div>
-            
-            {/* Color Selection */}
-            <div className="ios-form-field">
-              <label className="ios-field-label">
-                Team Color
-              </label>
-              <div className="ios-color-grid">
-                {TEAM_COLORS.map((color) => (
-                  <motion.button
-                    key={color.index}
-                    type="button"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className={`ios-color-option ${form.ColorIndex === color.index ? 'ios-color-selected' : ''}`}
-                    style={{ backgroundColor: color.bg }}
-                    onClick={() => handleColorSelect(color.index)}
-                    aria-label={`Select ${color.name} color`}
-                  >
-                    {form.ColorIndex === color.index && (
-                      <CheckCircle className="ios-color-check" size={16} />
-                    )}
-                  </motion.button>
-                ))}
-              </div>
-              <div className="ios-color-name">
-                {TEAM_COLORS[form.ColorIndex].name}
+              
+              {/* Team Color */}
+              <div>
+
+                <label className="flex items-center gap-2 text-sm font-medium mb-3 text-foreground">
+
+                  <Palette size={16} className="text-muted-foreground" />
+                  Team Color
+                </label>
+                <div className="grid grid-cols-5 gap-3 mb-2">
+
+                  {TEAM_COLORS.map((color, index) => (
+                    <motion.button
+                      key={index}
+                      type="button"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      className={cn(
+                        "aspect-square rounded-xl bg-gradient-to-br",
+                        color.gradient,
+                        form.ColorIndex === index ? 
+                          "ring-2 ring-primary ring-offset-2 ring-offset-card" : ""
+                      )}
+                      onClick={() => handleColorSelect(index)}
+                      aria-label={`Select ${color.name} color`}
+                    >
+                      {form.ColorIndex === index && (
+
+                        <Check className="text-white drop-shadow-md" size={18} />
+                      )}
+                    </motion.button>
+                  ))}
+                </div>
+                <div className="text-sm text-center text-foreground">
+
+                  {TEAM_COLORS[form.ColorIndex].name}
+                </div>
               </div>
             </div>
             
             {/* Form Actions */}
-            <div className="ios-form-actions">
+            <div className="mt-8 flex gap-3">
               <motion.button
                 type="button"
-                className="ios-cancel-button"
+                className="flex-1 py-2.5 px-4 bg-muted/50 backdrop-blur-sm hover:bg-muted text-foreground rounded-full transition-colors"
+
                 onClick={() => router.push(`/projects/${projectId}/team`)}
                 disabled={submitting || showSuccess}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
                 Cancel
               </motion.button>
               
               <motion.button
-                type="button"
-                className={`ios-create-button ${showSuccess ? 'ios-success' : ''}`}
-                onClick={handleSubmit}
+                type="submit"
+                className={cn(
+
+                  "flex-1 py-2.5 px-4 rounded-full transition-colors flex items-center justify-center gap-2",
+                  showSuccess 
+                    ? "bg-green-500 text-white" 
+
+                    : "bg-primary text-primary-foreground hover:bg-primary/90"
+                )}
                 disabled={submitting || showSuccess}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
               >
                 {showSuccess ? (
-                  <CheckCircle size={20} />
+                  <>
+                    <CheckCircle size={18} />
+                    Created!
+                  </>
                 ) : submitting ? (
-                  <div className="ios-spinner-small"></div>
+                  <>
+                    <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"></div>
+                    Creating...
+                  </>
                 ) : (
                   <>
-                    <PlusCircle size={16} />
-                    <span>Create Team</span>
+                    <PlusCircle size={18} />
+                    Create Team
                   </>
                 )}
               </motion.button>
             </div>
-          </div>
+          </form>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

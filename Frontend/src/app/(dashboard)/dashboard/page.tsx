@@ -95,19 +95,12 @@ function TopBar() {
             "text-2xl font-bold bg-gradient-to-r bg-clip-text text-transparent",
             getGradient()
           )}>
-            Welcome back, {getWelcomeName()}
+            It's good to see you, {getWelcomeName()}
           </h1>
         )}
       </motion.div>
       
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-            2
-          </span>
-        </Button>
-        
         {/* Profile button that directly navigates to profile page */}
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -130,7 +123,6 @@ function TopBar() {
     </div>
   );
 }
-
 
 
 function ProjectHighlightCard({ project, onClick }) {

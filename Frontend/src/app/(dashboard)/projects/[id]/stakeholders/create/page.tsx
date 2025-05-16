@@ -1,8 +1,10 @@
+// Path: Frontend/src/app/(dashboard)/projects/[id]/stakeholders/create/page.tsx
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, 
   Users,
@@ -12,7 +14,9 @@ import {
   AlertTriangle,
   Mail,
   Shield,
-  ExternalLink
+  ExternalLink,
+  Search,
+  X
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { launchConfetti } from '@/lib/confetti';
@@ -20,14 +24,13 @@ import { cn } from '@/lib/utils';
 
 // API imports
 import { getProjectById } from '@/api/ProjectAPI';
-import { getProjectStakeholders, createStakeholder } from '@/api/StakeholderAPI';
+import { getProjectStakeholders, createStakeholder, searchUsers } from '@/api/StakeholderAPI';
 import { getCurrentUser } from '@/api/UserAPI';
 
 export default function CreateStakeholderPage() {
   const { id } = useParams();
   const router = useRouter();
   const [project, setProject] = useState<any>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const [stakeholders, setStakeholders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -39,66 +42,74 @@ export default function CreateStakeholderPage() {
     Percentage: '10', // Default percentage
   });
   
+  // User search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  
   // Validation
   const [errors, setErrors] = useState<{
     Percentage?: string;
+    User?: string;
   }>({});
 
-  // Fetch project data, user data, and current stakeholders
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+  // Fetch project data and stakeholders
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
 
-      if (!id || typeof id !== 'string') {
-        console.error('Invalid project ID:', id);
-        toast.error('Invalid project ID');
-        return;
+        if (!id || typeof id !== 'string') {
+          console.error('Invalid project ID:', id);
+          toast.error('Invalid project ID');
+          return;
+        }
+
+        console.log('Fetching data for project ID:', id);
+
+        const [projectData, stakeholdersData] = await Promise.all([
+          getProjectById(id),
+          getProjectStakeholders(id)
+        ]);
+
+        setProject(projectData);
+        setStakeholders(stakeholdersData);
+
+        const total = stakeholdersData.reduce((acc, curr) => acc + curr.Percentage, 0);
+        setTotalAllocation(total);
+        setAvailablePercentage(100 - total);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+        toast.error('Could not load required data');
+      } finally {
+        setLoading(false);
       }
+    };
 
-      console.log('Fetching data for project ID:', id);
+    fetchData();
+  }, [id]);
 
-      const [projectData, userDataRaw, stakeholdersData] = await Promise.all([
-        getProjectById(id),
-        getCurrentUser(),
-        getProjectStakeholders(id)
-      ]);
-
-      const userData = userDataRaw?.Id
-        ? userDataRaw
-        : {
-            Id: localStorage.getItem('userId') || 'user-123',
-            FirstName: 'Current',
-            LastName: 'User',
-            Email: 'user@example.com',
-            Role: 'Member',
-            JobTitle: 'Team Member'
-          };
-
-      setCurrentUser(userData);
-      setProject(projectData);
-      setStakeholders(stakeholdersData);
-
-      const total = stakeholdersData.reduce((acc, curr) => acc + curr.Percentage, 0);
-      setTotalAllocation(total);
-      setAvailablePercentage(100 - total);
-
-      const isAlreadyStakeholder = stakeholdersData.some(s => s.UserId === userData.Id);
-      if (isAlreadyStakeholder) {
-        toast.info('You are already a stakeholder for this project');
-        router.push(`/projects/${id}/stakeholders`);
+  // Handle search query
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchQuery.trim().length >= 2) {
+        setSearching(true);
+        try {
+          const results = await searchUsers(searchQuery);
+          setSearchResults(results);
+        } catch (error) {
+          console.error('Error searching users:', error);
+        } finally {
+          setSearching(false);
+        }
+      } else {
+        setSearchResults([]);
       }
+    }, 300);
 
-    } catch (error) {
-      console.error('Failed to load data:', error);
-      toast.error('Could not load required data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchData();
-}, [id, router]);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
 
   // Update form.Percentage when availablePercentage changes
   useEffect(() => {
@@ -112,7 +123,11 @@ useEffect(() => {
     e.preventDefault();
     
     // Validate form
-    const newErrors: {Percentage?: string} = {};
+    const newErrors: {Percentage?: string; User?: string} = {};
+    
+    if (!selectedUser) {
+      newErrors.User = 'Please select a user';
+    }
     
     const percentage = parseInt(form.Percentage);
     if (isNaN(percentage) || percentage <= 0) {
@@ -134,17 +149,17 @@ useEffect(() => {
     try {
       const stakeholderData = {
         ProjectId: id as string,
-        UserId: currentUser.Id,
+        UserId: selectedUser.Id,
         Percentage: parseInt(form.Percentage)
       };
       
       await createStakeholder(stakeholderData);
       launchConfetti();
-      toast.success('You are now a stakeholder!');
+      toast.success('Stakeholder added successfully!');
       router.push(`/projects/${id}/stakeholders`);
     } catch (error) {
       console.error('Failed to create stakeholder:', error);
-      toast.error('Could not add you as a stakeholder');
+      toast.error('Could not add stakeholder');
     } finally {
       setSubmitting(false);
     }
@@ -172,12 +187,34 @@ useEffect(() => {
     }
   };
 
+  // Select a user from search results
+  const handleSelectUser = (user: any) => {
+    setSelectedUser(user);
+    setSearchQuery('');
+    setSearchResults([]);
+    
+    // Clear user error
+    if (errors.User) {
+      setErrors(prev => ({ ...prev, User: undefined }));
+    }
+  };
+
+  // Clear selected user
+  const handleClearUser = () => {
+    setSelectedUser(null);
+  };
+
   // Get stage color based on total allocation
   const getAllocationColor = () => {
     if (totalAllocation >= 100) return 'bg-red-500';
     if (totalAllocation >= 80) return 'bg-amber-500';
     if (totalAllocation >= 50) return 'bg-yellow-500';
     return 'bg-green-500';
+  };
+
+  // Check if user is already a stakeholder
+  const isUserAlreadyStakeholder = (userId: string) => {
+    return stakeholders.some(s => s.UserId === userId);
   };
 
   return (
@@ -196,7 +233,7 @@ useEffect(() => {
           </motion.button>
           
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Become a Stakeholder</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Add Stakeholder</h1>
             <p className="text-muted-foreground">
               {project?.Name || 'Loading project'}
             </p>
@@ -266,7 +303,7 @@ useEffect(() => {
                     <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="font-medium">No Available Stake</p>
-                      <p className="text-sm mt-1">This project has reached 100% stake allocation. You cannot become a stakeholder at this time.</p>
+                      <p className="text-sm mt-1">This project has reached 100% stake allocation. You cannot add a stakeholder at this time.</p>
                     </div>
                   </div>
                 )}
@@ -274,52 +311,6 @@ useEffect(() => {
             </>
           )}
         </motion.div>
-        
-        {/* User Card */}
-        {!loading && currentUser && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm mb-6"
-          >
-            <div className="p-6">
-              <h2 className="text-lg font-semibold mb-4">Your Details</h2>
-              
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  {currentUser.ProfilePicture ? (
-                    <img 
-                      src={currentUser.ProfilePicture.FilePath} 
-                      alt={`${currentUser.FirstName} ${currentUser.LastName}`}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <User className="h-6 w-6 text-primary" />
-                  )}
-                </div>
-                
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg">
-                    {currentUser.FirstName} {currentUser.LastName}
-                  </h3>
-                  
-                  <div className="flex items-center text-muted-foreground text-sm mt-1">
-                    <Mail className="h-3.5 w-3.5 mr-1.5" />
-                    <span>{currentUser.Email}</span>
-                  </div>
-                  
-                  {currentUser.JobTitle && (
-                    <div className="flex items-center text-muted-foreground text-sm mt-1">
-                      <Shield className="h-3.5 w-3.5 mr-1.5" />
-                      <span>{currentUser.JobTitle}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
         
         {/* Form section */}
         {!loading && (
@@ -330,8 +321,117 @@ useEffect(() => {
           >
             <form onSubmit={handleSubmit} className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
               <div className="p-6">
-                <h2 className="text-lg font-semibold mb-4">Stake Details</h2>
+                <h2 className="text-lg font-semibold mb-4">Stakeholder Details</h2>
                 
+                {/* User search */}
+                <div className="space-y-2 mb-6">
+                  <label htmlFor="userSearch" className="block text-sm font-medium text-foreground">
+                    Find User
+                  </label>
+                  {selectedUser ? (
+                    <div className="bg-muted/40 p-4 rounded-lg border border-border flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{selectedUser.FirstName} {selectedUser.LastName}</p>
+                          <p className="text-sm text-muted-foreground">{selectedUser.Email}</p>
+                        </div>
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={handleClearUser}
+                        className="p-1.5 rounded-full hover:bg-muted"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Search className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <input
+                          type="text"
+                          id="userSearch"
+                          value={searchQuery}
+                          onChange={e => setSearchQuery(e.target.value)}
+                          className={`block w-full pl-10 pr-3 py-3 bg-muted text-foreground placeholder-muted-foreground border ${
+                            errors.User ? 'border-red-500' : 'border-border'
+                          } rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent`}
+                          placeholder="Search by name or email"
+                          disabled={availablePercentage <= 0}
+                        />
+                      </div>
+                      
+                      {errors.User && (
+                        <p className="text-sm text-red-500 flex items-center mt-1">
+                          <AlertTriangle className="h-4 w-4 mr-1" />
+                          {errors.User}
+                        </p>
+                      )}
+                      
+                      {searching && (
+                        <div className="mt-2 text-sm text-muted-foreground">
+                          Searching users...
+                        </div>
+                      )}
+                      
+                      <AnimatePresence>
+                        {searchResults.length > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="mt-2 border border-border rounded-lg overflow-hidden max-h-60 overflow-y-auto"
+                          >
+                            {searchResults.map(user => {
+                              const isAlreadyStakeholder = isUserAlreadyStakeholder(user.Id);
+                              return (
+                                <motion.div
+                                  key={user.Id}
+                                  className={cn(
+                                    "p-3 border-b border-border last:border-b-0 flex items-center justify-between",
+                                    isAlreadyStakeholder 
+                                      ? "bg-muted/50 cursor-not-allowed"
+                                      : "hover:bg-muted/40 cursor-pointer"
+                                  )}
+                                  onClick={() => {
+                                    if (!isAlreadyStakeholder) {
+                                      handleSelectUser(user);
+                                    }
+                                  }}
+                                  whileHover={{ 
+                                    backgroundColor: isAlreadyStakeholder ? undefined : 'rgba(var(--primary-rgb), 0.1)',
+                                    x: isAlreadyStakeholder ? 0 : 3
+                                  }}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                      <User className="h-4 w-4 text-primary" />
+                                    </div>
+                                    <div>
+                                      <p className="font-medium">{user.FirstName} {user.LastName}</p>
+                                      <p className="text-xs text-muted-foreground">{user.Email}</p>
+                                    </div>
+                                  </div>
+                                  
+                                  {isAlreadyStakeholder && (
+                                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">Already a stakeholder</span>
+                                  )}
+                                </motion.div>
+                              );
+                            })}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Percentage field */}
                 <div className="space-y-2 mb-6">
                   <label htmlFor="Percentage" className="block text-sm font-medium text-foreground">
                     Stake Percentage
@@ -361,7 +461,7 @@ useEffect(() => {
                     </p>
                   )}
                   <p className="text-sm text-muted-foreground mt-1">
-                    Enter your desired stake percentage (max: {availablePercentage}%).
+                    Enter the desired stake percentage (max: {availablePercentage}%).
                   </p>
                 </div>
                 
@@ -371,18 +471,9 @@ useEffect(() => {
                     Important Information
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    By becoming a stakeholder, you agree to the project terms and conditions. 
-                    Your stake grants you certain rights and responsibilities in the project governance.
+                    By adding a stakeholder, you grant them certain rights and responsibilities in the project governance.
+                    The total stake allocation cannot exceed 100%.
                   </p>
-                  
-                  <motion.button
-                    type="button"
-                    className="text-xs flex items-center text-primary mt-3 hover:underline"
-                    whileHover={{ x: 3 }}
-                  >
-                    <span>Read stakeholder agreement</span>
-                    <ExternalLink className="h-3 w-3 ml-1" />
-                  </motion.button>
                 </div>
                 
                 <div className="flex justify-end gap-3">
@@ -400,13 +491,13 @@ useEffect(() => {
                   <motion.button
                     type="submit"
                     className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                      availablePercentage <= 0 
+                      availablePercentage <= 0 || !selectedUser
                         ? 'bg-muted text-muted-foreground cursor-not-allowed' 
                         : 'bg-primary hover:bg-primary/90 text-primary-foreground'
                     }`}
-                    disabled={submitting || availablePercentage <= 0}
-                    whileHover={availablePercentage > 0 ? { scale: 1.05 } : {}}
-                    whileTap={availablePercentage > 0 ? { scale: 0.95 } : {}}
+                    disabled={submitting || availablePercentage <= 0 || !selectedUser}
+                    whileHover={availablePercentage > 0 && selectedUser ? { scale: 1.05 } : {}}
+                    whileTap={availablePercentage > 0 && selectedUser ? { scale: 0.95 } : {}}
                   >
                     {submitting ? (
                       <>
@@ -416,7 +507,7 @@ useEffect(() => {
                     ) : (
                       <>
                         <CheckCircle className="h-4 w-4" />
-                        <span>Become a Stakeholder</span>
+                        <span>Add Stakeholder</span>
                       </>
                     )}
                   </motion.button>
