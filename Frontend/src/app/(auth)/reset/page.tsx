@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { toast } from "@/lib/toast"
-import api from "@/lib/axios"
+import { api } from "@/lib/axios"  // ✅ FIXED - Using proper API import
 import { Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { FormInput } from "@/components/ui/FormInput"
@@ -12,14 +12,15 @@ import { FormInput } from "@/components/ui/FormInput"
 export default function ResetPasswordPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
-  const [form, setForm] = useState({ newPassword: "" })
-  const [errors, setErrors] = useState<{ newPassword?: string }>({})
+  const [form, setForm] = useState({ newPassword: "", confirmPassword: "" })  // ✅ ADDED - Confirm password field
+  const [errors, setErrors] = useState<{ newPassword?: string, confirmPassword?: string }>({})
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem("taskup_reset_email")
     if (!stored) {
+      toast.error("Email not found. Please restart the password reset process.")
       router.push("/forgot")
     } else {
       setEmail(stored)
@@ -31,6 +32,11 @@ export default function ResetPasswordPage() {
     if (!form.newPassword) errs.newPassword = "New password is required."
     else if (form.newPassword.length < 6)
       errs.newPassword = "Password must be at least 6 characters."
+    
+    // ✅ ADDED - Confirm password validation
+    if (form.newPassword !== form.confirmPassword)
+      errs.confirmPassword = "Passwords don't match."
+    
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -42,20 +48,40 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = async () => {
     if (!validate()) return
+    
     setLoading(true)
     try {
+      // ✅ FIXED - Using correct API endpoint with proper payload
       await api.post("/users/reset-password", {
         Email: email,
-        NewPassword: form.newPassword,
+        NewPassword: form.newPassword
       })
+      
       toast.success("Password reset successfully")
       localStorage.removeItem("taskup_reset_email")
-      router.push("/login")
+      
+      // Give user time to see success message before redirecting
+      setTimeout(() => {
+        router.push("/login")
+      }, 1500)
     } catch (err: any) {
-      toast.error(err?.response?.data?.detail || "Reset failed")
+      console.error("Password reset error:", err)
+      
+      // ✅ FIXED - Improved error handling
+      const errorMessage = 
+        err.response?.data?.message || 
+        err.response?.data?.detail || 
+        "Password reset failed. Please try again."
+      
+      toast.error(typeof errorMessage === 'string' ? errorMessage : "Password reset failed.")
     } finally {
       setLoading(false)
     }
+  }
+
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(prev => !prev)
   }
 
   return (
@@ -78,13 +104,12 @@ export default function ResetPasswordPage() {
           label="New Password"
           error={errors.newPassword}
           rightSlot={
-            <button
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              className="hover:text-white transition"
+            <div
+              onClick={togglePasswordVisibility}
+              className="cursor-pointer hover:text-white transition"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            </button>
+            </div>
           }
           inputProps={{
             name: "newPassword",
@@ -92,6 +117,19 @@ export default function ResetPasswordPage() {
             placeholder: "••••••••",
             value: form.newPassword,
             onChange: (e) => handleChange("newPassword", e.target.value),
+          }}
+        />
+
+        {/* ✅ ADDED - Confirm password field */}
+        <FormInput
+          label="Confirm Password"
+          error={errors.confirmPassword}
+          inputProps={{
+            name: "confirmPassword",
+            type: showPassword ? "text" : "password",
+            placeholder: "••••••••",
+            value: form.confirmPassword,
+            onChange: (e) => handleChange("confirmPassword", e.target.value),
           }}
         />
 

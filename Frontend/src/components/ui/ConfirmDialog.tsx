@@ -1,98 +1,110 @@
-// Frontend/src/components/ui/ConfirmDialog.tsx
+// src/components/ui/ConfirmDialog.tsx
+'use client';
 
-import { motion } from 'framer-motion';
-import { AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AlertTriangle, Loader2, X } from 'lucide-react';
 
 interface ConfirmDialogProps {
-  title: string;
-  message: string;
-  confirmLabel: string;
-  cancelLabel: string;
+  isOpen: boolean;
+  onClose: () => void;
   onConfirm: () => void;
-  onCancel: () => void;
-  destructive?: boolean;
-  isLoading?: boolean;
+  title: string;
+  description: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  confirmVariant?: 'default' | 'destructive';
+  isProcessing?: boolean;
+  icon?: React.ReactNode;
 }
 
-export default function ConfirmDialog({
-  title,
-  message,
-  confirmLabel,
-  cancelLabel,
+export function ConfirmDialog({
+  isOpen,
+  onClose,
   onConfirm,
-  onCancel,
-  destructive = false,
-  isLoading = false
+  title,
+  description,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
+  confirmVariant = 'default',
+  isProcessing = false,
+  icon
 }: ConfirmDialogProps) {
+  if (!isOpen) return null;
+
+  // Default icon is warning
+  const dialogIcon = icon || <AlertTriangle className="h-6 w-6 text-amber-500" />;
+
+  // Get button style based on variant
+  const getConfirmButtonStyle = () => {
+    switch (confirmVariant) {
+      case 'destructive':
+        return 'bg-destructive text-destructive-foreground hover:bg-destructive/90';
+      default:
+        return 'bg-primary text-primary-foreground hover:bg-primary/90';
+    }
+  };
+
   return (
-    <div 
-      className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <motion.div 
-        className="bg-card/90 backdrop-blur-md border border-border/50 rounded-2xl p-6 max-w-md w-full shadow-lg"
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        transition={{ type: "spring", damping: 25 }}
-        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.2 }}
+        className="relative z-10 w-full max-w-md bg-card rounded-xl border shadow-lg overflow-hidden"
       >
-        <div className="flex items-center gap-3 mb-4">
-          {destructive && (
-            <div className="bg-red-500/10 p-2 rounded-full">
-              <AlertCircle className={cn(
-                "w-5 h-5",
-                destructive ? 'text-red-500' : 'text-primary'
-              )} />
+        <div className="p-5">
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                {dialogIcon}
+              </div>
+              <h3 className="text-xl font-semibold">{title}</h3>
             </div>
-          )}
-          <h3 className={cn(
-            "text-lg font-semibold",
-            destructive ? 'text-red-500' : 'text-foreground'
-          )}>
-            {title}
-          </h3>
-        </div>
-        
-        <p className="text-muted-foreground mb-6 pl-4">
-          {message}
-        </p>
-        
-        <div className="flex justify-end gap-3">
-          <motion.button
-            onClick={onCancel}
-            className="px-4 py-2.5 bg-muted/50 hover:bg-muted text-foreground rounded-full text-sm transition-colors"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            disabled={isLoading}
-          >
-            {cancelLabel}
-          </motion.button>
+            
+            <button
+              onClick={onClose}
+              className="p-1 rounded-full hover:bg-muted transition-colors"
+              disabled={isProcessing}
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
           
-          <motion.button
-            onClick={onConfirm}
-            className={cn(
-              "px-4 py-2.5 rounded-full text-sm transition-colors flex items-center",
-              destructive 
-                ? 'bg-red-500 text-white hover:bg-red-600' 
-                : 'bg-primary text-primary-foreground hover:bg-primary/90'
-            )}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin mr-2"></div>
-                Loading...
-              </>
-            ) : (
-              confirmLabel
-            )}
-          </motion.button>
+          <p className="text-muted-foreground mb-6">{description}</p>
+          
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-md border border-input bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
+              disabled={isProcessing}
+            >
+              {cancelLabel}
+            </button>
+            
+            <button
+              onClick={onConfirm}
+              className={`px-4 py-2 rounded-md ${getConfirmButtonStyle()} transition-colors shadow-sm flex items-center gap-2`}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <span>{confirmLabel}</span>
+              )}
+            </button>
+          </div>
         </div>
       </motion.div>
     </div>

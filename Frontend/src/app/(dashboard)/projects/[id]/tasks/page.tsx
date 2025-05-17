@@ -3,13 +3,10 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Search,
   Plus,
-  Filter,
-  ChevronDown,
   ArrowLeft,
   AlertTriangle,
   Loader2,
@@ -28,7 +25,6 @@ import { toast } from '@/lib/toast';
 
 // Components
 import { TaskList } from '@/components/task/TaskList';
-import { TaskDialog } from '@/components/task/TaskDialog';
 
 // Import animations
 import '@/styles/animations.css';
@@ -43,7 +39,6 @@ export default function ProjectTasksPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -108,6 +103,11 @@ export default function ProjectTasksPage() {
       console.error('Error refreshing tasks:', err);
       toast.error('Could not refresh tasks');
     }
+  };
+
+  // Navigate to create task page
+  const navigateToCreateTask = () => {
+    router.push(`/projects/${id}/tasks/create`);
   };
 
   // Check if user is project owner
@@ -177,12 +177,6 @@ export default function ProjectTasksPage() {
     setStatusFilter('all');
     setSortBy('deadline');
     setSortDirection('asc');
-  };
-
-  // Handle task dialog success
-  const handleTaskDialogSuccess = () => {
-    refreshTasks();
-    setIsCreateDialogOpen(false);
   };
 
   // Render loading state
@@ -281,7 +275,7 @@ export default function ProjectTasksPage() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setIsCreateDialogOpen(true)}
+              onClick={navigateToCreateTask}
               className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-sm"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -437,25 +431,54 @@ export default function ProjectTasksPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
       >
-        <TaskList
-          tasks={filteredTasks}
-          userRole={isProjectOwner ? 'project_owner' : 'member'}
-          currentUserId={userId || ''}
-          projectId={id as string}
-          loading={false}
-          error={null}
-          onTasksChange={refreshTasks}
-          viewMode={viewMode}
-        />
+        {filteredTasks.length > 0 ? (
+          <TaskList
+            tasks={filteredTasks}
+            userRole={isProjectOwner ? 'project_owner' : 'member'}
+            currentUserId={userId || ''}
+            projectId={id as string}
+            loading={false}
+            error={null}
+            onTasksChange={refreshTasks}
+            viewMode={viewMode}
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16 bg-card/50 rounded-lg border border-dashed border-border">
+            <div className="text-center max-w-md px-4">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary mb-4">
+                <Plus className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">No tasks found</h3>
+              <p className="text-muted-foreground mb-6">
+                {tasks.length === 0 
+                  ? "This project doesn't have any tasks yet. Create your first task to get started." 
+                  : "No tasks match your current filters. Try adjusting your search or filters."}
+              </p>
+              
+              {isProjectOwner && tasks.length === 0 && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={navigateToCreateTask}
+                  className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-sm"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create First Task
+                </motion.button>
+              )}
+              
+              {tasks.length > 0 && (
+                <button
+                  onClick={resetFilters}
+                  className="text-sm text-primary hover:text-primary/80 hover:underline"
+                >
+                  Clear all filters
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </motion.div>
-      
-      {/* Create Task Dialog */}
-      <TaskDialog
-        isOpen={isCreateDialogOpen}
-        onClose={() => setIsCreateDialogOpen(false)}
-        projectId={id as string}
-        onSuccess={handleTaskDialogSuccess}
-      />
     </div>
   );
 }

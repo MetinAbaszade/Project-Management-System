@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { FormInput } from "@/components/ui/FormInput"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/lib/toast"
-import axios from "axios"
+import { api } from "@/lib/axios"  // Fixed import
 import { Eye, EyeOff } from "lucide-react"
 import { motion } from "framer-motion"
 
@@ -45,6 +45,11 @@ export default function FinishRegisterPage() {
     setErrors((prev) => ({ ...prev, [name]: "" }))
   }
 
+  // Handle password toggle explicitly
+  const togglePasswordVisibility = () => {
+    setShowPassword(prev => !prev)
+  }
+
   const handleSubmit = async () => {
     if (!validate()) return
 
@@ -57,12 +62,8 @@ export default function FinishRegisterPage() {
         Password: form.Password
       }
       
-      const response = await axios.post("http://127.0.0.1:8000/auth/register", requestData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
-      })
+      // Using api instance instead of direct axios
+      const response = await api.post("/auth/register", requestData)
       
       toast.success("Account created successfully!")
       localStorage.removeItem("taskup_register_email")
@@ -70,8 +71,11 @@ export default function FinishRegisterPage() {
     } catch (err: any) {
       console.error("Registration error:", err)
       
-      // Check if the error is about email verification
-      const errorMessage = err.response?.data || "Registration failed. Please try again."
+      // Standardized error handling
+      const errorMessage = 
+        err.response?.data?.message || 
+        err.response?.data?.detail || 
+        (typeof err.response?.data === 'string' ? err.response.data : "Registration failed. Please try again.")
       
       if (typeof errorMessage === 'string' && errorMessage.includes("not verified")) {
         toast.error("Your email verification has expired. Please verify your email again.")
@@ -87,12 +91,19 @@ export default function FinishRegisterPage() {
   const handleReverify = async () => {
     setLoading(true)
     try {
-      // Send verification code again
-      await axios.post(`http://127.0.0.1:8000/email/send-verification-code?recipientEmail=${encodeURIComponent(email)}`)
+      await api.post("/email/send-verification-code", null, {
+        params: { recipientEmail: email }
+      })
+      
       toast.success("Verification code sent again. Please check your email.")
       router.push("/verify")
-    } catch (err) {
-      toast.error("Failed to send verification code. Please try again later.")
+    } catch (err: any) {
+      const errorMessage = 
+        err.response?.data?.message || 
+        err.response?.data?.detail || 
+        "Failed to send verification code. Please try again later."
+      
+      toast.error(typeof errorMessage === 'string' ? errorMessage : "Failed to send verification code.")
     } finally {
       setLoading(false)
     }
@@ -155,14 +166,12 @@ export default function FinishRegisterPage() {
               label="Password"
               error={errors.Password}
               rightSlot={
-                <motion.button
-                  type="button"
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="hover:text-white transition"
+                <div 
+                  onClick={togglePasswordVisibility}
+                  className="cursor-pointer hover:text-white transition"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </motion.button>
+                </div>
               }
               inputProps={{
                 id: "password",
