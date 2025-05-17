@@ -1,56 +1,100 @@
-// Frontend/src/lib/axios.ts
-import axios from 'axios';
+import axios, { AxiosInstance, AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { toast } from './toast';
 
-// Create an axios instance with the correct base URL
-export const api = axios.create({
-  // Use the correct API base URL based on your environment
+// Create base API instance
+export const api: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
-  // Add any other configurations
   headers: {
     'Content-Type': 'application/json',
-  }
+    'Accept': 'application/json'
+  },
+  timeout: 15000 // 15 second timeout
 });
 
-// Add a request interceptor to handle authentication
+// Request interceptor - automatically add authorization header when token exists
 api.interceptors.request.use(
-  (config) => {
-    // Add auth token if available
+  (config: AxiosRequestConfig) => {
     const token = localStorage.getItem('authToken');
-    if (token) {
+    
+    // If token exists, add it to the authorization header
+    if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
     return config;
   },
-  (error) => {
+  (error: AxiosError) => {
     return Promise.reject(error);
   }
 );
 
-// Add a response interceptor for global error handling
+// Response interceptor - handle common response situations
 api.interceptors.response.use(
-  (response) => {
+  (response: AxiosResponse) => {
     return response;
   },
-  (error) => {
-    // Handle specific error cases
-    if (error.response) {
-      // Server responded with an error status
-      console.error('API Error Response:', error.response.status, error.response.data);
-      
-      // Handle authentication errors
-      if (error.response.status === 401) {
-        // Clear token and redirect to login if needed
-        localStorage.removeItem('authToken');
-        // Handle redirect logic if needed
-      }
-    } else if (error.request) {
-      // Request was made but no response received
-      console.error('API Request Error (No Response):', error.request);
+  (error: AxiosError) => {
+    // Handle common error scenarios
+    if (!error.response) {
+      // Network error
+      toast.error('Network error. Please check your connection.');
     } else {
-      // Something else happened while setting up the request
-      console.error('API Setup Error:', error.message);
+      // Handle specific status codes
+      switch (error.response.status) {
+        case 401:
+          // Unauthorized - token expired or invalid
+          if (typeof window !== 'undefined') {
+            // Only clear on client side
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            
+            // Don't redirect from login/register/auth pages
+            const isAuthPage = window.location.pathname.includes('/login') || 
+                              window.location.pathname.includes('/register') ||
+                              window.location.pathname.includes('/verify') ||
+                              window.location.pathname.includes('/reset') ||
+                              window.location.pathname.includes('/forgot');
+            
+            if (!isAuthPage) {
+              toast.error('Your session has expired. Please log in again.');
+              // Use setTimeout to avoid immediate redirect interfering with current request
+              setTimeout(() => {
+                window.location.href = '/login';
+              }, 1000);
+            }
+          }
+          break;
+          
+        case 403:
+          toast.error('You do not have permission to perform this action.');
+          break;
+          
+        case 404:
+          // Don't show toast for all 404s as they might be expected in some cases
+          // Only log to console
+          console.error('Resource not found:', error.config?.url);
+          break;
+          
+        case 422:
+          // Validation errors - handled by individual components
+          break;
+          
+        case 500:
+        case 502:
+        case 503:
+        case 504:
+          toast.error('Server error. Please try again later.');
+          break;
+          
+        default:
+          // For other error codes, the components will handle them
+          break;
+      }
     }
     
     return Promise.reject(error);
   }
 );
+
+// Default export for convenience
+export default api;

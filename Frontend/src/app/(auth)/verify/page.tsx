@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/lib/toast"
-import api from "@/lib/axios"
+import { api } from "@/lib/axios"  // ✅ Fixed import
 import { motion } from "framer-motion"
 
 export default function VerifyPage() {
@@ -65,10 +65,12 @@ export default function VerifyPage() {
 
     setLoading(true)
     try {
+      // ✅ Fixed - Using consistent API call pattern
       const res = await api.post("/email/check-verification-code", {
         Email: email,
         VerificationCode: fullCode,
       })
+      
       const data = res.data
       if (data.Success) {
         toast.success("Email verified ✅")
@@ -79,9 +81,14 @@ export default function VerifyPage() {
         toast.error(data.Message || "Verification failed")
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.message || "Invalid or expired code."
-      setError(msg)
-      toast.error(msg)
+      // ✅ Fixed - Standardized error handling
+      const errorMessage = 
+        err.response?.data?.message || 
+        err.response?.data?.detail || 
+        "Invalid or expired code."
+      
+      setError(typeof errorMessage === 'string' ? errorMessage : "Verification failed")
+      toast.error(typeof errorMessage === 'string' ? errorMessage : "Verification failed")
     } finally {
       setLoading(false)
     }
@@ -99,11 +106,21 @@ export default function VerifyPage() {
       setError("")
       setTimeLeft(120)
 
-      await api.post(`/email/send-verification-code?recipientEmail=${encodeURIComponent(email)}`)
+      // ✅ Fixed - Using consistent API call pattern
+      await api.post("/email/send-verification-code", null, {
+        params: { recipientEmail: email }
+      })
+      
       toast.success("Code resent!")
       setTimeout(() => inputsRef.current[0]?.focus(), 100)
-    } catch {
-      toast.error("Failed to resend code. Try again.")
+    } catch (err: any) {
+      // ✅ Fixed - Standardized error handling
+      const errorMessage = 
+        err.response?.data?.message || 
+        err.response?.data?.detail || 
+        "Failed to resend code. Try again."
+        
+      toast.error(typeof errorMessage === 'string' ? errorMessage : "Failed to resend code")
     } finally {
       setResending(false)
     }

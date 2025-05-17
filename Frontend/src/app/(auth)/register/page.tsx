@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { toast } from "@/lib/toast"
-import api from "@/lib/axios" // ✅ fixed import
+import { api } from "@/lib/axios"  // ✅ Fixed import
 
 export default function Register() {
   const router = useRouter()
@@ -20,14 +20,22 @@ export default function Register() {
 
     setLoading(true)
     try {
-      await api.post(`/email/send-verification-code?recipientEmail=${encodeURIComponent(email)}`)
+      // ✅ Fixed - Using consistent API call pattern
+      await api.post("/email/send-verification-code", null, {
+        params: { recipientEmail: email }
+      })
 
       localStorage.setItem("taskup_register_email", email)
       toast.success("Verification code sent to your email")
       router.push("/verify")
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || "Something went wrong. Please try again."
-      toast.error(typeof msg === "string" ? msg : "Failed to send verification code.")
+      // ✅ Fixed - Standardized error handling
+      const errorMessage = 
+        err.response?.data?.message || 
+        err.response?.data?.detail || 
+        "Failed to send verification code. Please try again."
+      
+      toast.error(typeof errorMessage === 'string' ? errorMessage : "Failed to send verification code.")
     } finally {
       setLoading(false)
     }
