@@ -12,7 +12,7 @@ class Project(Base):
     Name = Column(String(100), nullable=False)
     Description = Column(Text)
 
-    Deadline = Column(DateTime)  # ✅ Add this line back
+    Deadline = Column(DateTime)
 
     Progress = Column(Integer, default=0)
     TotalBudget = Column(Numeric(12, 2), default=0, nullable = False)

@@ -18,9 +18,9 @@ class Task(Base):
     Title = Column(String(100), nullable=False)
     Description = Column(Text)
     Cost = Column(Float, default=0.0)
-    Status = Column(String(50), nullable=False)  # 'Not Started', 'In Progress', 'Completed'
+    Status = Column(String(50), nullable=False)
     StatusColorHex = Column(String(7))
-    Priority = Column(String(50), nullable=False)  # 'Low', 'Medium', 'High'
+    Priority = Column(String(50), nullable=False)
     PriorityColorHex = Column(String(7))
     ParentTaskId = Column(String(36), ForeignKey("Task.Id", ondelete="CASCADE"), nullable=True)
     Deadline = Column(DateTime)

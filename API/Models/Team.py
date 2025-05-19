@@ -11,7 +11,7 @@ class Team(Base):
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     Name = Column(String(100), nullable=False)
     Description = Column(Text)
-    ColorIndex = Column(Integer, default=0)  # For frontend usage
+    ColorIndex = Column(Integer, default=0)
     CreatedAt = Column(DateTime, default=datetime.now())
     UpdatedAt = Column(DateTime, onupdate=datetime.now())
     CreatedBy = Column(String(36), ForeignKey("User.Id"), nullable=False)
@@ -19,7 +19,7 @@ class Team(Base):
     IsDeleted = Column(Boolean, default=False)
 
     # Relationships
-    Tasks = relationship("Task", back_populates="Team", overlaps="Team,TasksAssigned")  # <- resolve Task overlap
+    Tasks = relationship("Task", back_populates="Team", overlaps="Team,TasksAssigned")
     Members = relationship(
         "User",
         secondary="TeamMember",

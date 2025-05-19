@@ -13,8 +13,6 @@ class ProjectScopeRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    # -------------------- GET --------------------
-
     def GetScopeByProjectId(self, projectId: str) -> ProjectScope:
         return self.db.query(ProjectScope).filter_by(ProjectId=projectId).first()
 
@@ -29,8 +27,6 @@ class ProjectScopeRepository:
 
     def GetWBS(self, wbsId: str) -> WorkBreakdownStructure:
         return self.db.query(WorkBreakdownStructure).filter_by(Id=wbsId).first()
-
-    # -------------------- CREATE --------------------
 
     def CreateScopeManagementPlan(self, projectId: str, data: ScopeManagementPlanSchema):
         scope = self.GetOrCreateScope(projectId)
@@ -125,9 +121,6 @@ class ProjectScopeRepository:
         self.db.commit()
         return wbs
 
-
-    # -------------------- UPDATE --------------------
-
     def UpdateScopeManagementPlan(self, projectId: str, data: ScopeManagementPlanUpdateSchema):
         scope = self.GetScopeOr404(projectId)
         plan = self.db.query(ScopeManagementPlan).filter_by(Id=scope.ScopeManagementPlanId).first()
@@ -142,12 +135,12 @@ class ProjectScopeRepository:
                 setattr(plan, field, value)
 
         self.db.commit()
-        self.db.refresh(plan)  # Optional: force reloading the updated object
+        self.db.refresh(plan)
         return plan
 
 
     def UpdateRequirementManagementPlan(self, projectId: str, data: RequirementManagementPlanUpdateSchema):
-        return self.UpdateScopeManagementPlan(projectId, data)  # Shares the same model
+        return self.UpdateScopeManagementPlan(projectId, data)
 
     def UpdateRequirementDocument(self, projectId: str, data: RequirementDocumentUpdateSchema):
         scope = self.GetScopeOr404(projectId)
@@ -187,37 +180,30 @@ class ProjectScopeRepository:
 
         self.db.commit()
         return wbs
-    # -------------------- Delete --------------------
-
 
     def SoftDeleteScope(self, projectId: str):
         scope = self.db.query(ProjectScope).filter_by(ProjectId=projectId).first()
         if not scope:
             raise HTTPException(status_code=404, detail="Project scope not found")
 
-        # Soft-delete the Scope itself
         scope.IsDeleted = True
         scope.UpdatedAt = datetime.utcnow()
 
-        # Delete associated ScopeManagementPlan
         if scope.ScopeManagementPlanId:
             plan = self.db.query(ScopeManagementPlan).filter_by(Id=scope.ScopeManagementPlanId).first()
             if plan:
                 self.db.delete(plan)
 
-        # Delete associated RequirementDocument
         if scope.RequirementDocumentId:
             doc = self.db.query(RequirementDocument).filter_by(Id=scope.RequirementDocumentId).first()
             if doc:
                 self.db.delete(doc)
 
-        # Delete associated ScopeStatement
         if scope.ScopeStatementId:
             stmt = self.db.query(ProjectScopeStatement).filter_by(Id=scope.ScopeStatementId).first()
             if stmt:
                 self.db.delete(stmt)
 
-        # Delete associated WorkBreakdownStructure
         if scope.WBSId:
             wbs = self.db.query(WorkBreakdownStructure).filter_by(Id=scope.WBSId).first()
             if wbs:
@@ -225,9 +211,6 @@ class ProjectScopeRepository:
 
         self.db.commit()
         return {"message": "Project scope and its related components deleted successfully"}
-
-
-    # -------------------- UTILITY --------------------
 
     def GetOrCreateScope(self, projectId: str) -> ProjectScope:
         scope = self.db.query(ProjectScope).filter_by(ProjectId=projectId).first()

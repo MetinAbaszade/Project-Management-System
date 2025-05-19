@@ -12,14 +12,11 @@ class TeamMember(Base):
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     TeamId = Column(String(36), ForeignKey("Team.Id", ondelete="CASCADE"), nullable=False)
     UserId = Column(String(36), ForeignKey("User.Id", ondelete="CASCADE"), nullable=False)
-
-    # "Team Lead", "Developer", etc.
     Role = Column(String(50))
     IsLeader = Column(Boolean, default=False)
     JoinedDate = Column(DateTime, default=datetime.now())
     IsActive = Column(Boolean, default=True)
 
-    # Relationships with overlaps to resolve SAWarnings
     Team = relationship(
         "Team",
         back_populates="TeamMemberships",
@@ -31,7 +28,6 @@ class TeamMember(Base):
         overlaps="Teams,Members"
     )
 
-    # Optional: if using SQLite for auto-increment
     __table_args__ = (
         {"sqlite_autoincrement": True},
     )

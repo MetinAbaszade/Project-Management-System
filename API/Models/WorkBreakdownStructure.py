@@ -11,7 +11,7 @@ class WorkBreakdownStructure(Base):
 
     WorkPackageName = Column(String(255))
     WorkDescription = Column(Text)
-    EstimatedDuration = Column(Integer)  # in days/hours
+    EstimatedDuration = Column(Integer)
     EstimatedCost = Column(Numeric(10, 2))
     IsDeleted = Column(Boolean, default=False)
 

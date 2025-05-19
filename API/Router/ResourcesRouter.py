@@ -12,10 +12,6 @@ from Schemas.ResourceSchema import (
 
 router = APIRouter(prefix="/resources", tags=["Resources"])
 
-
-# -----------------------------
-# Resource Endpoints
-
 @router.post("/create", status_code=status.HTTP_201_CREATED)
 def CreateResource(
     resourceData: ResourceBase,
@@ -60,10 +56,6 @@ def GetResourceById(
 ):
     return service.GetResourceById(resourceId)
 
-
-# -----------------------------
-# ActivityResource Endpoints
-
 @router.post("/assign", status_code=status.HTTP_201_CREATED)
 def AssignResourceToTask(
     assignmentData: ActivityResourceBase,
@@ -106,11 +98,6 @@ def GetAllResourcesAssignedToTask(
     service: ResourceService = Depends(ResourceService)
 ):
     return service.GetAllActivityResourcesByTaskId(taskId)
-
-
-# -----------------------------
-# ResourcePlan Endpoints
-# -----------------------------
 
 @router.post("/plan/create", status_code=status.HTTP_201_CREATED)
 def CreateResourcePlan(

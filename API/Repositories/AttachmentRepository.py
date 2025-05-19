@@ -17,7 +17,7 @@ def AddAttachment(db: Session, attachmentData: AttachmentCreateSchema) -> Attach
         EntityType=attachmentData.EntityType,
         EntityId=attachmentData.EntityId,
         OwnerId=attachmentData.OwnerId,
-        ProjectId=attachmentData.ProjectId  # ✅ Include this field
+        ProjectId=attachmentData.ProjectId
     )
     db.add(newAttachment)
     db.commit()
@@ -62,8 +62,7 @@ def UploadToUniServer(localFilePath: str, remoteFileName: str):
     hostname = "clabsql.clamv.constructor.university"
     username = "mabaszada"
     remoteDir = "/home/mabaszada/public_html"
-    
-    # Optional: use SSH key or password
+
     password = "YU3TIV" 
 
     transport = paramiko.Transport((hostname, 22))
@@ -93,7 +92,6 @@ def FileUpload(
     with open(tempLocalPath, "wb") as buffer:
         buffer.write(file.file.read())
 
-    # Upload remotely
     remotePath = UploadToUniServer(tempLocalPath, file.filename)
 
     fileSize = os.path.getsize(tempLocalPath)

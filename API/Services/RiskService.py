@@ -36,20 +36,16 @@ class RiskService:
         if not ProjectRepository.HasProjectAccess(self.db, str(projectId), str(userId)):
             raise HTTPException(status_code=403, detail="You are not a member of this project.")
 
-        # Step 1: Get the risk and confirm it exists
         risk = RiskRepository.GetRiskById(self.db, str(riskId))
         if not risk:
             raise HTTPException(status_code=404, detail="Risk not found")
 
-        # Step 2: Soft delete the risk
         RiskRepository.SoftDeleteRisk(self.db, str(riskId))
 
-        # Step 3: Soft delete related analyses
         analyses = RiskRepository.GetAllRiskAnalysesByRiskId(self.db, str(riskId))
         for analysis in analyses:
             RiskRepository.SoftDeleteRiskAnalysis(self.db, analysis.Id)
 
-        # Step 4: Soft delete related response plans
         responsePlans = RiskRepository.GetAllRiskResponsePlansByRiskId(self.db, str(riskId))
         for plan in responsePlans:
             RiskRepository.SoftDeleteRiskResponsePlan(self.db, plan.Id)
@@ -66,11 +62,7 @@ class RiskService:
     def GetAllRisks(self, projectId: str):
         return RiskRepository.GetAllRisks(self.db, projectId)
 
-    #----------------------
-    # RiskAnalysis
-
     def CreateRiskAnalysis(self, userId: UUID, analysisData: RiskAnalysisBase):
-        # Analysis links to a Risk, and that Risk links to a Project
         risk = RiskRepository.GetRiskById(self.db, analysisData.RiskId)
         if not risk:
             raise HTTPException(status_code=404, detail="Risk not found")
@@ -117,9 +109,6 @@ class RiskService:
     def GetAllRiskAnalysesByRiskId(self, riskId: UUID):
         return RiskRepository.GetAllRiskAnalysesByRiskId(self.db, str(riskId))
 
-
-    #----------------------
-    # RiskResponsePlan
     def CreateRiskResponsePlan(self, userId: UUID, responseData: RiskResponsePlanBase):
         risk = RiskRepository.GetRiskById(self.db, responseData.RiskId)
         if not risk:

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 from decimal import Decimal
 from sqlalchemy.orm import Session
@@ -12,8 +13,6 @@ from Models.Risk import Risk
 from Repositories import RiskRepository
 from Repositories import ResourceRepository
 from Repositories.ProjectScopeRepository import ProjectScopeRepository
-from Repositories.TeamRepository import TeamRepository
-from Repositories.TaskRepository import TaskRepository
 from Repositories.StakeholderRepository import StakeholderRepository
 
 
@@ -31,16 +30,13 @@ def CreateProject(db: Session, projectData: ProjectCreate, ownerId: UUID):
     return newProject
 
 def UpdateProject(db: Session, project: Project, updateData: ProjectUpdate):
-    # Step 1: Calculate how much has been used before updating any field
     oldTotal = Decimal(str(project.TotalBudget or 0))
     oldRemaining = Decimal(str(project.RemainingBudget or 0))
     usedAmount = abs(oldTotal- abs(oldRemaining))
 
-    # Step 2: Apply all updates
     for field, value in updateData.dict(exclude_unset=True).items():
         setattr(project, field, value)
 
-    # Step 3: If TotalBudget is updated, recalculate RemainingBudget
     if "TotalBudget" in updateData.dict(exclude_unset=True):
         newTotal = Decimal(str(project.TotalBudget))
         newRemaining = newTotal - usedAmount
@@ -88,23 +84,14 @@ def AddMemberToProject(db: Session, projectId: UUID, memberId: UUID):
     return member
 
 def SoftDeleteProject(db: Session, userId: UUID, project: Project):
-    
-    # Step 1: Soft delete the project itself
     project.IsDeleted = True
 
-    # Step 2: Soft-delete each project member using helper
     members = db.query(ProjectMember).filter(
         ProjectMember.ProjectId == str(project.Id),
         ProjectMember.IsDeleted == False
     ).all()
     for member in members:
         SoftDeleteProjectMember(db, project.Id, member.UserId)
-    
-    # teamRepo = TeamRepository(db)
-    # taskRepo = TaskRepository(db)
-    # stakeholderRepo = StakeholderRepository(db)
-    # resourceRepo = ResourceRepository(db)
-    # riskRepo = RiskRepository(db)
 
     try:
         scopeRepo = ProjectScopeRepository(db)
@@ -134,24 +121,6 @@ def SoftDeleteProject(db: Session, userId: UUID, project: Project):
         except HTTPException:
             pass
 
-    # tasks = db.query(Task).filter(
-    #     Task.ProjectId == str(project.Id),
-    #     Task.IsDeleted == False
-    # ).all()
-
-    # taskRepo = TaskRepository()
-    # for task in tasks:
-    #     try:
-    #         taskRepo.SoftDelete(task.Id)
-    #     except HTTPException:
-    #         pass
-
-    # try:
-    #     TeamRepository.SoftDelete(db, project.Id)
-    # except HTTPException:
-    #     pass
-
-
     stakeholderRepo = StakeholderRepository(db)
     stakeholders = db.query(ProjectStakeholder).filter(
         ProjectStakeholder.ProjectId == str(project.Id)
@@ -169,7 +138,6 @@ def SoftDeleteProject(db: Session, userId: UUID, project: Project):
     return {"message": "Project and all related data soft-deleted successfully"}
 
 def SoftDeleteProjectMember(db: Session, projectId: UUID, memberId: UUID):
-    # Step 1: Soft-delete from ProjectMember
     project_member = db.query(ProjectMember).filter(
         ProjectMember.ProjectId == str(projectId),
         ProjectMember.UserId == str(memberId),
@@ -181,14 +149,12 @@ def SoftDeleteProjectMember(db: Session, projectId: UUID, memberId: UUID):
 
     project_member.IsDeleted = True
 
-    # Step 2: Get all non-deleted teams of this project
     team_ids = db.query(Team.Id).filter(
         Team.ProjectId == str(projectId),
         Team.IsDeleted == False
     ).all()
     team_ids = [tid[0] for tid in team_ids]
 
-    # Step 3: Soft-delete matching TeamMember records
     if team_ids:
         db.query(TeamMember).filter(
             TeamMember.TeamId.in_(team_ids),
@@ -196,7 +162,6 @@ def SoftDeleteProjectMember(db: Session, projectId: UUID, memberId: UUID):
             TeamMember.IsActive == True
         ).update({"IsActive": False}, synchronize_session=False)
 
-    # Step 4: Soft-delete all tasks assigned to this user in the project
     db.query(Task).filter(
         Task.ProjectId == str(projectId),
         Task.AssignedTo == str(memberId),
@@ -221,16 +186,12 @@ def GetProjectOwner(db: Session, projectId: UUID):
     return owner
 
 def IsProjectOwner(db: Session, userId: str, projectId: str) -> bool:
-    # print("TYPE projectId:", type(projectId))
-    # print("VALUE projectId:", projectId)
     project = db.query(Project).filter(Project.Id == str(projectId), Project.IsDeleted == False).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     return str(project.OwnerId) == str(userId)
 
 def IsProjectMember(db: Session, userId: str, projectId: str) -> bool:
-    # print("TYPE projectId:", type(projectId))
-    # print("VALUE projectId:", projectId)
     project = db.query(Project).filter(Project.Id == str(projectId), Project.IsDeleted == False).first()
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
@@ -269,18 +230,15 @@ def GetTasks(db: Session, projectId: UUID):
     return [task for task in project.Tasks if not task.IsDeleted]
 
 
-# Add to Repositories/ProjectRepository.py
 def UpdateProject(db: Session, projectId: UUID, projectData: dict):
     project = db.query(Project).filter(Project.Id == str(projectId), Project.IsDeleted == False).first()
     
     if not project:
         return None
-    
-    # Handle budget field mapping if present
+
     if "Budget" in projectData:
         project.TotalBudget = projectData.pop("Budget")
-    
-    # Update remaining fields
+
     for key, value in projectData.items():
         if hasattr(project, key):
             setattr(project, key, value)

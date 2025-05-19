@@ -1,4 +1,3 @@
-# run_tunnel.py (utility script)
 from sshtunnel import SSHTunnelForwarder
 
 server = SSHTunnelForwarder(

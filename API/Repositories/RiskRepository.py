@@ -11,9 +11,6 @@ from Models.ProjectMember import ProjectMember
 import uuid
 from datetime import datetime
 
-# -----------------------------
-# Risk CRUD
-
 def CreateRisk(db: Session, riskData: RiskBase, ownerId: str):
     newRisk = Risk(
         Id=str(uuid.uuid4()),
@@ -57,10 +54,6 @@ def GetRiskById(db: Session, riskId: str):
 def GetAllRisks(db: Session, projectId: str):
     return db.query(Risk).filter(Risk.ProjectId == projectId, Risk.IsDeleted == False).all()
 
-
-# -----------------------------
-# RiskAnalysis CRUD
-
 def CreateRiskAnalysis(db: Session, analysisData: RiskAnalysisBase):
     newAnalysis = RiskAnalysis(
         Id=str(uuid.uuid4()),
@@ -99,10 +92,6 @@ def GetRiskAnalysisById(db: Session, analysisId: str):
 
 def GetAllRiskAnalysesByRiskId(db: Session, riskId: str):
     return db.query(RiskAnalysis).filter(RiskAnalysis.RiskId == riskId, RiskAnalysis.IsDeleted == False).all()
-
-
-# -----------------------------
-# RiskResponsePlan CRUD
 
 def CreateRiskResponsePlan(db: Session, responseData: RiskResponsePlanBase):
     newPlan = RiskResponsePlan(

@@ -1,4 +1,3 @@
-# Repositories/StakeholderRepository.py
 from typing import Optional
 
 from sqlalchemy.orm import Session

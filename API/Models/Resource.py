@@ -8,11 +8,11 @@ class Resource(Base):
     __tablename__ = "Resource"
 
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    ProjectId = Column(String(36), ForeignKey("Project.Id"), nullable=False)  # ✅ NEW
+    ProjectId = Column(String(36), ForeignKey("Project.Id"), nullable=False)
     Name = Column(String(50), nullable=False)
-    Type = Column(String(50), nullable=False)  # e.g. Human, Equipment, Material
-    Total = Column(Float, nullable=True)     # Total quantity in stock
-    Available = Column(Float, nullable=True) # Available quantity ready for use
+    Type = Column(String(50), nullable=False)
+    Total = Column(Float, nullable=True)
+    Available = Column(Float, nullable=True)
     Description = Column(Text)
     Unit = Column(String(36))
     IsDeleted = Column(Boolean, default=False)

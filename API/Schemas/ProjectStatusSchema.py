@@ -9,4 +9,4 @@ class ProjectStatusOut(BaseModel):
     description: Optional[str]
 
     class Config:
-        from_attributes = True  # ✅ Replaces orm_mode in Pydantic v2
+        from_attributes = True

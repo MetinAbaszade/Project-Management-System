@@ -5,9 +5,6 @@ from Db.session import Base
 import enum
 from sqlalchemy.orm import relationship
 
-#helelki implement elemeyin , admin pannel yoxdu
-
-
 class DataTypeEnum(enum.Enum):
     string = "string"
     number = "number"

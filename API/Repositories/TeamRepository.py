@@ -50,17 +50,14 @@ class TeamRepository:
         if not team:
             return False
 
-        # Soft delete the team
         team.IsDeleted = True
         team.UpdatedAt = datetime.now()
 
-        # Soft delete all team members
         self.db.query(TeamMember).filter(
             TeamMember.TeamId == str(teamId),
             TeamMember.IsActive == True
         ).update({"IsActive": False}, synchronize_session=False)
 
-        # Soft delete all tasks assigned to the team
         self.db.query(Task).filter(
             Task.TeamId == str(teamId),
             Task.IsDeleted == False
@@ -82,14 +79,12 @@ class TeamRepository:
         return member
 
     def SoftDeleteMember(self, teamId: UUID, userId: UUID):
-        # Step 1: Soft delete the team member directly
         self.db.query(TeamMember).filter(
             TeamMember.TeamId == str(teamId),
             TeamMember.UserId == str(userId),
             TeamMember.IsActive == True
         ).update({"IsActive": False}, synchronize_session=False)
 
-        # Step 2: Soft delete tasks in this team assigned to the user
         self.db.query(Task).filter(
             Task.TeamId == str(teamId),
             Task.AssignedTo == str(userId),
