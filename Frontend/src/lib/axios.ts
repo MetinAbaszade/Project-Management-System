@@ -1,24 +1,38 @@
-// Frontend/src/lib/axios.ts
+// src/lib/axios.ts
 import axios from 'axios';
+import { toast } from '@/lib/toast';
 
-// Create an axios instance with the correct base URL
+// Create axios instance with base URL
 export const api = axios.create({
-  // Use the correct API base URL based on your environment
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
-  // Add any other configurations
+  baseURL: 'http://localhost:8000', // Configure this according to your environment
   headers: {
     'Content-Type': 'application/json',
-  }
+  },
 });
 
-// Add a request interceptor to handle authentication
+// Add a request interceptor
 api.interceptors.request.use(
   (config) => {
-    // Add auth token if available
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Skip adding auth headers for login/register endpoints
+    const isAuthEndpoint = 
+      config.url?.includes('/auth/login') || 
+      config.url?.includes('/auth/register') ||
+      config.url?.includes('/email/send-verification-code');
+    
+    if (!isAuthEndpoint && typeof window !== 'undefined') {
+      try {
+        // Get authentication token from localStorage
+        const token = localStorage.getItem('authToken');
+        
+        if (token) {
+          // Add authentication header
+          config.headers['Authorization'] = `Bearer ${token}`;
+        }
+      } catch (error) {
+        console.error('Error setting auth header:', error);
+      }
     }
+    
     return config;
   },
   (error) => {
@@ -26,31 +40,45 @@ api.interceptors.request.use(
   }
 );
 
-// Add a response interceptor for global error handling
+// Add a response interceptor
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
-    // Handle specific error cases
-    if (error.response) {
-      // Server responded with an error status
-      console.error('API Error Response:', error.response.status, error.response.data);
+    // Get the request URL
+    const requestUrl = error.config?.url || '';
+    
+    // Check if error is due to authentication issues
+    if (error.response && error.response.status === 401) {
+      // ⚠️ FIX: Skip session expired handling for login/register endpoints
+      const isAuthEndpoint = 
+        requestUrl.includes('/auth/login') || 
+        requestUrl.includes('/auth/register') ||
+        requestUrl.includes('/email/send-verification-code');
       
-      // Handle authentication errors
-      if (error.response.status === 401) {
-        // Clear token and redirect to login if needed
+      // Only redirect for non-auth endpoints to prevent login loops
+      if (!isAuthEndpoint && typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+        console.warn('Authentication error - redirecting to login');
+        
+        // Get current path for redirect after login
+        const currentPath = window.location.pathname;
+        
+        // Clear token and user data
         localStorage.removeItem('authToken');
-        // Handle redirect logic if needed
+        localStorage.removeItem('userData');
+        
+        toast.error('Your session has expired. Please login again.');
+        
+        // Redirect to login with return URL
+        setTimeout(() => {
+          window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+        }, 1000);
       }
-    } else if (error.request) {
-      // Request was made but no response received
-      console.error('API Request Error (No Response):', error.request);
-    } else {
-      // Something else happened while setting up the request
-      console.error('API Setup Error:', error.message);
     }
     
     return Promise.reject(error);
   }
 );
+
+export default api;

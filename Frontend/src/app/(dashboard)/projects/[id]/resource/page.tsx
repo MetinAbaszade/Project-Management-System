@@ -8,6 +8,9 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { toast } from '@/lib/toast';
 
+// API
+import { getProjectResources, Resource } from '@/api/ResourceAPI';
+
 // Icons
 import {
   ArrowLeft,
@@ -15,19 +18,16 @@ import {
   Package,
   PlusCircle,
   Search,
-  FilePlus,
   LayoutGrid,
   LayoutList,
   Settings,
   Plus,
   UserPlus,
-  FileText,
   Clock,
   CheckSquare,
   Filter,
   XCircle,
   Briefcase,
-  HardHat,
   Box,
   TruckIcon,
   Wrench,
@@ -66,39 +66,37 @@ export default function ResourcePage() {
   const { id: projectId } = useParams();
   const router = useRouter();
   
-  const [resources, setResources] = useState([]);
+  const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState('grid');
   const [activeFilter, setActiveFilter] = useState('all');
 
-  // Load resources from localStorage
+  // Load resources from API
   useEffect(() => {
-    setLoading(true);
-    
-    // Small delay to simulate loading
-    const timer = setTimeout(() => {
+    const fetchResources = async () => {
+      setLoading(true);
       try {
-        // Get resources from localStorage
-        const storedResources = localStorage.getItem(`project_${projectId}_resources`);
-        if (storedResources) {
-          setResources(JSON.parse(storedResources));
-        }
-      } catch (error) {
-        console.error("Error loading resources:", error);
+        const resourceData = await getProjectResources(projectId as string);
+        setResources(resourceData);
+        setError(null);
+      } catch (err) {
+        console.error("Error loading resources:", err);
+        setError("Failed to load resources. Please try again.");
         toast.error("Failed to load resources");
       } finally {
         setLoading(false);
       }
-    }, 300);
-    
-    return () => clearTimeout(timer);
+    };
+
+    fetchResources();
   }, [projectId]);
 
   // Filter resources
   const filteredResources = resources.filter(resource => {
     const matchesSearch = resource.Name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          resource.Description?.toLowerCase().includes(searchTerm.toLowerCase());
+                          (resource.Description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
     
     if (activeFilter === 'all') {
       return matchesSearch;
@@ -107,9 +105,22 @@ export default function ResourcePage() {
     return resource.Type === activeFilter && matchesSearch;
   });
 
+  // Get assigned and unassigned resources
+  const assignedResources = resources.filter(resource => resource.AssignedToTask === true);
+  const unassignedResources = resources.filter(resource => !resource.AssignedToTask);
+
   // Render the appropriate icon based on resource type
-  const renderResourceIcon = (type) => {
-    return resourceTypeIcons[type] || resourceTypeIcons['Other'];
+  const renderResourceIcon = (type: string) => {
+    return resourceTypeIcons[type as keyof typeof resourceTypeIcons] || resourceTypeIcons['Other'];
+  };
+
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'N/A';
+    try {
+      return format(new Date(dateString), 'MMM d, yyyy');
+    } catch (error) {
+      return 'Invalid date';
+    }
   };
 
   return (
@@ -240,6 +251,21 @@ export default function ResourcePage() {
           </div>
         </div>
 
+        {/* Error message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-100 border border-red-300 text-red-700 rounded-md">
+            {error}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="ml-2"
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
+
         {/* Resources content */}
         <div className="my-4">
           <Tabs defaultValue="resources" className="w-full">
@@ -292,7 +318,7 @@ export default function ResourcePage() {
                             
                             <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
                               <div className="text-xs text-muted-foreground">
-                                Created {format(new Date(resource.CreatedAt), 'MMM d, yyyy')}
+                                Created {formatDate(resource.CreatedAt)}
                               </div>
                               
                               <div className="flex items-center">
@@ -347,7 +373,7 @@ export default function ResourcePage() {
                                 {resource.Available}/{resource.Total} {resource.Unit || "Units"}
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                Created {format(new Date(resource.CreatedAt), 'MMM d, yyyy')}
+                                Created {formatDate(resource.CreatedAt)}
                               </div>
                             </div>
                           </motion.div>
@@ -355,18 +381,150 @@ export default function ResourcePage() {
                       </div>
                     )
                   ) : (
-                    <EmptyResourcesState projectId={projectId} searchTerm={searchTerm} activeFilter={activeFilter} />
+                    <EmptyResourcesState projectId={projectId as string} searchTerm={searchTerm} activeFilter={activeFilter} />
                   )}
                 </>
               )}
             </TabsContent>
             
             <TabsContent value="assigned" className="mt-0">
-              <EmptyAssignedResourcesState projectId={projectId} />
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[1, 2].map(i => (
+                    <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">
+                      <div className="h-10 w-10 bg-muted rounded-md mb-4"></div>
+                      <div className="h-6 bg-muted rounded w-3/4 mb-3"></div>
+                      <div className="h-4 bg-muted rounded w-1/2 mb-2"></div>
+                      <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
+                      <div className="flex justify-between">
+                        <div className="h-6 bg-muted rounded w-1/4"></div>
+                        <div className="h-6 bg-muted rounded w-1/4"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {assignedResources.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {assignedResources.map(resource => (
+                        <motion.div
+                          key={resource.Id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="bg-card border border-border rounded-xl p-6 hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => router.push(`/projects/${projectId}/resource/${resource.Id}`)}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div>
+                              {renderResourceIcon(resource.Type)}
+                              <h3 className="text-lg font-semibold mt-3">{resource.Name}</h3>
+                              <div className="text-sm text-muted-foreground">{resource.Type}</div>
+                              <div className="mt-2 bg-primary/10 text-primary text-xs px-2 py-1 rounded-full inline-flex items-center">
+                                <CheckSquare className="h-3 w-3 mr-1" /> Assigned
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
+                            <div className="text-xs text-muted-foreground">
+                              Created {formatDate(resource.CreatedAt)}
+                            </div>
+                            
+                            <div className="flex items-center">
+                              {resource.Available !== undefined && resource.Total !== undefined && (
+                                <div className={cn(
+                                  "text-xs px-2 py-1 rounded",
+                                  resource.Available === 0 
+                                    ? "bg-red-500/10 text-red-500" 
+                                    : resource.Available < resource.Total * 0.2
+                                      ? "bg-amber-500/10 text-amber-500"
+                                      : "bg-green-500/10 text-green-500"
+                                )}>
+                                  {resource.Available}/{resource.Total} {resource.Unit || "Units"}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyAssignedResourcesState projectId={projectId as string} />
+                  )}
+                </>
+              )}
             </TabsContent>
             
             <TabsContent value="unassigned" className="mt-0">
-              <EmptyUnassignedResourcesState projectId={projectId} />
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[1, 2].map(i => (
+                    <div key={i} className="bg-card border border-border rounded-xl p-6 animate-pulse">
+                      <div className="h-10 w-10 bg-muted rounded-md mb-4"></div>
+                      <div className="h-6 bg-muted rounded w-3/4 mb-3"></div>
+                      <div className="h-4 bg-muted rounded w-1/2 mb-2"></div>
+                      <div className="h-4 bg-muted rounded w-3/4 mb-4"></div>
+                      <div className="flex justify-between">
+                        <div className="h-6 bg-muted rounded w-1/4"></div>
+                        <div className="h-6 bg-muted rounded w-1/4"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {unassignedResources.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {unassignedResources.map(resource => (
+                        <motion.div
+                          key={resource.Id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="bg-card border border-border rounded-xl p-6 hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => router.push(`/projects/${projectId}/resource/${resource.Id}`)}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div>
+                              {renderResourceIcon(resource.Type)}
+                              <h3 className="text-lg font-semibold mt-3">{resource.Name}</h3>
+                              <div className="text-sm text-muted-foreground">{resource.Type}</div>
+                              <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+                                {resource.Description || "No description provided"}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-4 pt-4 border-t border-border flex justify-between items-center">
+                            <div className="text-xs text-muted-foreground">
+                              Created {formatDate(resource.CreatedAt)}
+                            </div>
+                            
+                            <div className="flex items-center">
+                              {resource.Available !== undefined && resource.Total !== undefined && (
+                                <div className={cn(
+                                  "text-xs px-2 py-1 rounded",
+                                  resource.Available === 0 
+                                    ? "bg-red-500/10 text-red-500" 
+                                    : resource.Available < resource.Total * 0.2
+                                      ? "bg-amber-500/10 text-amber-500"
+                                      : "bg-green-500/10 text-green-500"
+                                )}>
+                                  {resource.Available}/{resource.Total} {resource.Unit || "Units"}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyUnassignedResourcesState projectId={projectId as string} />
+                  )}
+                </>
+              )}
             </TabsContent>
           </Tabs>
         </div>
@@ -375,7 +533,7 @@ export default function ResourcePage() {
   );
 }
 
-function EmptyResourcesState({ projectId, searchTerm, activeFilter }) {
+function EmptyResourcesState({ projectId, searchTerm, activeFilter }: { projectId: string, searchTerm: string, activeFilter: string }) {
   return (
     <div className="text-center py-16 bg-muted/30 rounded-xl border border-dashed border-border">
       {searchTerm || activeFilter !== 'all' ? (
@@ -404,7 +562,7 @@ function EmptyResourcesState({ projectId, searchTerm, activeFilter }) {
   );
 }
 
-function EmptyAssignedResourcesState({ projectId }) {
+function EmptyAssignedResourcesState({ projectId }: { projectId: string }) {
   return (
     <div className="text-center py-16 bg-muted/30 rounded-xl border border-dashed border-border">
       <CheckSquare className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
@@ -428,7 +586,7 @@ function EmptyAssignedResourcesState({ projectId }) {
   );
 }
 
-function EmptyUnassignedResourcesState({ projectId }) {
+function EmptyUnassignedResourcesState({ projectId }: { projectId: string }) {
   return (
     <div className="text-center py-16 bg-muted/30 rounded-xl border border-dashed border-border">
       <Package className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />

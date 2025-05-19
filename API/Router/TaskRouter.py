@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
-from typing import List
+from typing import List, Union
 from uuid import UUID
-from Schemas.TaskSchema import TaskCreate, TaskUpdate, TaskResponse
+from Schemas.TaskSchema import TaskCreate, TaskUpdate, TaskResponse, TaskTreeResponse
 from Services.TaskService import TaskService
 from Dependencies.auth import GetCurrentUser
 from Models import User
@@ -33,7 +33,7 @@ def Update(
 ):
     return taskService.Update(taskId, myData, currentUser.Id)
 
-@router.delete("/{taskId}", response_model=dict)  # Use dict if returning a message
+@router.delete("/{taskId}", response_model=dict)
 def Remove(
     taskId: UUID,
     currentUser: User = Depends(GetCurrentUser),
@@ -41,7 +41,7 @@ def Remove(
 ):
     return taskService.Remove(currentUser.Id, taskId)
 
-@router.get("/{taskId}/subtasks", response_model=List[TaskResponse], summary="Get all subtasks of a task")
+@router.get("/{taskId}/subtasks", response_model=List[TaskResponse])
 def GetSubtasks(
     taskId: UUID,
     currentUser: User = Depends(GetCurrentUser),
@@ -49,4 +49,10 @@ def GetSubtasks(
 ):
     return taskService.GetSubtasks(taskId)
 
-
+@router.get("/{taskId}/tree", response_model=TaskTreeResponse, summary="Get full task tree including all nested subtasks")
+def GetTaskTree(
+    taskId: UUID,
+    currentUser: User = Depends(GetCurrentUser),
+    taskService: TaskService = Depends(TaskService)
+):
+    return taskService.GetTaskTree(taskId)

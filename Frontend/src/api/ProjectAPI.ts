@@ -65,6 +65,11 @@ export async function getProjects(): Promise<Project[]> {
 }
 
 export async function getProjectById(projectId: string): Promise<Project> {
+  // Validate projectId before making the API call
+  if (!projectId || projectId === 'undefined') {
+    throw new Error('Invalid project ID provided');
+  }
+
   const headers = getAuthHeaders();
   const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, { method: 'GET', headers });
 
@@ -95,8 +100,12 @@ export async function createProject(data: ProjectCreateData): Promise<Project> {
   return response.json();
 }
 
-
 export async function updateProject(projectId: string, data: ProjectUpdateData): Promise<Project> {
+  // Validate projectId before making the API call
+  if (!projectId || projectId === 'undefined') {
+    throw new Error('Invalid project ID provided');
+  }
+
   const headers = getAuthHeaders();
   const response = await fetch(`${API_BASE_URL}/projects/${projectId}/update`, {
     method: 'PUT',
@@ -109,6 +118,11 @@ export async function updateProject(projectId: string, data: ProjectUpdateData):
 }
 
 export async function deleteProject(projectId: string): Promise<string> {
+  // Validate projectId before making the API call
+  if (!projectId || projectId === 'undefined') {
+    throw new Error('Invalid project ID provided');
+  }
+
   const headers = {
     ...getAuthHeaders(),
     'Content-Type': 'application/json',
@@ -128,10 +142,12 @@ export async function deleteProject(projectId: string): Promise<string> {
   return response.json(); 
 }
 
-
-
-
 export async function getProjectMembers(projectId: string): Promise<any[]> {
+  // Validate projectId before making the API call
+  if (!projectId || projectId === 'undefined') {
+    throw new Error('Invalid project ID provided');
+  }
+
   const headers = getAuthHeaders();
   const response = await fetch(`${API_BASE_URL}/projects/${projectId}/members`, {
     method: 'GET',
@@ -143,6 +159,14 @@ export async function getProjectMembers(projectId: string): Promise<any[]> {
 }
 
 export async function addProjectMember(projectId: string, memberId: string): Promise<any> {
+  // Validate projectId and memberId before making the API call
+  if (!projectId || projectId === 'undefined') {
+    throw new Error('Invalid project ID provided');
+  }
+  if (!memberId || memberId === 'undefined') {
+    throw new Error('Invalid member ID provided');
+  }
+
   const headers = getAuthHeaders();
   const response = await fetch(`${API_BASE_URL}/projects/${projectId}/add-member?memberId=${memberId}`, {
     method: 'POST',
@@ -154,6 +178,14 @@ export async function addProjectMember(projectId: string, memberId: string): Pro
 }
 
 export async function removeProjectMember(projectId: string, memberId: string): Promise<any> {
+  // Validate projectId and memberId before making the API call
+  if (!projectId || projectId === 'undefined') {
+    throw new Error('Invalid project ID provided');
+  }
+  if (!memberId || memberId === 'undefined') {
+    throw new Error('Invalid member ID provided');
+  }
+
   const headers = getAuthHeaders();
   const response = await fetch(`${API_BASE_URL}/projects/${projectId}/remove-member/${memberId}`, {
     method: 'DELETE',
@@ -165,6 +197,11 @@ export async function removeProjectMember(projectId: string, memberId: string): 
 }
 
 export async function getProjectTeams(projectId: string): Promise<any[]> {
+  // Validate projectId before making the API call
+  if (!projectId || projectId === 'undefined') {
+    throw new Error('Invalid project ID provided');
+  }
+
   const headers = getAuthHeaders();
   const response = await fetch(`${API_BASE_URL}/projects/${projectId}/teams`, {
     method: 'GET',
@@ -176,6 +213,11 @@ export async function getProjectTeams(projectId: string): Promise<any[]> {
 }
 
 export async function getProjectTasks(projectId: string): Promise<any[]> {
+  // Validate projectId before making the API call
+  if (!projectId || projectId === 'undefined') {
+    throw new Error('Invalid project ID provided');
+  }
+
   const headers = getAuthHeaders();
   const response = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks`, {
     method: 'GET',

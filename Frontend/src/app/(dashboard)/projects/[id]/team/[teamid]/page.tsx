@@ -17,13 +17,11 @@ import {
   AlertCircle,
   Info,
   Activity
-
 } from 'lucide-react';
 import { toast } from '@/lib/toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import './teamDetail.css';
-
 
 import { 
   getTeamById, 
@@ -32,11 +30,8 @@ import {
   addTeamMember, 
   removeTeamMember,
   getTeamTasks
-
-import './teamDetail.css';
-
-
 } from '@/api/TeamAPI';
+
 import { getProjectMembers } from '@/api/ProjectAPI';
 import { getUserIdFromToken } from '@/lib/utils';
 
@@ -48,8 +43,7 @@ import AttachmentsTab from './components/AttachmentsTab';
 import ResourcesTab from './components/ResourcesTab';
 import EditTeamDialog from './components/EditTeamDialog';
 import AddMemberDialog from './components/AddMemberDialog';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 type Tab = 'members' | 'tasks' | 'activity' | 'attachments' | 'resources';
 
 export default function TeamDetailPage() {

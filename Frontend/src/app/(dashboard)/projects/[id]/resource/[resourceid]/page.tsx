@@ -7,7 +7,19 @@ import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { toast } from '@/lib/toast';
-import { v4 as uuidv4 } from 'uuid';
+
+// API
+import { 
+  getResourceById, 
+  updateResource, 
+  deleteResource, 
+  assignResourceToTask,
+  getTaskResourceAssignments,
+  ResourceUpdateData, 
+  Resource, 
+  ResourceAssignment,
+  ResourceAssignmentCreateData
+} from '@/api/ResourceAPI';
 
 // Icons
 import {
@@ -32,7 +44,8 @@ import {
   LinkIcon,
   AlertCircle,
   Check,
-  X
+  X,
+  Plus
 } from 'lucide-react';
 
 // Components
@@ -55,7 +68,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -96,38 +108,56 @@ const resourceTypeIcons = {
   'Other': <Package className="h-6 w-6 text-gray-500" />,
 };
 
+// Interface for attachments
+interface Attachment {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url: string;
+}
+
+// Interface for tasks
+interface Task {
+  Id: string;
+  Title: string;
+}
+
 export default function ResourceDetailPage() {
   const { id: projectId, resourceId } = useParams();
   const router = useRouter();
   
-  const [resource, setResource] = useState(null);
+  const [resource, setResource] = useState<Resource | null>(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedTask, setSelectedTask] = useState('');
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [assignQuantity, setAssignQuantity] = useState('1');
-  const [errors, setErrors] = useState({});
+  const [estimatedCost, setEstimatedCost] = useState('0');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [resourceAssignments, setResourceAssignments] = useState<ResourceAssignment[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   
   // Form state for editing
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ResourceUpdateData>({
     Name: '',
     Type: '',
-    Total: '',
-    Available: '',
+    Total: 0,
+    Available: 0,
     Description: '',
     Unit: '',
   });
   
   // Ref for clicking outside of dropdown
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   
   // Close dropdown when clicking outside
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
     }
@@ -138,39 +168,49 @@ export default function ResourceDetailPage() {
     };
   }, []);
   
-  // Load resource and tasks from localStorage
+  // Load resource and assignments
   useEffect(() => {
-    setLoading(true);
-    
-    // Small delay to simulate loading
-    const timer = setTimeout(() => {
+    const fetchResourceData = async () => {
+      setLoading(true);
+      
       try {
-        // Get resources from localStorage
-        const storedResources = localStorage.getItem(`project_${projectId}_resources`);
-        if (storedResources) {
-          const resources = JSON.parse(storedResources);
-          const foundResource = resources.find(r => r.Id === resourceId);
-          
-          if (foundResource) {
-            setResource(foundResource);
-            setFormData({
-              Name: foundResource.Name || '',
-              Type: foundResource.Type || '',
-              Total: foundResource.Total !== null ? String(foundResource.Total) : '',
-              Available: foundResource.Available !== null ? String(foundResource.Available) : '',
-              Description: foundResource.Description || '',
-              Unit: foundResource.Unit || '',
-            });
-          } else {
-            toast.error("Resource not found");
-            router.push(`/projects/${projectId}/resource`);
-          }
-        }
+        // Load resource data
+        const resourceData = await getResourceById(resourceId as string);
         
-        // Get tasks from localStorage
-        const storedTasks = localStorage.getItem(`project_${projectId}_tasks`);
-        if (storedTasks) {
-          setTasks(JSON.parse(storedTasks));
+        if (resourceData) {
+          setResource(resourceData);
+          setFormData({
+            Name: resourceData.Name || '',
+            Type: resourceData.Type || '',
+            Total: resourceData.Total !== null ? resourceData.Total : 0,
+            Available: resourceData.Available !== null ? resourceData.Available : 0,
+            Description: resourceData.Description || '',
+            Unit: resourceData.Unit || '',
+          });
+          
+          // In a real app, we'd load attachments from an API
+          // For now, we'll simulate with an empty array or mock data if available
+          setAttachments(resourceData.Attachments || []);
+          
+          // Load resource assignments
+          try {
+            const assignments = await getTaskResourceAssignments(resourceId as string);
+            setResourceAssignments(assignments);
+          } catch (assignmentError) {
+            console.error("Error loading resource assignments:", assignmentError);
+          }
+          
+          // TODO: Load tasks - in a real app, this would be from an API
+          // For now, we'll use mock data
+          setTasks([
+            { Id: 'task-1', Title: 'Design Phase' },
+            { Id: 'task-2', Title: 'Development' },
+            { Id: 'task-3', Title: 'Testing' }
+          ]);
+          
+        } else {
+          toast.error("Resource not found");
+          router.push(`/projects/${projectId}/resource`);
         }
       } catch (error) {
         console.error("Error loading resource:", error);
@@ -178,61 +218,44 @@ export default function ResourceDetailPage() {
       } finally {
         setLoading(false);
       }
-    }, 300);
+    };
     
-    return () => clearTimeout(timer);
+    fetchResourceData();
   }, [projectId, resourceId, router]);
 
   // Handle form input changes
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
     // Clear error for this field when user types
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }));
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
   
   // Add file attachment
-  const handleAddAttachment = (e) => {
+  const handleAddAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
     const files = Array.from(e.target.files);
-    if (files.length === 0) return;
     
     // Create attachment objects
-    const newAttachments = files.map(file => ({
-      id: uuidv4(),
+    const newAttachments: Attachment[] = files.map(file => ({
+      id: crypto.randomUUID(),
       name: file.name,
       size: file.size,
       type: file.type,
-      // In a real app, we'd upload the file to a server or store it
+      // In a real app, we'd upload the file to a server and get a URL
       // Here we just create an object URL to simulate
       url: URL.createObjectURL(file)
     }));
     
     try {
-      // Get existing resources from localStorage
-      const storedResources = localStorage.getItem(`project_${projectId}_resources`);
-      if (storedResources) {
-        const resources = JSON.parse(storedResources);
-        const resourceIndex = resources.findIndex(r => r.Id === resourceId);
-        
-        if (resourceIndex !== -1) {
-          // Add attachments to resource
-          resources[resourceIndex].Attachments = [
-            ...(resources[resourceIndex].Attachments || []),
-            ...newAttachments
-          ];
-          
-          // Save back to localStorage
-          localStorage.setItem(`project_${projectId}_resources`, JSON.stringify(resources));
-          
-          // Update state
-          setResource(resources[resourceIndex]);
-          
-          toast.success(`Added ${files.length} attachment${files.length > 1 ? 's' : ''}`);
-        }
-      }
+      // In a real app, we'd upload files to a server, then update the resource with new attachments
+      setAttachments(prev => [...prev, ...newAttachments]);
+      
+      toast.success(`Added ${files.length} attachment${files.length > 1 ? 's' : ''}`);
     } catch (error) {
       console.error("Error adding attachment:", error);
       toast.error("Failed to add attachment");
@@ -240,29 +263,12 @@ export default function ResourceDetailPage() {
   };
   
   // Remove an attachment
-  const handleRemoveAttachment = (attachmentId) => {
+  const handleRemoveAttachment = (attachmentId: string) => {
     try {
-      // Get existing resources from localStorage
-      const storedResources = localStorage.getItem(`project_${projectId}_resources`);
-      if (storedResources) {
-        const resources = JSON.parse(storedResources);
-        const resourceIndex = resources.findIndex(r => r.Id === resourceId);
-        
-        if (resourceIndex !== -1) {
-          // Filter out the attachment
-          resources[resourceIndex].Attachments = resources[resourceIndex].Attachments.filter(
-            a => a.id !== attachmentId
-          );
-          
-          // Save back to localStorage
-          localStorage.setItem(`project_${projectId}_resources`, JSON.stringify(resources));
-          
-          // Update state
-          setResource(resources[resourceIndex]);
-          
-          toast.success("Attachment removed");
-        }
-      }
+      // In a real app, we'd delete the file from the server and update the resource
+      setAttachments(prev => prev.filter(a => a.id !== attachmentId));
+      
+      toast.success("Attachment removed");
     } catch (error) {
       console.error("Error removing attachment:", error);
       toast.error("Failed to remove attachment");
@@ -271,9 +277,9 @@ export default function ResourceDetailPage() {
   
   // Validate form
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: Record<string, string> = {};
     
-    if (!formData.Name.trim()) {
+    if (!formData.Name?.trim()) {
       newErrors.Name = 'Resource name is required';
     }
     
@@ -281,15 +287,15 @@ export default function ResourceDetailPage() {
       newErrors.Type = 'Resource type is required';
     }
     
-    if (formData.Total && isNaN(Number(formData.Total))) {
+    if (formData.Total !== undefined && isNaN(Number(formData.Total))) {
       newErrors.Total = 'Total must be a number';
     }
     
-    if (formData.Available && isNaN(Number(formData.Available))) {
+    if (formData.Available !== undefined && isNaN(Number(formData.Available))) {
       newErrors.Available = 'Available must be a number';
     }
     
-    if (formData.Total && formData.Available && 
+    if (formData.Total !== undefined && formData.Available !== undefined && 
         Number(formData.Available) > Number(formData.Total)) {
       newErrors.Available = 'Available cannot exceed total';
     }
@@ -299,40 +305,30 @@ export default function ResourceDetailPage() {
   };
   
   // Handle save changes
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     if (!validateForm()) {
       return;
     }
     
     try {
-      // Get existing resources from localStorage
-      const storedResources = localStorage.getItem(`project_${projectId}_resources`);
-      if (storedResources) {
-        const resources = JSON.parse(storedResources);
-        const resourceIndex = resources.findIndex(r => r.Id === resourceId);
-        
-        if (resourceIndex !== -1) {
-          // Update resource with form data
-          resources[resourceIndex] = {
-            ...resources[resourceIndex],
-            Name: formData.Name.trim(),
-            Type: formData.Type,
-            Total: formData.Total ? Number(formData.Total) : null,
-            Available: formData.Available ? Number(formData.Available) : null,
-            Description: formData.Description.trim(),
-            Unit: formData.Unit.trim(),
-          };
-          
-          // Save back to localStorage
-          localStorage.setItem(`project_${projectId}_resources`, JSON.stringify(resources));
-          
-          // Update state
-          setResource(resources[resourceIndex]);
-          setEditMode(false);
-          
-          toast.success("Resource updated successfully");
-        }
-      }
+      // Prepare data for API
+      const updateData: ResourceUpdateData = {
+        Name: formData.Name?.trim(),
+        Type: formData.Type,
+        Total: formData.Total !== undefined ? Number(formData.Total) : undefined,
+        Available: formData.Available !== undefined ? Number(formData.Available) : undefined,
+        Description: formData.Description?.trim(),
+        Unit: formData.Unit?.trim(),
+      };
+      
+      // Update resource via API
+      const updatedResource = await updateResource(resourceId as string, updateData);
+      
+      // Update local state
+      setResource(updatedResource);
+      setEditMode(false);
+      
+      toast.success("Resource updated successfully");
     } catch (error) {
       console.error("Error updating resource:", error);
       toast.error("Failed to update resource");
@@ -340,22 +336,15 @@ export default function ResourceDetailPage() {
   };
   
   // Handle delete resource
-  const handleDeleteResource = () => {
+  const handleDeleteResource = async () => {
     try {
-      // Get existing resources from localStorage
-      const storedResources = localStorage.getItem(`project_${projectId}_resources`);
-      if (storedResources) {
-        const resources = JSON.parse(storedResources);
-        const updatedResources = resources.filter(r => r.Id !== resourceId);
-        
-        // Save back to localStorage
-        localStorage.setItem(`project_${projectId}_resources`, JSON.stringify(updatedResources));
-        
-        toast.success("Resource deleted successfully");
-        
-        // Redirect to resource list
-        router.push(`/projects/${projectId}/resource`);
-      }
+      // Delete resource via API
+      await deleteResource(resourceId as string);
+      
+      toast.success("Resource deleted successfully");
+      
+      // Redirect to resource list
+      router.push(`/projects/${projectId}/resource`);
     } catch (error) {
       console.error("Error deleting resource:", error);
       toast.error("Failed to delete resource");
@@ -364,7 +353,7 @@ export default function ResourceDetailPage() {
   };
   
   // Handle assign resource to task
-  const handleAssignResource = () => {
+  const handleAssignResource = async () => {
     if (!selectedTask) {
       setErrors({ task: 'Please select a task' });
       return;
@@ -376,12 +365,24 @@ export default function ResourceDetailPage() {
     }
     
     try {
-      // In a real app, you'd update the task with the resource assignment
-      // Here we just show a success message
+      const assignmentData: ResourceAssignmentCreateData = {
+        TaskId: selectedTask,
+        ResourceId: resourceId as string,
+        Quantity: Number(assignQuantity),
+        EstimatedCost: Number(estimatedCost) || 0
+      };
+      
+      // Assign resource to task via API
+      const assignment = await assignResourceToTask(assignmentData);
+      
+      // Update assignments list
+      setResourceAssignments(prev => [...prev, assignment]);
+      
       toast.success(`Resource assigned to task successfully`);
       setShowAssignDialog(false);
       setSelectedTask('');
       setAssignQuantity('1');
+      setEstimatedCost('0');
       setErrors({});
     } catch (error) {
       console.error("Error assigning resource:", error);
@@ -390,16 +391,26 @@ export default function ResourceDetailPage() {
   };
   
   // Render resource icon based on type
-  const renderResourceIcon = (type) => {
-    return resourceTypeIcons[type] || resourceTypeIcons['Other'];
+  const renderResourceIcon = (type: string) => {
+    return resourceTypeIcons[type as keyof typeof resourceTypeIcons] || resourceTypeIcons['Other'];
+  };
+  
+  // Format date for display
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'N/A';
+    try {
+      return format(new Date(dateString), 'MMM d, yyyy');
+    } catch (error) {
+      return 'Invalid date';
+    }
   };
   
   if (loading) {
-    return <ResourceLoadingSkeleton projectId={projectId} />;
+    return <ResourceLoadingSkeleton projectId={projectId as string} />;
   }
   
   if (!resource) {
-    return <ResourceNotFound projectId={projectId} />;
+    return <ResourceNotFound projectId={projectId as string} />;
   }
 
   return (
@@ -474,7 +485,7 @@ export default function ResourceDetailPage() {
                       className="w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors flex items-center"
                       onClick={() => {
                         setShowDropdown(false);
-                        document.getElementById('file-upload').click();
+                        document.getElementById('file-upload')?.click();
                       }}
                     >
                       <FileUp className="h-4 w-4 mr-2" />
@@ -616,17 +627,39 @@ export default function ResourceDetailPage() {
                 >
                   <h2 className="text-lg font-semibold mb-4">Assigned Tasks</h2>
                   
-                  <div className="text-center py-8 bg-muted/30 rounded-lg border border-dashed border-border">
-                    <Clock className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
-                    <p className="text-muted-foreground mb-3">No tasks have been assigned yet</p>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setShowAssignDialog(true)}
-                    >
-                      <LinkIcon className="h-4 w-4 mr-2" /> Assign to Task
-                    </Button>
-                  </div>
+                  {resourceAssignments && resourceAssignments.length > 0 ? (
+                    <div className="space-y-3">
+                      {resourceAssignments.map(assignment => (
+                        <div 
+                          key={assignment.Id}
+                          className="p-4 border border-border rounded-lg flex items-center justify-between"
+                        >
+                          <div>
+                            <h3 className="font-medium">
+                              {tasks.find(t => t.Id === assignment.TaskId)?.Title || 'Unknown Task'}
+                            </h3>
+                            <div className="text-sm text-muted-foreground mt-1">
+                              {assignment.Quantity} {resource.Unit || 'Units'}
+                              {assignment.EstimatedCost > 0 && ` • Estimated Cost: $${assignment.EstimatedCost}`}
+                            </div>
+                          </div>
+                          <Button size="sm" variant="outline">View Task</Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 bg-muted/30 rounded-lg border border-dashed border-border">
+                      <Clock className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
+                      <p className="text-muted-foreground mb-3">No tasks have been assigned yet</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowAssignDialog(true)}
+                      >
+                        <LinkIcon className="h-4 w-4 mr-2" /> Assign to Task
+                      </Button>
+                    </div>
+                  )}
                 </motion.div>
                 
                 {/* Resource attachments */}
@@ -642,15 +675,15 @@ export default function ResourceDetailPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => document.getElementById('file-upload').click()}
+                      onClick={() => document.getElementById('file-upload')?.click()}
                     >
                       <FileUp className="h-4 w-4 mr-2" /> Add Files
                     </Button>
                   </div>
                   
-                  {resource.Attachments && resource.Attachments.length > 0 ? (
+                  {attachments && attachments.length > 0 ? (
                     <div className="space-y-3">
-                      {resource.Attachments.map(file => (
+                      {attachments.map(file => (
                         <div
                           key={file.id}
                           className="flex items-center justify-between bg-muted/50 p-3 rounded-md"
@@ -670,7 +703,7 @@ export default function ResourceDetailPage() {
                             <div className="overflow-hidden">
                               <p className="font-medium text-sm truncate">{file.name}</p>
                               <p className="text-xs text-muted-foreground">
-                                {(file.size / 1024).toFixed(1)} KB • Added {format(new Date(), 'MMM d, yyyy')}
+                                {(file.size / 1024).toFixed(1)} KB
                               </p>
                             </div>
                           </div>
@@ -702,7 +735,7 @@ export default function ResourceDetailPage() {
                       <Button 
                         variant="outline" 
                         size="sm"
-                        onClick={() => document.getElementById('file-upload').click()}
+                        onClick={() => document.getElementById('file-upload')?.click()}
                       >
                         <FileUp className="h-4 w-4 mr-2" /> Add Files
                       </Button>
@@ -739,13 +772,13 @@ export default function ResourceDetailPage() {
                 
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Created</span>
-                  <span>{format(new Date(resource.CreatedAt), 'MMM d, yyyy')}</span>
+                  <span>{formatDate(resource.CreatedAt)}</span>
                 </div>
                 <div className="border-t border-border"></div>
                 
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Last Updated</span>
-                  <span>{format(new Date(), 'MMM d, yyyy')}</span>
+                  <span>{formatDate(resource.UpdatedAt)}</span>
                 </div>
                 <div className="border-t border-border"></div>
                 
@@ -773,10 +806,34 @@ export default function ResourceDetailPage() {
             >
               <h2 className="text-lg font-semibold mb-4">Assignment History</h2>
               
-              <div className="text-center py-8">
-                <CalendarDays className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
-                <p className="text-muted-foreground">No assignment history available</p>
-              </div>
+              {resourceAssignments && resourceAssignments.length > 0 ? (
+                <div className="space-y-3">
+                  {resourceAssignments.map(assignment => (
+                    <div 
+                      key={assignment.Id} 
+                      className="p-3 bg-muted/30 rounded-lg text-sm"
+                    >
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-medium">
+                          {tasks.find(t => t.Id === assignment.TaskId)?.Title || 'Unknown Task'}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(assignment.AssignedAt)}
+                        </span>
+                      </div>
+                      <div>Quantity: {assignment.Quantity} {resource.Unit || 'Units'}</div>
+                      {assignment.EstimatedCost > 0 && (
+                        <div>Estimated Cost: ${assignment.EstimatedCost}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <CalendarDays className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
+                  <p className="text-muted-foreground">No assignment history available</p>
+                </div>
+              )}
             </motion.div>
           </div>
         </div>
@@ -862,6 +919,19 @@ export default function ResourceDetailPage() {
                 )}
               </div>
             </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="cost">Estimated Cost (optional)</Label>
+              <Input
+                id="cost"
+                type="number"
+                min="0"
+                step="0.01"
+                value={estimatedCost}
+                onChange={(e) => setEstimatedCost(e.target.value)}
+                placeholder="Enter estimated cost"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAssignDialog(false)}>
@@ -878,7 +948,19 @@ export default function ResourceDetailPage() {
 }
 
 // Edit Resource Form Component
-function EditResourceForm({ formData, errors, handleChange, handleSaveChanges, handleCancel }) {
+function EditResourceForm({ 
+  formData, 
+  errors, 
+  handleChange, 
+  handleSaveChanges, 
+  handleCancel 
+}: {
+  formData: ResourceUpdateData;
+  errors: Record<string, string>;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  handleSaveChanges: () => void;
+  handleCancel: () => void;
+}) {
   // Resource type definitions
   const resourceTypes = [
     { id: 'Human', label: 'Human Resource', icon: <UserPlus className="h-5 w-5 text-blue-500" /> },
@@ -916,7 +998,7 @@ function EditResourceForm({ formData, errors, handleChange, handleSaveChanges, h
                     : "hover:bg-muted"
                 )}
                 onClick={() => {
-                  handleChange({ target: { name: 'Type', value: type.id } });
+                  handleChange({ target: { name: 'Type', value: type.id } } as React.ChangeEvent<HTMLInputElement>);
                 }}
               >
                 {type.icon}
@@ -934,7 +1016,7 @@ function EditResourceForm({ formData, errors, handleChange, handleSaveChanges, h
           <Input
             id="resource-name"
             name="Name"
-            value={formData.Name}
+            value={formData.Name || ''}
             onChange={handleChange}
             placeholder="Enter resource name"
           />
@@ -947,7 +1029,7 @@ function EditResourceForm({ formData, errors, handleChange, handleSaveChanges, h
           <Textarea
             id="resource-description"
             name="Description"
-            value={formData.Description}
+            value={formData.Description || ''}
             onChange={handleChange}
             placeholder="Enter a description of this resource"
             rows={4}
@@ -964,7 +1046,7 @@ function EditResourceForm({ formData, errors, handleChange, handleSaveChanges, h
               type="number"
               min="0"
               step="0.01"
-              value={formData.Total}
+              value={formData.Total !== undefined ? formData.Total : ''}
               onChange={handleChange}
               placeholder="Total available"
             />
@@ -979,7 +1061,7 @@ function EditResourceForm({ formData, errors, handleChange, handleSaveChanges, h
               type="number"
               min="0"
               step="0.01"
-              value={formData.Available}
+              value={formData.Available !== undefined ? formData.Available : ''}
               onChange={handleChange}
               placeholder="Currently available"
             />
@@ -991,7 +1073,7 @@ function EditResourceForm({ formData, errors, handleChange, handleSaveChanges, h
             <Input
               id="resource-unit"
               name="Unit"
-              value={formData.Unit}
+              value={formData.Unit || ''}
               onChange={handleChange}
               placeholder="e.g., Hours, Pieces, Kg"
             />
@@ -1016,7 +1098,7 @@ function EditResourceForm({ formData, errors, handleChange, handleSaveChanges, h
 }
 
 // Loading Skeleton Component
-function ResourceLoadingSkeleton({ projectId }) {
+function ResourceLoadingSkeleton({ projectId }: { projectId: string }) {
   return (
     <div className="min-h-screen bg-background">
       <div className="container max-w-7xl mx-auto px-4 py-8">
@@ -1114,7 +1196,7 @@ function ResourceLoadingSkeleton({ projectId }) {
 }
 
 // Resource Not Found Component
-function ResourceNotFound({ projectId }) {
+function ResourceNotFound({ projectId }: { projectId: string }) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="max-w-md mx-auto px-6 py-12 bg-card rounded-xl shadow-sm border border-border text-center">

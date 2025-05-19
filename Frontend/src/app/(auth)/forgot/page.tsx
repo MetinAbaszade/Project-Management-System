@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { toast } from "@/lib/toast"
-import api from "@/lib/axios"
+import { api } from "@/lib/axios"  // ✅ FIXED - Using proper API import
 import { Mail, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { FormInput } from "@/components/ui/FormInput"
@@ -16,16 +16,27 @@ export default function ForgotPage() {
 
   const handleSubmit = async () => {
     if (!email) return toast.error("Please enter your email address.")
+    
     setLoading(true)
     try {
+      // ✅ FIXED - Using correct API endpoint and parameters
       await api.post("/email/send-verification-code", null, {
         params: { recipientEmail: email },
       })
+      
       localStorage.setItem("taskup_reset_email", email)
       toast.success("Reset code sent to your email.")
       router.push("/otp?next=reset")
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to send reset code.")
+      console.error("Error sending verification code:", err)
+      
+      // ✅ FIXED - Improved error handling
+      const errorMessage = 
+        err.response?.data?.message || 
+        err.response?.data?.detail || 
+        "Failed to send reset code. Please try again."
+      
+      toast.error(typeof errorMessage === 'string' ? errorMessage : "Failed to send reset code.")
     } finally {
       setLoading(false)
     }
