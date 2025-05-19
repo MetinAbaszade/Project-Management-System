@@ -1,12 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { v4 as uuidv4 } from 'uuid';
 import { toast } from '@/lib/toast';
-import { cn } from '@/lib/utils';
+
+// API
+import { 
+  createResource, 
+  ResourceCreateData 
+} from '@/api/ResourceAPI';
 
 // Icons
 import {
@@ -28,13 +32,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Card,
   CardContent,
   CardDescription,
@@ -43,6 +40,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 // Resource type definitions
 const resourceTypes = [
@@ -60,70 +58,74 @@ export default function CreateResourcePage() {
   const router = useRouter();
   
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ResourceCreateData>({
     Name: '',
     Type: '',
-    Total: '',
-    Available: '',
+    ProjectId: projectId as string,
     Description: '',
     Unit: '',
+    Total: 0,
+    Available: 0
   });
   
-  const [selectedType, setSelectedType] = useState(null);
-  const [attachments, setAttachments] = useState([]);
-  const [errors, setErrors] = useState({});
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Set ProjectId when component mounts
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, ProjectId: projectId as string }));
+  }, [projectId]);
+
   // Handle form input changes
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     
     // Clear error for this field when user types
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }));
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
   
   // Handle resource type selection
-  const handleTypeSelect = (typeId) => {
+  const handleTypeSelect = (typeId: string) => {
     setSelectedType(typeId);
     setFormData(prev => ({ ...prev, Type: typeId }));
     
     // Clear type error if it exists
     if (errors.Type) {
-      setErrors(prev => ({ ...prev, Type: null }));
+      setErrors(prev => ({ ...prev, Type: '' }));
     }
   };
   
   // Handle file attachment
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
     
-    // Create attachment objects
-    const newAttachments = files.map(file => ({
-      id: uuidv4(),
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      // In a real app, we'd upload the file to a server or store it
-      // Here we just create an object URL to simulate
-      url: URL.createObjectURL(file)
-    }));
-    
-    setAttachments(prev => [...prev, ...newAttachments]);
-    toast.success(`Added ${files.length} attachment${files.length > 1 ? 's' : ''}`);
+    const selectedFiles = Array.from(e.target.files);
+    setFiles(prev => [...prev, ...selectedFiles]);
+    toast.success(`Added ${selectedFiles.length} attachment${selectedFiles.length > 1 ? 's' : ''}`);
   };
   
   // Remove an attachment
-  const removeAttachment = (id) => {
-    setAttachments(prev => prev.filter(attachment => attachment.id !== id));
+  const removeAttachment = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  // Convert form numbers from string to number
+  const prepareFormData = () => {
+    return {
+      ...formData,
+      Total: formData.Total ? Number(formData.Total) : 0,
+      Available: formData.Available ? Number(formData.Available) : 0,
+    };
   };
   
   // Validate form
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors: Record<string, string> = {};
     
     if (!formData.Name.trim()) {
       newErrors.Name = 'Resource name is required';
@@ -151,7 +153,7 @@ export default function CreateResourcePage() {
   };
   
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -160,31 +162,19 @@ export default function CreateResourcePage() {
     
     setIsSubmitting(true);
     
-    // Create new resource object
-    const newResource = {
-      Id: uuidv4(),
-      ProjectId: projectId,
-      Name: formData.Name.trim(),
-      Type: formData.Type,
-      Total: formData.Total ? Number(formData.Total) : null,
-      Available: formData.Available ? Number(formData.Available) : null,
-      Description: formData.Description.trim(),
-      Unit: formData.Unit.trim(),
-      IsDeleted: false,
-      CreatedAt: new Date().toISOString(),
-      Attachments: attachments
-    };
-    
     try {
-      // Get existing resources from localStorage or initialize empty array
-      const storedResources = localStorage.getItem(`project_${projectId}_resources`);
-      const resources = storedResources ? JSON.parse(storedResources) : [];
+      // Prepare the data with correct types
+      const preparedData = prepareFormData();
       
-      // Add new resource
-      resources.push(newResource);
+      // Create resource via API
+      const createdResource = await createResource(preparedData);
       
-      // Save back to localStorage
-      localStorage.setItem(`project_${projectId}_resources`, JSON.stringify(resources));
+      // TODO: In a real implementation, we would upload the files here
+      // and associate them with the created resource
+      if (files.length > 0) {
+        // This would be replaced with actual file upload logic
+        console.log(`Uploading ${files.length} files for resource ${createdResource.Id}`);
+      }
       
       toast.success('Resource added successfully!');
       
@@ -346,25 +336,25 @@ export default function CreateResourcePage() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => document.getElementById('file-upload').click()}
+                      onClick={() => document.getElementById('file-upload')?.click()}
                     >
                       <Plus className="h-4 w-4 mr-2" /> Select Files
                     </Button>
                   </div>
                   
-                  {attachments.length > 0 && (
+                  {files.length > 0 && (
                     <div className="space-y-2 mt-4">
                       <Label>Uploaded Files</Label>
-                      {attachments.map(file => (
+                      {files.map((file, index) => (
                         <div
-                          key={file.id}
+                          key={index}
                           className="flex items-center justify-between bg-muted p-3 rounded-md"
                         >
                           <div className="flex items-center">
                             <div className="w-9 h-9 rounded bg-primary/10 flex items-center justify-center mr-3">
                               {file.type.includes('image') ? (
                                 <img
-                                  src={file.url}
+                                  src={URL.createObjectURL(file)}
                                   alt={file.name}
                                   className="w-full h-full object-cover rounded"
                                 />
@@ -383,7 +373,7 @@ export default function CreateResourcePage() {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            onClick={() => removeAttachment(file.id)}
+                            onClick={() => removeAttachment(index)}
                             className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
                           >
                             Remove

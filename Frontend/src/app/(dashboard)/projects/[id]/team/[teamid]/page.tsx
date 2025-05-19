@@ -43,7 +43,7 @@ import AttachmentsTab from './components/AttachmentsTab';
 import ResourcesTab from './components/ResourcesTab';
 import EditTeamDialog from './components/EditTeamDialog';
 import AddMemberDialog from './components/AddMemberDialog';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 type Tab = 'members' | 'tasks' | 'activity' | 'attachments' | 'resources';
 
 export default function TeamDetailPage() {

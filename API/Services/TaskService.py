@@ -1,5 +1,4 @@
 from typing import Optional
-
 from fastapi import HTTPException, Depends
 from uuid import UUID
 from sqlalchemy.orm import Session
@@ -26,17 +25,14 @@ class TaskService:
         self.teamService = teamService
 
     def Add(self, userId: UUID, taskData: TaskCreate) -> Optional[Task]:
-        # Check if project exists
         project = self.projectService.GetProjectById(taskData.ProjectId)
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
 
-        # Check if current user is the creator of the project
         if str(project.OwnerId) != str(userId):
             raise HTTPException(status_code=403, detail="Only the project owner can create tasks")
 
         if taskData.TeamId:
-            # Check if team exists
             team = self.teamService.GetTeamById(taskData.TeamId)
             if not team:
                 raise HTTPException(status_code=404, detail="Assigned team not found")
@@ -65,7 +61,6 @@ class TaskService:
 
     def Update(self, taskId: UUID, updateData: TaskUpdate, currentUserId: UUID):
         task = self.repo.GetById(taskId)
-        print(taskId)
         if not task:
             raise HTTPException(status_code=404, detail="Task not found")
 
@@ -92,4 +87,8 @@ class TaskService:
 
         return self.repo.GetSubtasks(parentTaskId)
 
-
+    def GetTaskTree(self, taskId: UUID):
+        tree = self.repo.GetTaskTree(taskId)
+        if not tree:
+            raise HTTPException(status_code=404, detail="Task not found")
+        return tree
