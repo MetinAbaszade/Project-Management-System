@@ -19,9 +19,6 @@ class ResourceService:
     def __init__(self, db: Session = Depends(GetDb)):
         self.db = db
 
-    # -----------------------------
-    # Resource
-
     def CreateResource(self, userId: UUID, resourceData: ResourceBase):
         if not ProjectRepository.HasProjectAccess(self.db, resourceData.ProjectId, str(userId)):
             raise HTTPException(status_code=403, detail="You are not allowed to add resources to this project.")
@@ -55,9 +52,6 @@ class ResourceService:
         if not resource:
             raise HTTPException(status_code=404, detail="Resource not found")
         return resource
-
-    # -----------------------------
-    # ActivityResource
 
     def CreateActivityResource(self, assignmentData: ActivityResourceBase):
         resource = self.db.query(Resource).filter(Resource.Id == assignmentData.ResourceId, Resource.IsDeleted == False).first()
@@ -110,9 +104,6 @@ class ResourceService:
 
     def GetAllActivityResourcesByTaskId(self, taskId: str):
         return ResourceRepository.GetAllActivityResourcesByTaskId(self.db, taskId)
-
-    # -----------------------------
-    # ResourcePlan
 
     def CreateResourcePlan(self, userId: UUID, planData: ResourcePlanBase):
         if not ProjectRepository.HasProjectAccess(self.db, planData.ProjectId, str(userId)):

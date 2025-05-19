@@ -1,4 +1,3 @@
-# Services/StakeholderService.py
 from fastapi import Depends, HTTPException
 from Dependencies.db import GetDb
 from sqlalchemy.orm import Session
@@ -29,20 +28,16 @@ class StakeholderService:
         return stakeholder
 
     def Create(self, userId: UUID, data: StakeholderCreate):
-        # Check if project exists
         project = self.projectService.GetProjectById(data.ProjectId)
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
 
-        # ✅ Ensure current user is the project owner
         if str(project.OwnerId) != str(userId):
             raise HTTPException(status_code=403, detail="Only the project owner can add stakeholders")
 
-        # ✅ Ensure current user is the project owner
         if str(userId) == str(data.UserId):
             raise HTTPException(status_code=403, detail="Project owner can not be stakeholder")
 
-        # Check if the user to be added exists
         if not self.userService.UserExistsById(data.UserId):
             raise HTTPException(status_code=404, detail="Stakeholder user not found")
 

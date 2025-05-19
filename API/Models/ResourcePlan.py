@@ -18,6 +18,4 @@ class ResourcePlan(Base):
     Project = relationship("Project", back_populates="ResourcePlans")
     Owner = relationship("User")
 
-    # project.py
-    #ResourcePlans = relationship("ResourcePlan", back_populates="Project", cascade="all, delete-orphan")
 

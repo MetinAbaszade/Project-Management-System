@@ -26,10 +26,8 @@ class TeamService:
         if not ProjectRepository.IsProjectOwner(self.db, userId, projectId):
             raise HTTPException(status_code=403, detail="Only the project owner can add a team.")
 
-        # Step 1: Create the team
         createdTeam = self.repo.Create(userId, teamData)
 
-        # Step 2: Add creator to the team as leader
         member = TeamMember(
             TeamId=str(createdTeam.Id),
             UserId=str(userId),
@@ -94,7 +92,6 @@ class TeamService:
         if team.CreatedBy != str(userId):
             raise HTTPException(status_code=403, detail="Only the creator of the team can remove members.")
 
-        # Validate member exists and is active before deletion
         member_exists = self.db.query(TeamMember).filter(
             TeamMember.TeamId == str(teamId),
             TeamMember.UserId == str(userIdToBeRemoved),
@@ -104,7 +101,6 @@ class TeamService:
         if not member_exists:
             return {"message": "Team member removed successfully"}
 
-        # Call repository to perform deletion
         self.repo.SoftDeleteMember(teamId, userIdToBeRemoved)
 
         return {"message": "Team member removed successfully"}

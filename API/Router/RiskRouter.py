@@ -12,10 +12,6 @@ from Dependencies.auth import GetCurrentUser
 
 router = APIRouter(prefix="/risks", tags=["Risks"])
 
-
-# -----------------------------
-# Risk Endpoints
-
 @router.post("/create", status_code=status.HTTP_201_CREATED)
 def CreateRisk(
     riskData: RiskBase,
@@ -56,10 +52,6 @@ def GetAllRisksByProject(
 ):
     return riskService.GetAllRisks(projectId)
 
-
-# -----------------------------
-# RiskAnalysis Endpoints
-
 @router.post("/analysis/create", status_code=status.HTTP_201_CREATED)
 def CreateRiskAnalysis(
     analysisData: RiskAnalysisBase,
@@ -98,10 +90,6 @@ def GetAllRiskAnalyses(
     riskService: RiskService = Depends(RiskService)
 ):
     return riskService.GetAllRiskAnalysesByRiskId(riskId)
-
-
-# -----------------------------
-# RiskResponsePlan Endpoints
 
 @router.post("/response/create", status_code=status.HTTP_201_CREATED)
 def CreateRiskResponsePlan(

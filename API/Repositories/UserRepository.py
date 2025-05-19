@@ -100,7 +100,6 @@ class UserRepository:
 
         userSchema: UserResponseSchema = UserResponseSchema.from_orm(user)
 
-        # Manually inject ProfilePictureUrl if picture exists
         if user.ProfilePictureId:
             profilePic = db.query(Attachment).filter(
                 Attachment.Id == user.ProfilePictureId,
@@ -110,7 +109,7 @@ class UserRepository:
         if profilePic:
             baseUrl = "http://clabsql.clamv.constructor.university/~mabaszada/"
             fileName = os.path.basename(profilePic.FilePath)
-            userSchema.ProfilePicture = profilePic  # fills nested object
+            userSchema.ProfilePicture = profilePic
             userSchema.ProfilePictureUrl = f"{baseUrl}{fileName}"
 
         return userSchema
@@ -120,19 +119,16 @@ class UserRepository:
         file: UploadFile,
         currentUser: User
     ):
-        # Save file temporarily
         tempLocalPath = os.path.join("temp_uploads", file.filename)
         os.makedirs("temp_uploads", exist_ok=True)
 
         with open(tempLocalPath, "wb") as buffer:
             buffer.write(file.file.read())
 
-        # Upload to server and remove local file
         remotePath = UploadToUniServer(tempLocalPath, file.filename)
         fileSize = os.path.getsize(tempLocalPath)
         os.remove(tempLocalPath)
 
-        # Create Attachment record for profile picture
         attachment = Attachment(
             FileName=file.filename,
             FileType=file.content_type,

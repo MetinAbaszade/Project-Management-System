@@ -29,7 +29,6 @@ class ProjectService:
         return ProjectRepository.GetProjectById(self.db, projectId)
 
     def SoftDeleteProject(self, userId: UUID, projectId: UUID):
-        # Step 1: Check if project exists
         project = self.db.query(Project).filter(
             Project.Id == str(projectId),
             Project.IsDeleted == False
@@ -38,17 +37,14 @@ class ProjectService:
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
 
-        # Step 2: Check if the user is the owner
         if str(project.OwnerId) != str(userId):
             raise HTTPException(status_code=403, detail="Only the project owner can delete the project.")
 
-        # Step 3: Proceed with soft deletion
         return ProjectRepository.SoftDeleteProject(self.db, userId, project)
 
     def AddProjectMember(self, userId: UUID, projectId: UUID, memberId: UUID):
         if not ProjectRepository.IsProjectOwner(self.db, userId, projectId):
             raise HTTPException(status_code=403, detail="Only the project owner can add members.")
-        # Check if the member user exists
         member_user = self.userService.GetUserById(memberId)
         if not member_user:
             raise HTTPException(status_code=404, detail="User to be added not found")
@@ -97,12 +93,11 @@ class ProjectService:
         if not self.GetProjectById(projectId):
             raise HTTPException(status_code=404, detail="Project not found")
         return ProjectRepository.GetTasks(self.db, projectId)
-# Add this method to the ProjectService class
+
 def UpdateProject(self, userId: UUID, projectId: UUID, projectData: 'ProjectUpdate'):
     """
     Update an existing project. Only the project owner can update a project.
     """
-    # Step 1: Check if project exists
     project = self.db.query(Project).filter(
         Project.Id == str(projectId),
         Project.IsDeleted == False
@@ -110,12 +105,10 @@ def UpdateProject(self, userId: UUID, projectId: UUID, projectData: 'ProjectUpda
     
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
-    
-    # Step 2: Check if user is the owner
+
     if str(project.OwnerId) != str(userId):
         raise HTTPException(status_code=403, detail="Only the project owner can update the project")
-    
-    # Step 3: Update project
+
     updateData = projectData.dict(exclude_unset=True)
     return ProjectRepository.UpdateProject(self.db, projectId, updateData)
 

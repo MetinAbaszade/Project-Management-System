@@ -19,8 +19,6 @@ class ProjectScope(Base):
     UpdatedAt = Column(DateTime, onupdate=datetime.now())
     IsDeleted = Column(Boolean, default=False)
 
-
-    # Relationships
     Project = relationship("Project", back_populates="Scope")
     ScopeManagementPlan = relationship(
         "ScopeManagementPlan",

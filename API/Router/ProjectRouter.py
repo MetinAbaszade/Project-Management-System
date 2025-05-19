@@ -85,7 +85,6 @@ def GetProjectTasks(
 ):
     return service.GetProjectTasks(projectId)
 
-# Add to Router/ProjectRouter.py
 @router.put("/{projectId}/update", response_model=ProjectOut)
 def UpdateProject(
     projectId: UUID,

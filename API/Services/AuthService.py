@@ -5,7 +5,7 @@ from Schemas.AuthSchema import RegisterSchema, LoginSchema
 from Dependencies.auth import VerifyPassword, CreateAccessToken
 from Dependencies.db import GetDb
 from Schemas.UserSchema import AddUserSchema
-from Services.UserService import UserService  # ✅ now using UserService
+from Services.UserService import UserService
 
 
 class AuthService:

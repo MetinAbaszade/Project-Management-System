@@ -1,5 +1,3 @@
-# Models/WorkPackage.py
-
 from sqlalchemy import Column, String, Integer, Numeric, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 import uuid
@@ -16,5 +14,4 @@ class WorkPackage(Base):
     
     WBSId = Column(String(36), ForeignKey("WorkBreakdownStructure.Id"), nullable=False)
 
-    # Relationship back to WBS
     WBS = relationship("WorkBreakdownStructure", back_populates="WorkPackages")

@@ -14,9 +14,6 @@ from datetime import datetime
 from Models.Project import Project
 from Models.Task import Task
 
-# -----------------------------
-# Resource CRUD
-
 def CreateResource(db: Session, resourceData: ResourceBase):
     available = resourceData.Available if resourceData.Available is not None else resourceData.Total
 
@@ -56,7 +53,6 @@ def SoftDeleteResource(db: Session, resourceId: str):
     resource.IsDeleted = True
     db.commit()
 
-    # Cascade soft delete ActivityResources
     activities = db.query(ActivityResource).filter(ActivityResource.ResourceId == resourceId, ActivityResource.IsDeleted == False).all()
     for activity in activities:
         activity.IsDeleted = True
@@ -73,9 +69,6 @@ def GetAllResourcesByProjectId(db: Session, projectId: str):
         Resource.IsDeleted == False
     ).all()
 
-
-# -----------------------------
-# ActivityResource CRUD
 
 def CreateActivityResource(db: Session, assignmentData: ActivityResourceBase, task: Task, resource: Resource):
     resource.Available -= assignmentData.Quantity
@@ -102,12 +95,10 @@ def UpdateActivityResource(db: Session, assignment: ActivityResource, updateData
 
     quantityDelta = newQuantity - oldQuantity
     if quantityDelta > 0:
-        # Need more quantity than before
         if resource.Available is None or resource.Available < quantityDelta:
             raise HTTPException(status_code=400, detail="Not enough available resource quantity.")
         resource.Available -= quantityDelta
     elif quantityDelta < 0:
-        # Releasing some quantity
         resource.Available += abs(quantityDelta)
     
     oldCost = assignment.EstimatedCost
@@ -155,10 +146,6 @@ def AdjustRemainingBudget(db: Session, projectId: str, amountDelta: int):
     project.RemainingBudget = new_budget
 
     db.commit()
-
-
-# -----------------------------
-# ResourcePlan CRUD
 
 def CreateResourcePlan(db: Session, planData: ResourcePlanBase):
     newPlan = ResourcePlan(

@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from Models import *
 
 
 # Routers
@@ -26,16 +25,14 @@ app = FastAPI(
     description="Backend API for Task Management System"
 )
 
-# ✅ CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Update if frontend runs elsewhere
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ✅ Create tables
 def init_db():
     Base.metadata.create_all(bind=engine)
 
@@ -43,12 +40,10 @@ def init_db():
 def on_startup():
     init_db()
 
-# ✅ Health check route
 @app.get("/")
 def root():
-    return {"message": "FastAPI is running 🚀"}
+    return {"message": "FastAPI is running"}
 
-# ✅ Register routers
 app.include_router(email_router)
 app.include_router(auth_router)
 app.include_router(project_router)
@@ -61,6 +56,5 @@ app.include_router(resource_router)
 app.include_router(attachment_router)
 app.include_router(stakeholder_router)
 
-# ✅ Run app
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8001, reload=True)

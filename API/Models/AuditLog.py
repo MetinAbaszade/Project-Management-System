@@ -5,13 +5,6 @@ from datetime import datetime
 from Db.session import Base
 from sqlalchemy.orm import relationship
 
-
-
-
- # frontendde projectsde ve user profilede activity section var
-
- # bezi columnnlari sile bilersiz
-
 class AuditLog(Base):
     __tablename__ = "AuditLog"
     Id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))

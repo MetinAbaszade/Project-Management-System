@@ -20,8 +20,6 @@ class User(Base):
     UpdatedAt = Column(DateTime, onupdate=datetime.now)
     IsDeleted = Column(Boolean, default=False)
 
-    # 🔁 Relationships
-    # Teams where user is a member
     Teams = relationship(
         "Team",
         secondary="TeamMember",
@@ -29,14 +27,12 @@ class User(Base):
         overlaps="TeamMemberships"
     )
 
-    # Tasks assigned directly to this user (NOT TaskAssignment)
     TasksAssigned = relationship(
         "Task",
         back_populates="User",
         foreign_keys="Task.UserId"
     )
 
-    # Tasks created by this user
     TasksCreated = relationship(
         "Task",
         back_populates="Creator",
@@ -47,7 +43,7 @@ class User(Base):
     Attachments = relationship(
         "Attachment",
         back_populates="Owner",
-        foreign_keys="[Attachment.OwnerId]"  # ✅ Disambiguates join condition
+        foreign_keys="[Attachment.OwnerId]"
     )
     ProjectStakes = relationship("ProjectStakeholder", back_populates="User")
 

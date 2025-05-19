@@ -40,7 +40,6 @@ class ProjectOut(BaseModel):
     class Config:
         from_attributes = True
 
-# Add this to Schemas/ProjectSchema.py
 class ProjectUpdate(BaseModel):
     Name: Optional[str] = None
     Description: Optional[str] = None

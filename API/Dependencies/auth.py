@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 from Models.User import User
 from Dependencies.db import GetDb
 
-# Secure password hashing
 PWD_CONTEXT = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def HashPassword(password: str) -> str:

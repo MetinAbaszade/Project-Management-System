@@ -23,8 +23,8 @@ class UserService:
             raise HTTPException(status_code=400, detail="Email is already registered")
         except HTTPException as e:
             if e.status_code != 404:
-                raise e  # Reraise other unexpected errors
-            
+                raise e
+
         if not EmailService().IsEmailVerified(userData.Email):
             raise HTTPException(status_code=400, detail="Email is not verified")
 

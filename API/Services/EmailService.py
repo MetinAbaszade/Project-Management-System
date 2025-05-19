@@ -10,7 +10,6 @@ from Schemas.EmailSchema import ResponseDTO, CheckVerificationCodeDTO
 from Repositories.UserRepository import UserRepository
 from Dependencies.db import GetDb
 
-# Use a Global Cache to persist verification codes across multiple API calls
 verification_cache = TTLCache(maxsize=1000, ttl=120)
 
 class EmailService:

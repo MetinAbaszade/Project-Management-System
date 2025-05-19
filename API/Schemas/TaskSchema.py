@@ -3,7 +3,6 @@ from typing import Optional, List, TYPE_CHECKING
 from datetime import datetime
 from uuid import UUID
 
-# Prevent circular type issues
 if TYPE_CHECKING:
     from Schemas.TaskSchema import TaskTreeResponse
 

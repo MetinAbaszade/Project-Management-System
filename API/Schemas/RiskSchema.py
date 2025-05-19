@@ -2,9 +2,6 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
-# -----------------------------
-# Risk Schemas
-
 class RiskBase(BaseModel):
     ProjectId: str
     Name: str
@@ -32,9 +29,6 @@ class RiskRead(RiskBase):
     class Config:
         orm_mode = True
 
-# ---------------------------
-# RiskAnalysis Schemas
-
 class RiskAnalysisBase(BaseModel):
     RiskId: str
     AnalysisType: str
@@ -53,9 +47,6 @@ class RiskAnalysisRead(RiskAnalysisBase):
 
     class Config:
         orm_mode = True
-
-# ---------------------------
-# RiskResponsePlan Schemas
 
 class RiskResponsePlanBase(BaseModel):
     RiskId: str

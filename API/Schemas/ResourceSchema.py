@@ -3,11 +3,6 @@ from typing import Optional
 from datetime import datetime
 from decimal import Decimal
 
-
-# -------------------------------
-# Resource Schemas
-# -------------------------------
-
 class ResourceBase(BaseModel):
     Name: str
     Type: str  
@@ -31,11 +26,6 @@ class ResourceRead(ResourceBase):
 
     class Config:
         orm_mode = True
-
-
-# -------------------------------
-# ActivityResource Schemas
-# -------------------------------
 
 class ActivityResourceBase(BaseModel):
     TaskId: str
@@ -65,11 +55,6 @@ class ActivityResourceResponse(BaseModel):
 
     class Config:
         orm_mode = True
-
-
-# -------------------------------
-# ResourcePlan Schemas
-# -------------------------------
 
 class ResourcePlanBase(BaseModel):
     ProjectId: str
