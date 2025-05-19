@@ -10,15 +10,14 @@ import {
   FileText, 
   Download, 
   Loader2, 
-  ImageIcon,
-  FileIcon,
+  Image as ImageIcon,
   File,
   FileSpreadsheet,
-  FilePdf,
+  // Remove FilePdf
   FileCode,
-  FileArchive,
-  FileVideo,
-  FileAudio,
+  Archive, // Replace FileArchive with Archive
+  Video, // Replace FileVideo with Video
+  Music, // Replace FileAudio with Music
   X,
   Plus
 } from 'lucide-react';
@@ -194,7 +193,8 @@ export function TaskAttachments({ taskId, projectId, isOwner }: TaskAttachmentsP
     if (fileType.startsWith('image/')) {
       return <ImageIcon className="h-5 w-5 text-blue-500" />;
     } else if (fileType.includes('pdf')) {
-      return <FilePdf className="h-5 w-5 text-red-500" />;
+      // Use FileText instead of FilePdf
+      return <FileText className="h-5 w-5 text-red-500" />;
     } else if (fileType.includes('excel') || fileType.includes('sheet') || fileType.includes('csv')) {
       return <FileSpreadsheet className="h-5 w-5 text-green-500" />;
     } else if (fileType.includes('word') || fileType.includes('document')) {
@@ -202,11 +202,11 @@ export function TaskAttachments({ taskId, projectId, isOwner }: TaskAttachmentsP
     } else if (fileType.includes('html') || fileType.includes('javascript') || fileType.includes('css') || fileType.includes('json')) {
       return <FileCode className="h-5 w-5 text-purple-500" />;
     } else if (fileType.includes('zip') || fileType.includes('rar') || fileType.includes('tar') || fileType.includes('compressed')) {
-      return <FileArchive className="h-5 w-5 text-amber-500" />;
+      return <Archive className="h-5 w-5 text-amber-500" />; // Changed from FileArchive
     } else if (fileType.includes('video')) {
-      return <FileVideo className="h-5 w-5 text-pink-500" />;
+      return <Video className="h-5 w-5 text-pink-500" />; // Changed from FileVideo
     } else if (fileType.includes('audio')) {
-      return <FileAudio className="h-5 w-5 text-cyan-500" />;
+      return <Music className="h-5 w-5 text-cyan-500" />; // Changed from FileAudio
     } else {
       return <FileText className="h-5 w-5 text-gray-500" />;
     }

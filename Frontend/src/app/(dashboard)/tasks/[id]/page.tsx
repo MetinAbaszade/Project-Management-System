@@ -1,9 +1,10 @@
+// src/app/tasks/[id]/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format, formatDistanceToNow, addDays, parseISO, isPast, isToday } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { 
   ArrowLeft, 
   Calendar, 
@@ -17,20 +18,19 @@ import {
   Loader2,
   AlertCircle,
   Tag,
-  MessageSquare,
   FileText,
   Paperclip,
-  ListChecks
+  ListTree
 } from 'lucide-react';
 
 // API imports
 import { getTaskById, updateTask, deleteTask, markTaskComplete } from '@/api/TaskAPI';
 import { getProjectById, getProjectMembers, getProjectTeams } from '@/api/ProjectAPI';
+import { getCurrentUser } from '@/api/UserAPI';
 import { toast } from '@/lib/toast';
 
 // Component imports
-import { TaskSubtasks } from '@/components/task/TaskSubtasks';
-import { ResourceSection } from '@/components/task/ResourceSection';
+import { TaskTreeView } from '@/components/task/TaskTreeView';
 import { TaskAttachments } from '@/components/task/TaskAttachments';
 import { TaskDialog } from '@/components/task/TaskDialog';
 import { cn } from '@/lib/utils';
@@ -50,23 +50,23 @@ export default function TaskDetailPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [processingAction, setProcessingAction] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('details');
+  const [activeTab, setActiveTab] = useState('hierarchy');
   
-  // Get user ID and fetch task data
+  // Get user ID from userData stored in localStorage
   useEffect(() => {
     try {
-      const token = localStorage.getItem('authToken');
-      if (token) {
-        const payload = token.split('.')[1];
-        const decoded = JSON.parse(atob(payload));
-        setUserId(decoded.sub || decoded.id || decoded.userId);
+      const user = getCurrentUser();
+      if (user && user.Id) {
+        setUserId(user.Id);
+        console.log('[TaskDetailPage] User authenticated:', { id: user.Id });
       } else {
-        // No token, redirect to login
+        // No user data, redirect to login
+        console.error('[TaskDetailPage] No user data found');
         toast.error('Authentication required');
-        router.push('/login');
+        router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
       }
     } catch (error) {
-      console.error('Error decoding token:', error);
+      console.error('Error getting user data:', error);
       toast.error('Authentication error');
       router.push('/login');
     }
@@ -75,25 +75,38 @@ export default function TaskDetailPage() {
   // Fetch task data
   useEffect(() => {
     const fetchData = async () => {
-      if (!id || !userId) return;
+      if (!id) return;
+      
+      const taskId = Array.isArray(id) ? id[0] : id;
       
       setLoading(true);
       try {
         // Fetch task details
-        const taskData = await getTaskById(id as string);
+        const taskData = await getTaskById(taskId);
         setTask(taskData);
         
-        // Fetch associated project data
+        // Fetch associated project data if task has a project
         if (taskData.ProjectId) {
-          const [projectData, membersData, teamsData] = await Promise.all([
-            getProjectById(taskData.ProjectId),
-            getProjectMembers(taskData.ProjectId),
-            getProjectTeams(taskData.ProjectId)
-          ]);
-          
-          setProject(projectData);
-          setProjectMembers(membersData || []);
-          setProjectTeams(teamsData || []);
+          try {
+            const [projectData, membersData, teamsData] = await Promise.all([
+              getProjectById(taskData.ProjectId),
+              getProjectMembers(taskData.ProjectId),
+              getProjectTeams(taskData.ProjectId)
+            ]);
+            
+            setProject(projectData);
+            setProjectMembers(membersData || []);
+            setProjectTeams(teamsData || []);
+            
+            console.log('[TaskDetailPage] Project data loaded:', {
+              projectId: projectData.Id,
+              ownerId: projectData.OwnerId,
+              userId
+            });
+          } catch (projectError) {
+            console.error('Error fetching project data:', projectError);
+            // Continue with task data even if project data fails
+          }
         }
         
         setError(null);
@@ -106,14 +119,29 @@ export default function TaskDetailPage() {
       }
     };
     
-    fetchData();
+    if (userId) {
+      fetchData();
+    }
   }, [id, userId, router]);
   
-  // Permissions
-  const isProjectOwner = project?.OwnerId === userId;
-  const isAssignedUser = task?.UserId === userId;
-  const isTaskCreator = task?.CreatedBy === userId;
-  const canCompleteTask = !task?.Completed && (isProjectOwner || isAssignedUser || isTaskCreator);
+  // Determine permissions with simplified checks
+  const isProjectOwner = userId && project?.OwnerId === userId;
+  
+  // Log permissions for debugging
+  useEffect(() => {
+    if (project) {
+      console.log('[TaskDetailPage] Permission check:', {
+        userId,
+        projectOwnerId: project.OwnerId,
+        isProjectOwner
+      });
+    }
+  }, [project, userId, isProjectOwner]);
+  
+  // All permissions derive from project ownership
+  const canEditTask = isProjectOwner;
+  const canCompleteTask = isProjectOwner && !task?.Completed;
+  const canDeleteTask = isProjectOwner;
   
   // Handle mark task as complete
   const handleCompleteTask = async () => {
@@ -176,10 +204,17 @@ export default function TaskDetailPage() {
   
   // Get creator name
   const getCreatorName = () => {
-    if (task?.CreatedBy === userId) return 'You';
+    if (!task?.CreatedBy) return 'Unknown';
     
-    const creator = projectMembers.find(
-      member => member.UserId === task?.CreatedBy
+    // If current user is the creator
+    if (userId && task.CreatedBy === userId) {
+      return 'You';
+    }
+    
+    // Try to find creator in project members
+    const creator = projectMembers.find(member => 
+      member.UserId === task.CreatedBy || 
+      member.User?.Id === task.CreatedBy
     );
     
     if (creator?.User?.FirstName) {
@@ -195,10 +230,14 @@ export default function TaskDetailPage() {
       const team = projectTeams.find(team => team.Id === task.TeamId);
       return team?.Name || 'Team';
     } else if (task?.UserId) {
-      if (task.UserId === userId) return 'You';
+      // If current user is assigned
+      if (userId && task.UserId === userId) {
+        return 'You';
+      }
       
-      const user = projectMembers.find(
-        member => member.UserId === task.UserId
+      const user = projectMembers.find(member => 
+        member.UserId === task.UserId || 
+        member.User?.Id === task.UserId
       );
       
       if (user?.User?.FirstName) {
@@ -209,66 +248,6 @@ export default function TaskDetailPage() {
     }
     
     return 'Not assigned';
-  };
-  
-  // Get time distance text
-  const getTimeDistance = (dateString: string) => {
-    try {
-      const date = parseISO(dateString);
-      return formatDistanceToNow(date, { addSuffix: true });
-    } catch (e) {
-      return '';
-    }
-  };
-  
-  // Get deadline status
-  const getDeadlineStatus = () => {
-    if (!task?.Deadline) return { color: '', text: '', urgent: false };
-    
-    try {
-      const deadline = parseISO(task.Deadline);
-      
-      if (task.Completed) {
-        return { 
-          color: 'text-green-600', 
-          text: 'Completed',
-          urgent: false
-        };
-      }
-      
-      if (isPast(deadline) && !isToday(deadline)) {
-        return { 
-          color: 'text-red-600', 
-          text: 'Overdue',
-          urgent: true 
-        };
-      }
-      
-      if (isToday(deadline)) {
-        return { 
-          color: 'text-amber-600', 
-          text: 'Due today',
-          urgent: true 
-        };
-      }
-      
-      const daysUntil = Math.ceil((deadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-      if (daysUntil <= 2) {
-        return { 
-          color: 'text-amber-600', 
-          text: `Due in ${daysUntil} day${daysUntil !== 1 ? 's' : ''}`,
-          urgent: false 
-        };
-      }
-      
-      return { 
-        color: 'text-blue-600', 
-        text: format(deadline, 'MMM d, yyyy'),
-        urgent: false 
-      };
-    } catch (e) {
-      return { color: '', text: '', urgent: false };
-    }
   };
   
   // Get status styles
@@ -302,12 +281,10 @@ export default function TaskDetailPage() {
   // Get tab icon
   const getTabIcon = (tab: string) => {
     switch (tab) {
+      case 'hierarchy':
+        return <ListTree className="h-4 w-4" />;
       case 'details':
         return <FileText className="h-4 w-4" />;
-      case 'subtasks':
-        return <ListChecks className="h-4 w-4" />;
-      case 'resources':
-        return <Briefcase className="h-4 w-4" />;
       case 'attachments':
         return <Paperclip className="h-4 w-4" />;
       default:
@@ -357,13 +334,13 @@ export default function TaskDetailPage() {
       </div>
     );
   }
-  
-  // Get deadline status display
-  const deadlineStatus = getDeadlineStatus();
+
+  // Check if task has a valid projectId before rendering TaskTreeView
+  const hasValidProjectId = task.ProjectId && task.ProjectId !== 'undefined' && task.ProjectId !== '';
 
   return (
     <div className="max-w-7xl mx-auto p-8">
-      {/* Premium Header Section */}
+      {/* Header Section */}
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -401,11 +378,28 @@ export default function TaskDetailPage() {
           </div>
         </div>
         
-        {/* Created By and Created At */}
-        <div className="flex items-center text-sm text-muted-foreground">
-          <span>Created by {getCreatorName()}</span>
-          <span className="inline-block mx-2">•</span>
-          <span>{getTimeDistance(task.CreatedAt)}</span>
+        {/* Created By and Assignment */}
+        <div className="flex flex-wrap items-center text-sm text-muted-foreground gap-4">
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            <span>Created by {getCreatorName()}</span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {task.TeamId ? (
+              <Users className="h-4 w-4" />
+            ) : (
+              <User className="h-4 w-4" />
+            )}
+            <span>Assigned to {getAssignedName()}</span>
+          </div>
+          
+          {task.Deadline && (
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <span>Due {format(parseISO(task.Deadline), 'MMMM d, yyyy')}</span>
+            </div>
+          )}
         </div>
       </motion.div>
       
@@ -413,9 +407,9 @@ export default function TaskDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left Content (2/3 width on desktop) */}
         <div className="md:col-span-2 space-y-6">
-          {/* Premium Tab Navigation */}
+          {/* Tab Navigation */}
           <div className="flex items-center px-2 border-b">
-            {['details', 'subtasks', 'resources', 'attachments'].map(tab => (
+            {['hierarchy', 'details', 'attachments'].map(tab => (
               <button
                 key={tab}
                 className={cn(
@@ -443,6 +437,33 @@ export default function TaskDetailPage() {
           
           {/* Tab Content */}
           <AnimatePresence mode="wait">
+            {activeTab === 'hierarchy' && (
+              <motion.div
+                key="hierarchy"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {hasValidProjectId ? (
+                  <TaskTreeView
+                    taskId={task.Id}
+                    projectId={task.ProjectId}
+                    isProjectOwner={isProjectOwner}
+                    userId={userId}
+                  />
+                ) : (
+                  <div className="bg-card rounded-xl border p-6 text-center">
+                    <ListTree className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Task Hierarchy Available</h3>
+                    <p className="text-muted-foreground mb-4">
+                      This task is not associated with a project, so no task hierarchy is available.
+                    </p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+            
             {activeTab === 'details' && (
               <motion.div
                 key="details"
@@ -454,11 +475,12 @@ export default function TaskDetailPage() {
                 <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
                   <div className="px-6 py-4 border-b bg-muted/30 flex items-center justify-between">
                     <h2 className="font-semibold flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4 text-primary" />
+                      <FileText className="h-4 w-4 text-primary" />
                       Description
                     </h2>
                     
-                    {isProjectOwner && (
+                    {/* Only show edit button if user is project owner */}
+                    {canEditTask && (
                       <button
                         onClick={() => setIsEditDialogOpen(true)}
                         className="text-xs text-primary flex items-center gap-1 hover:underline"
@@ -538,40 +560,6 @@ export default function TaskDetailPage() {
               </motion.div>
             )}
             
-            {activeTab === 'subtasks' && (
-              <motion.div
-                key="subtasks"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="bg-card rounded-xl border shadow-sm overflow-hidden p-6"
-              >
-                <TaskSubtasks 
-                  taskId={task.Id} 
-                  projectId={task.ProjectId} 
-                  isOwner={isProjectOwner} 
-                />
-              </motion.div>
-            )}
-            
-            {activeTab === 'resources' && (
-              <motion.div
-                key="resources"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="bg-card rounded-xl border shadow-sm overflow-hidden p-6"
-              >
-                <ResourceSection 
-                  taskId={task.Id}
-                  projectId={task.ProjectId}
-                  isOwner={isProjectOwner}
-                />
-              </motion.div>
-            )}
-            
             {activeTab === 'attachments' && (
               <motion.div
                 key="attachments"
@@ -581,11 +569,21 @@ export default function TaskDetailPage() {
                 transition={{ duration: 0.2 }}
                 className="bg-card rounded-xl border shadow-sm overflow-hidden p-6"
               >
-                <TaskAttachments 
-                  taskId={task.Id}
-                  projectId={task.ProjectId} 
-                  isOwner={isProjectOwner} 
-                />
+                {hasValidProjectId ? (
+                  <TaskAttachments 
+                    taskId={task.Id}
+                    projectId={task.ProjectId} 
+                    isOwner={isProjectOwner} 
+                  />
+                ) : (
+                  <div className="text-center py-8">
+                    <Paperclip className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Attachments Available</h3>
+                    <p className="text-muted-foreground">
+                      This task is not associated with a project, so attachments are not available.
+                    </p>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -615,7 +613,8 @@ export default function TaskDetailPage() {
                 </button>
               )}
               
-              {isProjectOwner && (
+              {/* Only show edit/delete buttons if user is project owner */}
+              {canEditTask && (
                 <>
                   <button
                     onClick={() => setIsEditDialogOpen(true)}
@@ -681,7 +680,9 @@ export default function TaskDetailPage() {
                   </button>
                 </div>
               ) : (
-                <p className="text-muted-foreground">Project information not available</p>
+                <p className="text-muted-foreground">
+                  This task is not associated with any project.
+                </p>
               )}
             </div>
           </motion.div>
@@ -692,10 +693,7 @@ export default function TaskDetailPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.3 }}
-              className={cn(
-                "bg-card rounded-xl border shadow-sm overflow-hidden",
-                deadlineStatus.urgent && "border-red-200 dark:border-red-800"
-              )}
+              className="bg-card rounded-xl border shadow-sm overflow-hidden"
             >
               <div className="px-6 py-4 border-b bg-muted/30">
                 <h2 className="font-semibold flex items-center gap-2">
@@ -710,12 +708,8 @@ export default function TaskDetailPage() {
                     <Calendar className="h-8 w-8 text-primary" />
                   </div>
                   
-                  <p className={cn("text-xl font-semibold", deadlineStatus.urgent && "animate-pulse")}>
+                  <p className="text-xl font-semibold">
                     {format(parseISO(task.Deadline), 'MMMM d, yyyy')}
-                  </p>
-                  
-                  <p className={cn("text-sm mt-1", deadlineStatus.color)}>
-                    {deadlineStatus.text}
                   </p>
                 </div>
               </div>

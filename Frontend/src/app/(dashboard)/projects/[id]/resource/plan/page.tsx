@@ -5,9 +5,22 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
-import { v4 as uuidv4 } from 'uuid';
 import { cn } from '@/lib/utils';
 import { toast } from '@/lib/toast';
+
+// API
+import { 
+  getResourcePlanById,
+  getProjectResources,
+  getProjectResourcePlans,
+  createResourcePlan,
+  updateResourcePlan,
+  deleteResourcePlan,
+  Resource,
+  ResourcePlan,
+  ResourcePlanCreateData,
+  ResourcePlanUpdateData
+} from '@/api/ResourceAPI';
 
 // Icons
 import {
@@ -25,10 +38,10 @@ import {
   Edit,
   Table,
   BarChart,
-  MoreHorizontal,
+  Package as PackageIcon,
   Briefcase,
   XCircle,
-  HardHat,
+  TruckIcon,
   ExternalLink,
   UserPlus,
 } from 'lucide-react';
@@ -61,16 +74,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Tabs,
   TabsContent,
@@ -78,71 +83,98 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 
+// Interface for attachments
+interface Attachment {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url: string;
+}
+
 export default function ResourcePlanPage() {
   const { id: projectId } = useParams();
   const router = useRouter();
   
-  const [resources, setResources] = useState([]);
-  const [plan, setPlan] = useState(null);
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [plans, setPlans] = useState<ResourcePlan[]>([]);
+  const [activePlan, setActivePlan] = useState<ResourcePlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
   const [planNotes, setPlanNotes] = useState('');
   const [showAddAttachmentDialog, setShowAddAttachmentDialog] = useState(false);
-  const [attachments, setAttachments] = useState([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [error, setError] = useState<string | null>(null);
   
-  // Load resources and plan from localStorage
+  // Load resources and plan from API
   useEffect(() => {
-    setLoading(true);
-    
-    // Small delay to simulate loading
-    const timer = setTimeout(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      
       try {
-        // Get resources from localStorage
-        const storedResources = localStorage.getItem(`project_${projectId}_resources`);
-        if (storedResources) {
-          setResources(JSON.parse(storedResources));
-        }
+        // Get resources from API
+        const resourceData = await getProjectResources(projectId as string);
+        setResources(resourceData);
         
-        // Get resource plan from localStorage
-        const storedPlan = localStorage.getItem(`project_${projectId}_resource_plan`);
-        if (storedPlan) {
-          const planData = JSON.parse(storedPlan);
-          setPlan(planData);
-          setPlanNotes(planData.Notes || '');
-          setAttachments(planData.Attachments || []);
+        // Get resource plans from API
+        const planData = await getProjectResourcePlans(projectId as string);
+        setPlans(planData);
+        
+        // Set the active plan
+        if (planData && planData.length > 0) {
+          const latestPlan = planData[0]; // Assuming first plan is the latest
+          setActivePlan(latestPlan);
+          setPlanNotes(latestPlan.Notes || '');
+          
+          // In a real app, we'd load attachments via an API
+          // For now, we'll use mock data or set empty array
+          setAttachments(latestPlan.Attachments || []);
         } else {
-          // Create a new empty plan
-          const newPlan = {
-            Id: uuidv4(),
-            ProjectId: projectId,
-            OwnerId: 'current-user-id', // In a real app, this would be the current user's ID
-            Notes: '',
-            CreatedAt: new Date().toISOString(),
-            IsDeleted: false,
-            Attachments: []
-          };
-          localStorage.setItem(`project_${projectId}_resource_plan`, JSON.stringify(newPlan));
-          setPlan(newPlan);
+          // No plan exists, we'll create a new one when saving
+          setActivePlan(null);
+          setPlanNotes('');
+          setAttachments([]);
         }
       } catch (error) {
         console.error("Error loading resource plan:", error);
+        setError("Failed to load resource plan. Please try again.");
         toast.error("Failed to load resource plan");
       } finally {
         setLoading(false);
       }
-    }, 300);
+    };
     
-    return () => clearTimeout(timer);
+    fetchData();
   }, [projectId]);
   
   // Save plan notes
-  const handleSavePlanNotes = () => {
+  const handleSavePlanNotes = async () => {
     try {
-      const updatedPlan = { ...plan, Notes: planNotes };
-      localStorage.setItem(`project_${projectId}_resource_plan`, JSON.stringify(updatedPlan));
-      setPlan(updatedPlan);
-      setIsEditMode(false);
-      toast.success("Resource plan updated successfully");
+      if (activePlan) {
+        // Update existing plan
+        const updateData: ResourcePlanUpdateData = {
+          Notes: planNotes
+        };
+        
+        const updatedPlan = await updateResourcePlan(activePlan.Id, updateData);
+        setActivePlan(updatedPlan);
+        setIsEditMode(false);
+        toast.success("Resource plan updated successfully");
+      } else {
+        // Create new plan
+        const newPlanData: ResourcePlanCreateData = {
+          ProjectId: projectId as string,
+          Notes: planNotes,
+          OwnerId: 'current-user-id' // In a real app, this would be the current user's ID
+        };
+        
+        const newPlan = await createResourcePlan(newPlanData);
+        setActivePlan(newPlan);
+        setPlans(prev => [newPlan, ...prev]);
+        setIsEditMode(false);
+        toast.success("Resource plan created successfully");
+      }
     } catch (error) {
       console.error("Error saving resource plan:", error);
       toast.error("Failed to save resource plan");
@@ -150,33 +182,33 @@ export default function ResourcePlanPage() {
   };
   
   // Handle file attachment
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
     const files = Array.from(e.target.files);
-    if (files.length === 0) return;
     
     // Create attachment objects
-    const newAttachments = files.map(file => ({
-      id: uuidv4(),
+    const newAttachments: Attachment[] = files.map(file => ({
+      id: crypto.randomUUID(),
       name: file.name,
       size: file.size,
       type: file.type,
-      // In a real app, we'd upload the file to a server or store it
+      // In a real app, we'd upload the file to a server and get a URL
       // Here we just create an object URL to simulate
       url: URL.createObjectURL(file)
     }));
     
     try {
-      const updatedAttachments = [...attachments, ...newAttachments];
-      const updatedPlan = { ...plan, Attachments: updatedAttachments };
+      // In a real app, we'd upload files to a server, then update the resource plan with new attachments
+      setAttachments(prev => [...prev, ...newAttachments]);
       
-      // Save to localStorage
-      localStorage.setItem(`project_${projectId}_resource_plan`, JSON.stringify(updatedPlan));
+      // Then update the plan
+      if (activePlan) {
+        // This is a mock implementation - in a real app you would update the plan via API
+        // Example: await updateResourcePlanAttachments(activePlan.Id, updatedAttachments);
+      }
       
-      // Update state
-      setAttachments(updatedAttachments);
-      setPlan(updatedPlan);
       setShowAddAttachmentDialog(false);
-      
       toast.success(`Added ${files.length} attachment${files.length > 1 ? 's' : ''}`);
     } catch (error) {
       console.error("Error adding attachment:", error);
@@ -185,17 +217,17 @@ export default function ResourcePlanPage() {
   };
   
   // Remove an attachment
-  const handleRemoveAttachment = (attachmentId) => {
+  const handleRemoveAttachment = (attachmentId: string) => {
     try {
+      // In a real app, we'd delete the file from the server and update the resource plan
       const updatedAttachments = attachments.filter(a => a.id !== attachmentId);
-      const updatedPlan = { ...plan, Attachments: updatedAttachments };
-      
-      // Save to localStorage
-      localStorage.setItem(`project_${projectId}_resource_plan`, JSON.stringify(updatedPlan));
-      
-      // Update state
       setAttachments(updatedAttachments);
-      setPlan(updatedPlan);
+      
+      // Then update the plan
+      if (activePlan) {
+        // This is a mock implementation - in a real app you would update the plan via API
+        // Example: await updateResourcePlanAttachments(activePlan.Id, updatedAttachments);
+      }
       
       toast.success("Attachment removed");
     } catch (error) {
@@ -204,39 +236,40 @@ export default function ResourcePlanPage() {
     }
   };
   
+  // Format date
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'N/A';
+    try {
+      return format(new Date(dateString), 'MMM d, yyyy');
+    } catch (error) {
+      return 'Invalid date';
+    }
+  };
+  
   // Calculate resource statistics
   const resourceStats = {
     total: resources.length,
-    byType: resources.reduce((acc, resource) => {
+    byType: resources.reduce((acc: Record<string, number>, resource: Resource) => {
       acc[resource.Type] = (acc[resource.Type] || 0) + 1;
       return acc;
     }, {}),
-    availableResources: resources.filter(r => r.Available && r.Available > 0).length,
+    availableResources: resources.filter(r => r.Available !== undefined && r.Available > 0).length,
     lowStock: resources.filter(r => 
-      r.Available !== null && r.Total !== null && 
+      r.Available !== undefined && r.Total !== undefined && 
       r.Available > 0 && r.Available < (r.Total * 0.2)
     ).length,
     outOfStock: resources.filter(r => r.Available === 0).length,
   };
-  
-  // Group resources by type for display in table
-  const resourcesByType = resources.reduce((acc, resource) => {
-    if (!acc[resource.Type]) {
-      acc[resource.Type] = [];
-    }
-    acc[resource.Type].push(resource);
-    return acc;
-  }, {});
 
   // Resource type icons
   const resourceTypeIcons = {
     'Human': <UserPlus className="h-5 w-5 text-blue-500" />,
     'Equipment': <Settings className="h-5 w-5 text-amber-500" />,
-    'Material': <Package className="h-5 w-5 text-green-500" />,
+    'Material': <PackageIcon className="h-5 w-5 text-green-500" />,
     'Tool': <Briefcase className="h-5 w-5 text-purple-500" />,
-    'Vehicle': <HardHat className="h-5 w-5 text-red-500" />,
+    'Vehicle': <TruckIcon className="h-5 w-5 text-red-500" />,
     'Space': <Table className="h-5 w-5 text-indigo-500" />,
-    'Other': <Package className="h-5 w-5 text-gray-500" />,
+    'Other': <PackageIcon className="h-5 w-5 text-gray-500" />,
   };
 
   return (
@@ -270,6 +303,21 @@ export default function ResourcePlanPage() {
           </div>
         </div>
 
+        {/* Error message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-100 border border-red-300 text-red-700 rounded-md">
+            {error}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="ml-2"
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
+
         {loading ? (
           <LoadingSkeleton />
         ) : (
@@ -292,7 +340,7 @@ export default function ResourcePlanPage() {
                         variant="outline" 
                         size="sm" 
                         onClick={() => {
-                          setPlanNotes(plan.Notes || '');
+                          setPlanNotes(activePlan?.Notes || '');
                           setIsEditMode(false);
                         }}
                       >
@@ -325,8 +373,8 @@ export default function ResourcePlanPage() {
                   />
                 ) : (
                   <div className="prose dark:prose-invert max-w-none">
-                    {plan.Notes ? (
-                      <div className="whitespace-pre-wrap">{plan.Notes}</div>
+                    {activePlan?.Notes ? (
+                      <div className="whitespace-pre-wrap">{activePlan.Notes}</div>
                     ) : (
                       <div className="text-muted-foreground italic">
                         No resource plan notes have been added yet. Click "Edit Notes" to add information about your resource planning, allocation strategy, or requirements.
@@ -392,7 +440,7 @@ export default function ResourcePlanPage() {
                             className="flex items-center justify-between bg-muted/50 p-3 rounded-lg hover:bg-muted transition-colors"
                           >
                             <div className="flex items-center gap-3">
-                              {resourceTypeIcons[type] || <Package className="h-5 w-5 text-muted-foreground" />}
+                              {resourceTypeIcons[type as keyof typeof resourceTypeIcons] || <PackageIcon className="h-5 w-5 text-muted-foreground" />}
                               <span>{type}</span>
                             </div>
                             <div className="bg-background px-2 py-1 rounded text-sm">
@@ -420,7 +468,7 @@ export default function ResourcePlanPage() {
                             <TableRow key={resource.Id}>
                               <TableCell>
                                 <div className="flex items-center gap-2">
-                                  {resourceTypeIcons[resource.Type] || <Package className="h-4 w-4 text-muted-foreground" />}
+                                  {resourceTypeIcons[resource.Type as keyof typeof resourceTypeIcons] || <PackageIcon className="h-4 w-4 text-muted-foreground" />}
                                   <span>{resource.Type}</span>
                                 </div>
                               </TableCell>
@@ -440,12 +488,12 @@ export default function ResourcePlanPage() {
                                   "inline-block px-2 py-1 rounded-md text-xs font-medium",
                                   resource.Available === 0 
                                     ? "bg-red-500/10 text-red-500" 
-                                    : resource.Available < resource.Total * 0.2
+                                    : resource.Available !== undefined && resource.Total !== undefined && resource.Available < resource.Total * 0.2
                                       ? "bg-amber-500/10 text-amber-500"
                                       : "bg-green-500/10 text-green-500"
                                 )}>
                                   {resource.Available === 0 ? "Out of stock" : 
-                                  resource.Available < resource.Total * 0.2 ? "Low stock" : 
+                                  resource.Available !== undefined && resource.Total !== undefined && resource.Available < resource.Total * 0.2 ? "Low stock" : 
                                   "Available"}
                                 </div>
                               </TableCell>
@@ -505,19 +553,19 @@ export default function ResourcePlanPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Plan ID</span>
-                    <span className="text-sm font-mono">{plan.Id.substring(0, 8)}</span>
+                    <span className="text-sm font-mono">{activePlan ? activePlan.Id.substring(0, 8) : 'Not created yet'}</span>
                   </div>
                   <div className="border-t border-border"></div>
                   
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Created</span>
-                    <span>{format(new Date(plan.CreatedAt), 'MMM d, yyyy')}</span>
+                    <span>{activePlan ? formatDate(activePlan.CreatedAt) : 'Not created yet'}</span>
                   </div>
                   <div className="border-t border-border"></div>
                   
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Last Updated</span>
-                    <span>{format(new Date(), 'MMM d, yyyy')}</span>
+                    <span>{activePlan ? formatDate(activePlan.UpdatedAt) : 'Not created yet'}</span>
                   </div>
                   <div className="border-t border-border"></div>
                   
@@ -569,7 +617,7 @@ export default function ResourcePlanPage() {
                           <div className="overflow-hidden">
                             <p className="font-medium text-sm truncate">{file.name}</p>
                             <p className="text-xs text-muted-foreground">
-                              {(file.size / 1024).toFixed(1)} KB • Added {format(new Date(), 'MMM d, yyyy')}
+                              {(file.size / 1024).toFixed(1)} KB
                             </p>
                           </div>
                         </div>
@@ -685,7 +733,7 @@ export default function ResourcePlanPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => document.getElementById('attachment-upload').click()}
+              onClick={() => document.getElementById('attachment-upload')?.click()}
             >
               <Plus className="h-4 w-4 mr-2" /> Select Files
             </Button>

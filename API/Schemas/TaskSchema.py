@@ -1,7 +1,11 @@
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel
+from typing import Optional, List, TYPE_CHECKING
 from datetime import datetime
 from uuid import UUID
+
+# Prevent circular type issues
+if TYPE_CHECKING:
+    from Schemas.TaskSchema import TaskTreeResponse
 
 class TaskBase(BaseModel):
     Title: str
@@ -33,3 +37,11 @@ class TaskResponse(TaskBase):
 
     class Config:
         orm_mode = True
+
+class TaskTreeResponse(TaskResponse):
+    Subtasks: List["TaskTreeResponse"] = []
+
+    class Config:
+        orm_mode = True
+
+TaskTreeResponse.update_forward_refs()
